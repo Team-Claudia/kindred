@@ -6,3 +6,4 @@ Kindred helps families coordinate care without forcing them to abandon the tools
 
 - [Product Requirements Document](docs/PRD.md)
 - [MVP user flow](docs/user-flow.md)
+- [Architecture Decision Record](docs/ADR.md)
