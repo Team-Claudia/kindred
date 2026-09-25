@@ -5,6 +5,7 @@
 **Product name:** Kindred
 **Platform:** Mobile app — iOS/Android
 **Product stage:** MVP / validation stage
+**Launch market:** Canada (see **37. Technical and Non-Functional Requirements**)
 **Primary user:** Working adults who share unpaid caregiving responsibilities for an aging parent, spouse, or other family member with siblings, partners, or relatives.
 
 ### Product Vision
@@ -257,6 +258,8 @@ The MVP will include:
 17. Messaging app sharing.
 18. Shared activity feed.
 19. Contextual comments.
+20. Recurring tasks and appointments (simple repeats).
+21. Account deletion and personal data export.
 
 ---
 
@@ -307,6 +310,7 @@ Shows:
 - Availability settings.
 - Notification preferences.
 - Care Circle settings.
+- Account settings, including data export and account deletion.
 
 ---
 
@@ -335,6 +339,62 @@ Shows:
 
 ---
 
+### User Story 1.2 — Sign In
+
+**As a** caregiver,
+**I want to** sign in with a method I already use,
+**so that** joining my family's Care Circle is quick even if I am not technically confident.
+
+**Acceptance Criteria**
+
+**Scenario: Supported sign-in methods**
+
+- **Given** I am on the sign-in screen
+- **When** I choose how to sign in
+- **Then** I can use Sign in with Apple, Sign in with Google, or an email one-time code.
+
+**Scenario: Invitation link before the app is installed**
+
+- **Given** I receive a Care Circle invitation but do not have Kindred installed
+- **When** I open the link, install the app, and sign in
+- **Then** Kindred still adds me to the Care Circle from the original invitation.
+
+*Assumption: passwordless methods only for MVP, to reduce support load and suit less technically confident family members. Sign in with Apple is required by the App Store whenever Sign in with Google is offered.*
+
+---
+
+### User Story 1.3 — Delete Account and Export Data
+
+**As a** caregiver,
+**I want to** export or delete my personal data,
+**so that** I stay in control of information about me and my family.
+
+**Acceptance Criteria**
+
+**Scenario: Export data**
+
+- **Given** I am signed in
+- **When** I request a data export
+- **Then** Kindred provides a copy of my personal data and the Care Circle content I created.
+
+**Scenario: Delete account**
+
+- **Given** I am signed in
+- **When** I delete my account and confirm
+- **Then** Kindred removes my account and disconnects my calendar
+- **And** open responsibilities I own return to **Needs someone**
+- **And** other members are notified.
+
+**Scenario: Shared history is preserved without my identity**
+
+- **Given** I contributed updates or comments to a Care Circle
+- **When** my account is deleted
+- **Then** that content remains for the family but is attributed to "Former member".
+
+*Assumption: whether shared content is kept or deleted on account deletion needs privacy/legal review (see §37).*
+
+---
+
 ## 11. Epic 2 — Care Circles
 
 A **Care Circle** represents the group coordinating care for one person.
@@ -360,6 +420,43 @@ A **Care Circle** represents the group coordinating care for one person.
 - **When** I attempt to continue without providing a name
 - **Then** Kindred prevents creation
 - **And** prompts me to enter one.
+
+---
+
+### User Story 2.2 — Equal Member Permissions
+
+**As a** Care Circle member,
+**I want** every member to be able to manage the family's responsibilities,
+**so that** coordination does not depend on one person being available.
+
+**Acceptance Criteria**
+
+**Scenario: Any member can manage any item**
+
+- **Given** I belong to a Care Circle
+- **When** I view a task or appointment created or owned by someone else
+- **Then** I can edit, cancel, assign, reassign, or withdraw an assignment on it.
+
+**Scenario: Changes are attributed**
+
+- **Given** a member changes an item they do not own
+- **When** the change is saved
+- **Then** the activity feed records who made the change
+- **And** the current owner or proposed assignee is notified.
+
+**Scenario: Member management is limited to administrators**
+
+- **Given** I am not an administrator
+- **When** I view the Care Circle member list
+- **Then** I can invite members but cannot remove them or change administrators.
+
+**Scenario: Last administrator leaves**
+
+- **Given** I am the only administrator
+- **When** I leave the Care Circle
+- **Then** Kindred makes the longest-standing remaining member an administrator.
+
+*Decision: all members have equal permissions over tasks and appointments. The administrator role exists only for member management (removing members, granting administrator). A Care Circle may have several administrators.*
 
 ---
 
@@ -531,6 +628,21 @@ A **Care Circle** represents the group coordinating care for one person.
 - **Given** a Kindred appointment has been synced
 - **When** the appointment is cancelled
 - **Then** the synced calendar event is removed or marked cancelled.
+
+**Scenario: Sync preferences**
+
+- **Given** my calendar is connected
+- **When** I open my sync preferences
+- **Then** I can choose whether accepted appointments and accepted tasks with a due time are added to my calendar
+- **And** by default, appointments are added and tasks are not.
+
+**Scenario: Synced events stay private**
+
+- **Given** Kindred adds an event to my connected calendar
+- **When** the event is created
+- **Then** it contains the title, time, and a Kindred link, but not appointment notes or updates.
+
+*Assumption: sync is one-way (Kindred → calendar). Edits made to a synced event in the calendar app are not read back into Kindred.*
 
 ---
 
@@ -763,6 +875,112 @@ Because the caregiver is voluntarily claiming the task themselves, a second acce
 
 ---
 
+### User Story 7.6 — Create a Recurring Task or Appointment
+
+**As a** caregiver,
+**I want to** set a task or appointment to repeat,
+**so that** routine care such as weekly medication pickups does not need to be recreated.
+
+**Acceptance Criteria**
+
+**Scenario: Create repeating item**
+
+- **Given** I am creating a task or appointment
+- **When** I choose to repeat it daily, weekly, or monthly, with an optional end date
+- **Then** Kindred creates a series of occurrences on the shared calendar.
+
+**Scenario: Each occurrence has its own ownership**
+
+- **Given** a recurring series exists
+- **When** I view one occurrence
+- **Then** it has its own assignment state, owner, completion, comments, and updates.
+
+**Scenario: Assign a series**
+
+- **Given** I am assigning a recurring item
+- **When** I choose **This occurrence** or **All future occurrences**
+- **Then** the assignee receives one request covering what I selected
+- **And** accepting it confirms them as owner of every occurrence it covers.
+
+**Scenario: Coverage is per occurrence**
+
+- **Given** I own several occurrences in a series
+- **When** I request coverage
+- **Then** the request applies to one occurrence and counts as one coverage request.
+
+*Decision: MVP supports simple repeats only (daily, weekly, monthly). Rules such as "every second Tuesday" are out of scope.*
+
+---
+
+### User Story 7.7 — Edit or Cancel a Recurring Item
+
+**As a** caregiver,
+**I want to** change one occurrence or the rest of a series,
+**so that** one-off changes do not break the routine.
+
+**Acceptance Criteria**
+
+**Scenario: Edit scope**
+
+- **Given** I edit or cancel an occurrence of a recurring item
+- **When** I save the change
+- **Then** Kindred asks whether it applies to **This occurrence** or **This and future occurrences**.
+
+---
+
+### User Story 7.8 — Change an Existing Assignment
+
+**As a** caregiver,
+**I want to** withdraw, reassign, or reschedule responsibilities,
+**so that** plans can change without leaving the family unsure who is responsible.
+
+**Acceptance Criteria**
+
+**Scenario: Withdraw a pending assignment**
+
+- **Given** an item is **Awaiting acceptance**
+- **When** any member withdraws the assignment
+- **Then** the item returns to **Needs someone**
+- **And** the proposed assignee is notified.
+
+**Scenario: Reassign an accepted item**
+
+- **Given** an item is **Assigned**
+- **When** another member reassigns it to a different caregiver
+- **Then** the item becomes **Awaiting acceptance** for the new caregiver
+- **And** the previous owner is notified and is no longer the owner
+- **And** the previous owner's coverage-request count is unaffected.
+
+**Scenario: Schedule change requires re-confirmation**
+
+- **Given** an item is **Assigned**
+- **When** a member other than the owner changes its date or time
+- **Then** the item returns to **Awaiting acceptance** for the same owner
+- **And** the owner is asked to confirm they can still do it.
+
+**Scenario: Non-schedule edits**
+
+- **Given** an item is **Assigned**
+- **When** a member changes its title, notes, or location
+- **Then** ownership is unchanged
+- **And** the owner is notified of the change.
+
+**Scenario: Overdue item**
+
+- **Given** an item's due time has passed
+- **And** it is not **Completed** or **Cancelled**
+- **When** members view it
+- **Then** Kindred shows an **Overdue** indicator alongside its state.
+
+**Scenario: Unanswered assignment near due time**
+
+- **Given** an item is still **Awaiting acceptance** 24 hours before it is due
+- **When** that point is reached
+- **Then** the assignee receives a reminder
+- **And** the member who assigned it is notified that it is unconfirmed.
+
+---
+
 ## 17. Assignment State Model
 
 Kindred will use the following core assignment states:
@@ -788,6 +1006,18 @@ If the confirmed caregiver later cannot complete it:
 
 > **Assigned → Needs coverage → Assigned to new caregiver**
 
+Other transitions (see User Story 7.8):
+
+| From | Action | To |
+| --- | --- | --- |
+| Awaiting acceptance | Any member withdraws the assignment | Needs someone |
+| Assigned | Any member reassigns to another caregiver | Awaiting acceptance (new caregiver) |
+| Assigned | Someone other than the owner changes date/time | Awaiting acceptance (same owner) |
+| Needs coverage | Owner cancels the coverage request | Assigned (same owner) |
+| Any state except Completed | Any member cancels | Cancelled |
+
+**Overdue** is an indicator shown alongside a state, not a state of its own. Changes of state must be atomic, so that two members acting at once (for example, both claiming the same task) cannot both succeed.
+
 ---
 
 ## 18. Epic 8 — Coverage and Handoffs
@@ -812,7 +1042,7 @@ If the confirmed caregiver later cannot complete it:
 
 - **Given** a valid coverage request has been created
 - **When** the request is published
-- **Then** eligible Care Circle members are notified that coverage is needed.
+- **Then** every other member of the Care Circle is notified that coverage is needed.
 
 **Scenario: Reach monthly coverage limit**
 
@@ -889,7 +1119,7 @@ Because a caregiver is voluntarily selecting **I can do it**, no additional acce
 
 - **Given** responsibility has successfully transferred
 - **When** the handoff is completed
-- **Then** the original caregiver's synced event is removed, cancelled, or updated according to configured calendar behaviour.
+- **Then** the original caregiver's synced event is removed from their calendar.
 
 ---
 
@@ -897,7 +1127,7 @@ Because a caregiver is voluntarily selecting **I can do it**, no additional acce
 
 For MVP, messaging app integration means **sharing Kindred information into the family's messaging app (e.g., WhatsApp) and linking family members back into the correct Kindred item**.
 
-Kindred does not need to read users' private messaging app conversations.
+Sharing uses the phone's standard share sheet with pre-filled text and a Kindred link. There is no direct integration with any messaging app's API, and Kindred does not need to read users' private messaging app conversations.
 
 ### User Story 9.1 — Share a Task to Messaging App
 
@@ -1166,6 +1396,19 @@ Kindred does not need to read users' private messaging app conversations.
 - **When** I disable an optional notification category
 - **Then** Kindred stops sending push notifications for that category.
 
+Notification categories and defaults:
+
+| Category | Includes | Default |
+| --- | --- | --- |
+| Requests | Assignment requests, coverage requests, re-confirmation requests | On |
+| Reminders | Upcoming responsibilities I own, unanswered assignments near due time | On |
+| Changes | Changes, reassignments, and cancellations affecting items I own or was asked to take | On |
+| Appointment updates | Updates added to appointments in my Care Circle | On |
+| Comments | Comments on items I own or commented on | On |
+| Activity | Other members completing or creating items | Off |
+
+All categories can be turned off for push. Requests always remain visible in the app regardless of this setting.
+
 **Scenario: In-app indicator remains even when notifications are disabled**
 
 - **Given** an assignment requires my acceptance
@@ -1249,7 +1492,6 @@ Each caregiver may initiate a maximum of **2 formal coverage requests per calend
 The limit:
 
 - Applies per caregiver.
-- Applies across all Care Circles the caregiver belongs to.
 - Includes tasks and appointments.
 - Resets at the beginning of each calendar month.
 - Counts once the request is submitted.
@@ -1295,13 +1537,43 @@ A task or appointment assigned by someone else should not be treated as a confir
 
 ### BR-06 — Messaging App as Communication Channel
 
-Kindred may generate structured content and links for sharing through the family's connected messaging app (e.g., WhatsApp) but does not require access to users' private messaging conversation history for MVP.
+Kindred may generate structured content and links for sharing through the family's messaging app (e.g., WhatsApp) via the phone's share sheet, but does not integrate with messaging app APIs or require access to users' private messaging conversation history for MVP.
 
 ---
 
 ### BR-07 — Care Circle Access
 
 Only authorized Care Circle members may view tasks, appointments, updates, comments, and other information within the circle.
+
+---
+
+### BR-08 — Equal Member Permissions
+
+Every Care Circle member may create, edit, cancel, assign, reassign, and withdraw assignments on any task or appointment in that circle. Administrators additionally manage membership (removing members and granting the administrator role). Every change is attributed in the activity feed.
+
+---
+
+### BR-09 — Single Time Zone
+
+For MVP, Kindred assumes all members of a Care Circle are in the same time zone. Items, reminders, availability, and the monthly coverage-request reset (BR-01) all use the device's local time zone. Support for members in different time zones is deferred.
+
+---
+
+### BR-10 — Recurring Items
+
+Recurring tasks and appointments repeat daily, weekly, or monthly, with an optional end date. Each occurrence is an independent item for assignment, acceptance, coverage, completion, comments, and updates.
+
+---
+
+### BR-11 — Re-confirmation After Schedule Changes
+
+If anyone other than the owner changes the date or time of an **Assigned** item, it returns to **Awaiting acceptance** for the same owner. This keeps BR-02's guarantee that a confirmed owner has agreed to the responsibility as it currently stands.
+
+---
+
+### BR-12 — One Care Circle per User
+
+For MVP, each user belongs to exactly one Care Circle. A user who already belongs to a Care Circle cannot create or join another; if they open an invitation to a different Care Circle, Kindred explains that they must leave their current one first.
 
 ---
 
@@ -1335,6 +1607,8 @@ Kindred should support:
 - Minimal reliance on icons without text.
 - Status indicators that do not depend on colour alone.
 
+The target standard is **WCAG 2.2 AA**.
+
 ---
 
 ## 26. Privacy Requirements
@@ -1347,6 +1621,7 @@ Because caregiving information may be sensitive:
 - Calendar integration exposes only the minimum free/busy information needed.
 - Users can disconnect calendars.
 - Users can leave a Care Circle.
+- Users can export their data and delete their account.
 - Administrators can remove members.
 - Push notifications should minimize sensitive lock-screen information.
 - Appointment notes should only be accessible to authorized Care Circle members.
@@ -1549,12 +1824,19 @@ Through interviews and product surveys, determine whether Kindred helps users ex
 | P0 | Share appointments to messaging app |
 | P0 | Appointment notes/updates |
 | P0 | Task and appointment reminders |
+| P0 | Recurring tasks and appointments (daily/weekly/monthly) |
+| P0 | Withdraw, reassign, and reschedule assignments |
+| P0 | Account deletion and data export |
 | P1 | Suggested caregivers based on availability |
 | P1 | Suggested appointment times |
 | P1 | Activity feed |
 | P1 | Task comments |
 | P1 | Share appointment updates to messaging app |
+| P1 | French language support (required before availability in Quebec) |
 | P2 | Apple Calendar / Outlook integration |
+| P2 | Care Circles whose members are in different time zones |
+| P2 | Belonging to more than one Care Circle |
+| P2 | Advanced recurrence rules (e.g., every second Tuesday) |
 | P2 | Deeper messaging app automation where technically feasible |
 | P2 | AI-generated appointment summaries |
 | P2 | Contribution/fairness insights |
@@ -1604,11 +1886,11 @@ rather than Kindred becoming another tool maintained only by the primary caregiv
 The following remain product discovery questions:
 
 - How long should an assignment remain **Awaiting acceptance** before Kindred reminds the assignee?
-- Should the assigner be able to withdraw a pending assignment?
+- Should the assigner be able to withdraw a pending assignment? **Decided: yes, any member can (BR-08, User Story 7.8).**
 - Should an assigner be able to send the same responsibility to multiple potential caregivers, or only one person at a time?
-- What happens if an assignment remains unanswered close to its due date?
+- What happens if an assignment remains unanswered close to its due date? **Current MVP assumption: assignee and assigner are reminded 24 hours before (User Story 7.8).**
 - Should declined assignments include an optional reason?
-- Should accepted tasks automatically sync to the user's calendar, or only appointments?
+- Should accepted tasks automatically sync to the user's calendar, or only appointments? **Current MVP assumption: appointments by default; tasks are opt-in (User Story 5.2).**
 - Is free/busy information sufficient for effective coordination?
 - How frequently will users use messaging app sharing?
 - Does the care recipient ever need their own Kindred account?
@@ -1617,6 +1899,9 @@ The following remain product discovery questions:
 - Is two coverage requests per month the right limit, and should this be configurable per Care Circle rather than fixed for all users? **Current MVP assumption: fixed at 2, with per-Care-Circle configurability planned as a later-phase item (see MVP Prioritization).**
 - Should unused coverage requests roll over? **Current MVP assumption: no.**
 - Should other caregivers see someone's remaining monthly coverage allowance? **Current MVP assumption: no.**
+- With Google Calendar as the only P0 calendar, iPhone users on iCloud Calendar will show as **Unknown**. Should MVP read on-device calendars (iOS EventKit / Android Calendar Provider) to cover them? To be evaluated in the ARD.
+- Should shared content (updates, comments) be kept as "Former member" when an account is deleted, or removed? Needs privacy/legal review.
+- When is French language support needed, and does the MVP launch include Quebec?
 
 ---
 
@@ -1635,3 +1920,100 @@ The key distinction is that Kindred does not simply show **who someone nominated
 That supports the central product thesis:
 
 > **Kindred does not need to replace the tools families already have. It needs to make those tools work together while creating clarity around who is responsible, what they have agreed to do, and whether it actually got done.**
+
+---
+
+## 37. Technical and Non-Functional Requirements
+
+This section gives the constraints the Architecture Requirements Document (ARD) should design to. Items marked *Assumption* are proposed defaults to confirm or revise; items marked *Decision* have been agreed (see **38. Decision Log**).
+
+### 37.1 Market and Language
+
+- *Decision:* MVP launches in **Canada**.
+- *Assumption:* English (Canadian spelling) at launch. French support is P1 and required before the app is made available in Quebec (Charter of the French Language).
+- *Assumption:* iOS (current and previous major version) and Android 10 and later.
+
+### 37.2 Privacy and Compliance
+
+Appointment updates, notes, and comments may contain personal health information, so Kindred treats them as **sensitive personal information**.
+
+- Kindred must comply with **PIPEDA** and, where applicable, provincial private-sector privacy laws: **Quebec Law 25**, **Alberta PIPA**, and **British Columbia PIPA**.
+- Quebec Law 25 requires, among other things, a designated person responsible for privacy, a privacy impact assessment before transferring personal information outside Quebec, and privacy-protective default settings.
+- Consent for collecting sensitive information must be express and obtained during onboarding.
+- Privacy breaches that create a real risk of significant harm must be reported to the Office of the Privacy Commissioner of Canada and affected users.
+- *Assumption:* Kindred is a consumer coordination tool, not a health information custodian under provincial health privacy laws (such as Ontario's PHIPA). **This must be confirmed by legal review before launch.**
+
+### 37.3 Data Residency
+
+- *Assumption:* all Kindred data, including backups, is stored in Canadian data centres.
+- Data necessarily leaves Kindred's control when sent to third parties (push notification services, Google Calendar). Those payloads must therefore contain no sensitive content (see 37.4).
+
+### 37.4 Security
+
+- All traffic encrypted in transit (TLS 1.2 or later); all stored data encrypted at rest.
+- Sensitive content (appointment notes, updates, comments) is never included in push notification payloads, synced calendar events, share-sheet text by default, application logs, or analytics events.
+- Calendar access tokens are stored encrypted and use the minimum scopes needed to read free/busy information and manage events Kindred created.
+- Links (invitations, shared items) never grant access on their own: opening one requires signing in as a member of the relevant Care Circle. Invitation links expire after 7 days.
+- Changes of state are atomic and validated on the server (see §17).
+
+### 37.5 Scale
+
+*Assumption:* the MVP is a validation release. Design for:
+
+- Up to 1,000 Care Circles and 5,000 users in the first 12 months, with room to grow tenfold without re-architecture.
+- Typically 2–6 members per Care Circle, with a maximum of 20.
+- Recurring series show occurrences at least 12 weeks ahead.
+
+### 37.6 Performance and Reliability
+
+*Assumption:*
+
+- Common one-tap actions (accept, decline, claim, complete) confirm within 1 second on a typical mobile connection.
+- Push notifications are sent within 1 minute of the triggering event; reminders within 1 minute of their scheduled time.
+- Free/busy information is no more than 15 minutes old.
+- Service availability of 99.5% per month.
+- Data can be restored with at most 1 hour of loss (RPO) and service restored within 8 hours of a major failure (RTO).
+
+### 37.7 Offline Behaviour
+
+*Assumption:*
+
+- When offline, Kindred shows the last-synced Home, Calendar, and Tasks, clearly marked as possibly out of date.
+- Actions that change ownership or state (accept, claim, complete, request coverage) require a connection, so that two members cannot both succeed while offline. Kindred explains this clearly when offline.
+- Drafts of updates and comments are kept on the device until they can be sent.
+
+### 37.8 Data Retention
+
+*Assumption:*
+
+- Care Circle content is kept while the Care Circle exists.
+- Completed and cancelled items are deleted 24 months after completion or cancellation.
+- Deleted accounts are removed within 30 days, including from backups as they expire.
+
+### 37.9 Analytics
+
+- The metrics in §30 require product event tracking.
+- Events record identifiers, event types, and timings only, never titles, notes, updates, or comments.
+- *Assumption:* users can opt out of analytics in settings. Whether analytics needs opt-in consent instead should be confirmed by the privacy review in 37.2.
+
+### 37.10 Integrations
+
+| Integration | MVP approach |
+| --- | --- |
+| Sign-in | Sign in with Apple, Sign in with Google, email one-time code (User Story 1.2) |
+| Calendar | Google Calendar: read free/busy, one-way write of accepted items (Epic 5) |
+| Messaging apps | Phone share sheet with pre-filled text and links; no messaging API (Epic 9) |
+| Invitations and shared links | Deep links that also work after the app is installed for the first time (User Story 1.2) |
+| Push notifications | Apple Push Notification service and Firebase Cloud Messaging |
+
+---
+
+## 38. Decision Log
+
+| Date | Decision | Where it is applied |
+| --- | --- | --- |
+| 2026-09-25 | MVP launch market is Canada | §1, §37.1–37.3 |
+| 2026-09-25 | All Care Circle members have equal permissions over tasks and appointments; administrators only manage membership | User Story 2.2, BR-08 |
+| 2026-09-25 | MVP supports simple recurrence (daily, weekly, monthly) with each occurrence owned independently | User Stories 7.6–7.7, BR-10 |
+| 2026-09-25 | MVP assumes all members of a Care Circle share one time zone | BR-09 |
+| 2026-09-25 | Each user belongs to exactly one Care Circle in MVP | BR-12 |
