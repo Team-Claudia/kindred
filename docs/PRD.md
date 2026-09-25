@@ -4,8 +4,8 @@
 
 **Product name:** Kindred
 **Platform:** Mobile app — iOS/Android
-**Product stage:** MVP / validation stage
-**Launch market:** Canada (see **37. Technical and Non-Functional Requirements**)
+**Product stage:** MVP / validation stage — first delivered as a working prototype for the productBC buildathon (3-week build). The prototype runs as a mobile web app that members add to their phone's Home Screen; native iOS/Android apps follow from the same codebase (see [ADR.md](ADR.md), ADR-001 and ADR-002)
+**Launch market:** Canada
 **Primary user:** Working adults who share unpaid caregiving responsibilities for an aging parent, spouse, or other family member with siblings, partners, or relatives.
 
 ### Product Vision
@@ -361,6 +361,8 @@ Shows:
 
 *Assumption: passwordless methods only for MVP, to reduce support load and suit less technically confident family members. Sign in with Apple is required by the App Store whenever Sign in with Google is offered.*
 
+*Prototype: the web app offers Sign in with Google and the email one-time code. Sign in with Apple and the "invitation link before the app is installed" scenario arrive with the native apps. In the prototype, the invitation link opens the web app directly, so there is nothing to install first (see [ADR.md](ADR.md), ADR-004 and ADR-011).*
+
 ---
 
 ### User Story 1.3 — Delete Account and Export Data
@@ -391,7 +393,7 @@ Shows:
 - **When** my account is deleted
 - **Then** that content remains for the family but is attributed to "Former member".
 
-*Assumption: whether shared content is kept or deleted on account deletion needs privacy/legal review (see §37).*
+*Assumption: whether shared content is kept or deleted on account deletion needs privacy/legal review.*
 
 ---
 
@@ -593,6 +595,8 @@ A **Care Circle** represents the group coordinating care for one person.
 - **Then** Kindred stops accessing calendar availability
 - **And** stops syncing new events.
 
+*Prototype: "Connect calendar" has two parts. Connecting a Google calendar lets Kindred check free/busy availability. Separately, any member can subscribe their calendar app (Apple, Google or Outlook) to a personal Kindred calendar link. Disconnecting removes the Google connection and turns off the calendar link. Members who don't connect Google, including iCloud and Outlook users, show as **Unknown** (see [ADR.md](ADR.md), ADR-008).*
+
 ---
 
 ### User Story 5.2 — Sync Accepted Care Appointments to Connected Calendar
@@ -643,6 +647,8 @@ A **Care Circle** represents the group coordinating care for one person.
 - **Then** it contains the title, time, and a Kindred link, but not appointment notes or updates.
 
 *Assumption: sync is one-way (Kindred → calendar). Edits made to a synced event in the calendar app are not read back into Kindred.*
+
+*Prototype: accepted items reach the member's calendar through their subscribed Kindred calendar link rather than being written directly. Additions, changes, cancellations and handoffs (User Story 8.3) show up when the calendar app next refreshes the link. That can take minutes in Apple Calendar or several hours in Google Calendar. Kindred itself is always up to date (see [ADR.md](ADR.md), ADR-008).*
 
 ---
 
@@ -1899,7 +1905,7 @@ The following remain product discovery questions:
 - Is two coverage requests per month the right limit, and should this be configurable per Care Circle rather than fixed for all users? **Current MVP assumption: fixed at 2, with per-Care-Circle configurability planned as a later-phase item (see MVP Prioritization).**
 - Should unused coverage requests roll over? **Current MVP assumption: no.**
 - Should other caregivers see someone's remaining monthly coverage allowance? **Current MVP assumption: no.**
-- With Google Calendar as the only P0 calendar, iPhone users on iCloud Calendar will show as **Unknown**. Should MVP read on-device calendars (iOS EventKit / Android Calendar Provider) to cover them? To be evaluated in the ARD.
+- With Google Calendar as the only P0 calendar, iPhone users on iCloud Calendar will show as **Unknown**. Should MVP read on-device calendars (iOS EventKit / Android Calendar Provider) to cover them? Answered in the ADR (ADR-008): not possible for the web prototype; revisit with the native app.
 - Should shared content (updates, comments) be kept as "Former member" when an account is deleted, or removed? Needs privacy/legal review.
 - When is French language support needed, and does the MVP launch include Quebec?
 
@@ -1923,97 +1929,15 @@ That supports the central product thesis:
 
 ---
 
-## 37. Technical and Non-Functional Requirements
-
-This section gives the constraints the Architecture Requirements Document (ARD) should design to. Items marked *Assumption* are proposed defaults to confirm or revise; items marked *Decision* have been agreed (see **38. Decision Log**).
-
-### 37.1 Market and Language
-
-- *Decision:* MVP launches in **Canada**.
-- *Assumption:* English (Canadian spelling) at launch. French support is P1 and required before the app is made available in Quebec (Charter of the French Language).
-- *Assumption:* iOS (current and previous major version) and Android 10 and later.
-
-### 37.2 Privacy and Compliance
-
-Appointment updates, notes, and comments may contain personal health information, so Kindred treats them as **sensitive personal information**.
-
-- Kindred must comply with **PIPEDA** and, where applicable, provincial private-sector privacy laws: **Quebec Law 25**, **Alberta PIPA**, and **British Columbia PIPA**.
-- Quebec Law 25 requires, among other things, a designated person responsible for privacy, a privacy impact assessment before transferring personal information outside Quebec, and privacy-protective default settings.
-- Consent for collecting sensitive information must be express and obtained during onboarding.
-- Privacy breaches that create a real risk of significant harm must be reported to the Office of the Privacy Commissioner of Canada and affected users.
-- *Assumption:* Kindred is a consumer coordination tool, not a health information custodian under provincial health privacy laws (such as Ontario's PHIPA). **This must be confirmed by legal review before launch.**
-
-### 37.3 Data Residency
-
-- *Assumption:* all Kindred data, including backups, is stored in Canadian data centres.
-- Data necessarily leaves Kindred's control when sent to third parties (push notification services, Google Calendar). Those payloads must therefore contain no sensitive content (see 37.4).
-
-### 37.4 Security
-
-- All traffic encrypted in transit (TLS 1.2 or later); all stored data encrypted at rest.
-- Sensitive content (appointment notes, updates, comments) is never included in push notification payloads, synced calendar events, share-sheet text by default, application logs, or analytics events.
-- Calendar access tokens are stored encrypted and use the minimum scopes needed to read free/busy information and manage events Kindred created.
-- Links (invitations, shared items) never grant access on their own: opening one requires signing in as a member of the relevant Care Circle. Invitation links expire after 7 days.
-- Changes of state are atomic and validated on the server (see §17).
-
-### 37.5 Scale
-
-*Assumption:* the MVP is a validation release. Design for:
-
-- Up to 1,000 Care Circles and 5,000 users in the first 12 months, with room to grow tenfold without re-architecture.
-- Typically 2–6 members per Care Circle, with a maximum of 20.
-- Recurring series show occurrences at least 12 weeks ahead.
-
-### 37.6 Performance and Reliability
-
-*Assumption:*
-
-- Common one-tap actions (accept, decline, claim, complete) confirm within 1 second on a typical mobile connection.
-- Push notifications are sent within 1 minute of the triggering event; reminders within 1 minute of their scheduled time.
-- Free/busy information is no more than 15 minutes old.
-- Service availability of 99.5% per month.
-- Data can be restored with at most 1 hour of loss (RPO) and service restored within 8 hours of a major failure (RTO).
-
-### 37.7 Offline Behaviour
-
-*Assumption:*
-
-- When offline, Kindred shows the last-synced Home, Calendar, and Tasks, clearly marked as possibly out of date.
-- Actions that change ownership or state (accept, claim, complete, request coverage) require a connection, so that two members cannot both succeed while offline. Kindred explains this clearly when offline.
-- Drafts of updates and comments are kept on the device until they can be sent.
-
-### 37.8 Data Retention
-
-*Assumption:*
-
-- Care Circle content is kept while the Care Circle exists.
-- Completed and cancelled items are deleted 24 months after completion or cancellation.
-- Deleted accounts are removed within 30 days, including from backups as they expire.
-
-### 37.9 Analytics
-
-- The metrics in §30 require product event tracking.
-- Events record identifiers, event types, and timings only, never titles, notes, updates, or comments.
-- *Assumption:* users can opt out of analytics in settings. Whether analytics needs opt-in consent instead should be confirmed by the privacy review in 37.2.
-
-### 37.10 Integrations
-
-| Integration | MVP approach |
-| --- | --- |
-| Sign-in | Sign in with Apple, Sign in with Google, email one-time code (User Story 1.2) |
-| Calendar | Google Calendar: read free/busy, one-way write of accepted items (Epic 5) |
-| Messaging apps | Phone share sheet with pre-filled text and links; no messaging API (Epic 9) |
-| Invitations and shared links | Deep links that also work after the app is installed for the first time (User Story 1.2) |
-| Push notifications | Apple Push Notification service and Firebase Cloud Messaging |
-
----
-
-## 38. Decision Log
+## 37. Decision Log
 
 | Date | Decision | Where it is applied |
 | --- | --- | --- |
-| 2026-09-25 | MVP launch market is Canada | §1, §37.1–37.3 |
+| 2026-09-25 | MVP launch market is Canada | §1 |
 | 2026-09-25 | All Care Circle members have equal permissions over tasks and appointments; administrators only manage membership | User Story 2.2, BR-08 |
 | 2026-09-25 | MVP supports simple recurrence (daily, weekly, monthly) with each occurrence owned independently | User Stories 7.6–7.7, BR-10 |
 | 2026-09-25 | MVP assumes all members of a Care Circle share one time zone | BR-09 |
 | 2026-09-25 | Each user belongs to exactly one Care Circle in MVP | BR-12 |
+| 2026-09-25 | Technical and non-functional requirements are out of scope for the PRD; technical decisions are recorded in the ADR | [ADR.md](ADR.md) |
+| 2026-09-25 | The buildathon prototype is a mobile web app installed to the Home Screen; native iOS/Android apps follow from the same codebase | §1, User Story 1.2, [ADR.md](ADR.md) ADR-001, ADR-002 |
+| 2026-09-25 | Prototype calendar integration: accepted items reach personal calendars through a subscribed Kindred calendar link; availability comes from Google Calendar free/busy only | User Stories 5.1–5.2, [ADR.md](ADR.md) ADR-008 |
