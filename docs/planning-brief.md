@@ -1,6 +1,6 @@
 # Kindred — Implementation Planning Brief
 
-Inputs for writing the implementation plan. Read this with [PRD.md](PRD.md), [user-flow.md](user-flow.md), [ADR.md](ADR.md) and [judging-criteria.md](judging-criteria.md). Where this brief and the ADR's build plan (§6) disagree on dates, this brief is newer.
+Inputs for writing the implementation plan. Read this with [PRD.md](PRD.md), [user-flow.md](user-flow.md), [ADR.md](ADR.md) and [judging-criteria.md](judging-criteria.md). The resulting plan is [implementation-plan.md](implementation-plan.md).
 
 **Last updated:** 2026-09-26 (Demo Day confirmed as 17 October)
 
@@ -51,7 +51,7 @@ Full text: [judging-criteria.md](judging-criteria.md). Summary:
 | Communication & Product Thinking | 20% | Everyone presents, 7 minutes total; explain the reasoning behind decisions (the ADR and PRD decision log help) |
 
 What this means for the plan:
-- **Depth over breadth.** Build the core loop from PRD §28–29 end to end and make it solid: create → assign → accept → hand off (coverage) → share to the messaging app → complete. Other P0 items are candidates to cut or simplify (use the ADR §6 cut order).
+- **Depth over breadth.** Build the core loop from PRD §28–29 end to end and make it solid: create → assign → accept → hand off (coverage) → share to the messaging app → complete. Other P0 items are candidates to cut or simplify (the cut order is in the implementation plan, §2).
 - **The demo is short.** A 7-minute pitch covering five criteria leaves maybe 2–3 minutes of demo. Plan the build around a scripted demo path, with sample data that tells the story quickly.
 - **Someone else must be able to experience it.** A public URL that judges can open (and a QR code for the slides) matters more than extra features.
 
@@ -82,7 +82,7 @@ The PM is setting these up. Ideally they're owned by a shared team account rathe
 
 ## 7. Plan format
 
-- A markdown file in `docs/` (no GitHub issues for now).
+- A markdown file in `docs/`. Its tasks become GitHub issues, created phase by phase (see the implementation plan, §7.1).
 - It's written in a fresh Claude Code session, so it must stand alone and point at the PRD, user flow, ADR and this brief.
 
 ## 8. Still to come

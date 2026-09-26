@@ -4,7 +4,7 @@ Derived from [PRD.md](PRD.md) and [user-flow.md](user-flow.md). This document re
 
 **Status:** Accepted for the buildathon prototype
 **Date:** 2026-09-25
-**Build window:** 3 weeks (Demo Day 2026-10-17; see [planning-brief.md](planning-brief.md))
+**Build window:** 3 weeks (Demo Day 2026-10-17); schedule and scope cuts are in [implementation-plan.md](implementation-plan.md)
 
 ---
 
@@ -594,42 +594,7 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 
 ---
 
-## 6. Build Plan
-
-> Superseded by the implementation plan, which has the current schedule for the 17 October Demo Day (see also [planning-brief.md](planning-brief.md)). The cut order below still applies.
-
-```mermaid
-gantt
-    title Kindred prototype — 3-week build
-    dateFormat YYYY-MM-DD
-    axisFormat %b %d
-    section Week 1 · Foundations
-    Repo, Vite PWA shell, Supabase project (Canada)  :w1a, 2026-09-28, 2d
-    Auth (Google, email OTP) + profiles              :w1b, after w1a, 2d
-    Circles, invites, join flow                      :w1c, after w1a, 3d
-    Schema + state-machine RPCs + pgTAP              :w1d, after w1a, 4d
-    First deploy on team iPhones                     :milestone, 2026-10-02, 0d
-    section Week 2 · Core coordination
-    Tasks & Calendar tabs, create / assign / accept  :w2a, 2026-10-05, 4d
-    Coverage + BR-01 allowance                       :w2b, 2026-10-06, 3d
-    Recurrence (materialised series)                 :w2c, 2026-10-07, 2d
-    Web Share + item links                           :w2d, 2026-10-08, 1d
-    Outbox worker + web push + reminders             :w2e, 2026-10-07, 3d
-    section Week 3 · Integrations & polish
-    Calendar feed (.ics)                             :w3a, 2026-10-12, 1d
-    Google connect + free/busy                       :w3b, 2026-10-12, 2d
-    Appointment updates + follow-ups                 :w3c, 2026-10-13, 2d
-    Export / delete account                          :w3d, 2026-10-14, 1d
-    P1 if time - activity feed and comments          :w3e, 2026-10-14, 2d
-    Demo rehearsal on two iPhones                    :w3f, 2026-10-15, 1d
-    Demo                                             :milestone, 2026-10-16, 0d
-```
-
-If time runs short, cut in this order: P1 items (feed, comments, suggestions) → Google free/busy (everyone shows Unknown; keep the calendar feed) → recurrence "this and future" edits (keep create + per-occurrence) → data export. Never cut: acceptance vs. assignment, atomic transitions, coverage limit, share-to-messaging — they are the product thesis.
-
----
-
-## 7. Risks and Follow-ups
+## 6. Risks and Follow-ups
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
