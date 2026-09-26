@@ -1,6 +1,6 @@
 # Kindred — Architecture Decision Record (ADR)
 
-Derived from [PRD.md](PRD.md) and [user-flow.md](user-flow.md). This document records the technical decisions for the Kindred MVP, why each was made, and what it costs us.
+Derived from [PRD.md](PRD.md) and [user-flow.md](user-flow.md). This document records the technical decisions for the Kindred MVP, why each was made, and what it costs us. For a non-technical summary, see [architecture-explained.md](architecture-explained.md).
 
 **Status:** Accepted for the buildathon prototype
 **Date:** 2026-09-25
