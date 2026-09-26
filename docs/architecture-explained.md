@@ -45,7 +45,7 @@ Kindred never reads family chats and never sees what's in anyone's personal cale
 **Why:**
 - It costs nothing. Publishing on the App Store needs a US$99-a-year developer account and Apple's review process.
 - Anyone can try it by opening a link, including judges on their own phones. There's nothing to download or approve.
-- Everyone on the team has an iPhone. A website also works on Android without an Android phone to test on.
+- One website works on both iPhone and Android phones.
 - Changes go live as soon as we publish them.
 
 **Alternatives we ruled out:** a native iPhone app, which costs money and takes Apple's approval time; free iPhone test builds, which can't send notifications and expire after 7 days; and the iPhone simulator on a laptop, which can't do notifications or calendars for real.
