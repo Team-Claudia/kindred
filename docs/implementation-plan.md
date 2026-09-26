@@ -6,7 +6,6 @@ Read it with:
 - [PRD.md](PRD.md): what the product does (user stories, business rules BR-01 to BR-12, §17 state model, §28–29 key flows)
 - [user-flow.md](user-flow.md): the MVP flow as a diagram
 - [ADR.md](ADR.md): how it's built (stack, data model, RPCs, integrations)
-- [planning-brief.md](planning-brief.md): timeline, team, accounts and constraints
 - [judging-criteria.md](judging-criteria.md): why the plan favours depth over breadth
 
 **Status:** Draft for team review
@@ -26,7 +25,7 @@ Read it with:
 - Build the **core loop** end to end and make it solid first: **create → assign → accept → hand off (coverage) → share to the messaging app → complete**.
 - Everything else in P0 comes after that, in a simplified form, and is cut in the order in §2 if time runs short.
 - The two target flows (§3) decide what gets polished. Other screens only need to work.
-- Where two options work, pick the **easiest and simplest** one (planning brief §9).
+- Where two options work, pick the **easiest and simplest** one (ADR §1).
 
 ## 2. Scope
 
@@ -36,7 +35,7 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 
 | Capability | PRD | Notes |
 | --- | --- | --- |
-| Sign in: **Google** (prominent), email code (team only), **Try the demo** (anonymous) | US 1.2 | Brief §2, §6. Apple is deferred to native (ADR-004) |
+| Sign in: **Google** (prominent), email code (team only), **Try the demo** (anonymous) | US 1.2 | Google is how people outside the team sign in, since built-in email codes only reach team addresses. Apple is deferred to native (ADR-004) |
 | Create a Care Circle, invite by link, join via `/join/<code>` | Epics 2–3, BR-12 | Invite shared through the share sheet |
 | Home screen: today, awaiting my response, needs someone, coverage requests | §9 | Status always text + colour |
 | Create task or appointment (title, date/time, location, private notes, optional assignee) | US 4.2, 7.1 | One create sheet for both kinds |
@@ -48,7 +47,7 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 | Installable PWA (manifest, icon, full-screen, "Add to Home Screen" guide) | ADR-001 | |
 | **Calendar feed** (`.ics`): accepted items appear in the owner's calendar app | US 5.2, 8.3 | ~Half a day (ADR-008) |
 | Appointment update + follow-up task | US 10.1–10.2 | Part of the §28 flow |
-| Sample data and a reset script | Brief §2 | So anyone trying the prototype lands on a realistic Care Circle |
+| Sample data and a reset script | — | So anyone trying the prototype lands on a realistic Care Circle |
 
 ### Tier 2: P0 in simplified form (build after Tier 1; cut in this order)
 
@@ -217,7 +216,7 @@ Each task is roughly **one GitHub issue, one worktree, one Claude Code session a
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
-| 0.1 | **Accounts** (before the build starts; brief §6): Supabase org + project in Canada (Central) with team emails added; Vercel Hobby linked to `Team-Claudia/kindred`; Google Cloud OAuth client with Calendar API enabled and consent screen **In production**; VAPID key pair generated. Secrets go in Supabase/Vercel settings and a shared password manager, never the repo | — | Every dashboard is reachable with the shared team account |
+| 0.1 | **Accounts** (before the build starts): Supabase org + project in Canada (Central) with team emails added; Vercel Hobby linked to `Team-Claudia/kindred`; Google Cloud OAuth client with Calendar API enabled and consent screen **In production**; VAPID key pair generated. Secrets go in Supabase/Vercel settings and a shared password manager, never the repo | — | Every dashboard is reachable with the shared team account |
 | 0.2 | **Scaffold and pipeline**: `web/` (Vite, React, TypeScript, React Router, TanStack Query, Tailwind, shadcn/ui, `vite-plugin-pwa`, `i18next`, Vitest), `supabase/` (`supabase init`), `vercel.json` (SPA fallback + `/cal/:token.ics` rewrite), `.env.example`, a root **`CLAUDE.md`** with repo conventions (§4 and §7 of this plan, including "work from your GitHub issue; don't read the full PRD or ADR unless the issue links to a section"), `.claude/worktrees/` in `.gitignore`, and a `.worktreeinclude` listing `.env.local`, and GitHub Actions for CI and deployment (§8.2) | — | A "Hello Kindred" page is live on the production URL; CI is green |
 | 0.3 | **Schema and skeleton**: first migration with all tables (§4.1) and RLS enabled; generated types; `errors.ts`; `api.ts` and `queries.ts` stubs; route skeletons; `tokens.css`; `platform/` interfaces (§4) | — | The migration is applied to the hosted project; every route renders a placeholder |
 
@@ -311,7 +310,7 @@ Because `CLAUDE.md` and the issue hold the conventions and the context, every se
 - **Merge database changes first.** When two PRs both change the schema, merge one, then have the other session rebase on `main` and regenerate `database.types.ts`. Screens that need new RPCs wait until those RPCs are merged, because previews use the hosted database, which only gets migrations from `main` (§8.2).
 - Migrations use the Supabase CLI's timestamped names, so two branches never pick the same file name. Never edit a merged migration; add a new one.
 - Change the spec in §4 (RPC arguments, error codes, table columns) in the same PR that changes the code.
-- No secrets, team names or email addresses in the repo (brief §3).
+- No secrets, team names or email addresses in the repo.
 
 ### 7.3 Checks before a PR is opened
 
@@ -384,7 +383,7 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 - [ ] `select * from outbox where status = 'failed'` returns nothing unexpected.
 - [ ] The calendar feed URL works through the Vercel rewrite and subscribes in Apple Calendar.
 - [ ] `reset_demo_circle()` runs cleanly on production.
-- [ ] Supabase project used within the last week (free projects pause after a week idle; brief §9).
+- [ ] Supabase project used within the last week (free projects pause after a week idle; ADR §5).
 
 ### 8.5 Sample data
 
@@ -398,7 +397,7 @@ The team's own circle is created through the app, not seeded.
 
 ## 9. Design hand-off
 
-Designs arrive as work in progress (brief §5). Layout and flow changes are expensive late on; colours and polish are cheap. So designs are needed in this order:
+Designs arrive as work in progress. Layout and flow changes are expensive late on; colours and polish are cheap. So designs are needed in this order:
 
 | Needed before | Design delivers | Why |
 | --- | --- | --- |
