@@ -4,7 +4,7 @@ Derived from [PRD.md](PRD.md) and [user-flow.md](user-flow.md). This document re
 
 **Status:** Accepted for the buildathon prototype
 **Date:** 2026-09-25
-**Build window:** 3 weeks (demo ≈ 2026-10-16)
+**Build window:** 3 weeks (Demo Day 2026-10-17; see [planning-brief.md](planning-brief.md))
 
 ---
 
@@ -184,6 +184,7 @@ The path to native is **Capacitor**, which wraps an existing web app as an iOS a
 **Decision.** Use **Supabase Auth**:
 - **Google**: Supabase's standard web OAuth redirect, with only the basic `openid email profile` scopes, which need no Google app verification.
 - **Email OTP**: a 6-digit code, not a magic link, so it works when email is read on another device and inside a Home Screen app. Supabase's built-in email only delivers to the project team's own addresses at 2 messages/hour, so outside testers need a custom SMTP provider (Resend free tier) and a domain (§5).
+- **"Try the demo"** (for judges): Supabase **anonymous sign-in** creates a guest user and adds them to a pre-filled demo Care Circle. No email or Google account needed. Guest users get the same RLS rules as anyone else, and a nightly job removes them and resets the demo circle.
 - **Apple**: added with the native app (ADR-002). Sign in with Apple on the web also needs the paid Apple Developer account, and the App Store rule that requires it only applies to native apps.
 
 A `profiles` row is created by a trigger on `auth.users`. No passwords are stored.
@@ -312,7 +313,7 @@ sequenceDiagram
 
 **Consequences.**
 - Calendar apps refresh subscribed feeds on their own timetable, so an accepted appointment can take minutes (Apple, if set to refresh often) to hours (Google) to appear. The app itself is always current, which is where people accept and hand off.
-- Google verification is the gate to real users. The demo runs in Testing mode with team members listed as test users, and everyone reconnects in the days before the demo.
+- Google verification is the gate to real users, and it needs a domain we own. For the buildathon we have no custom domain, so the Google app is set to **In production but unverified**: anyone can sign in (basic scopes need no verification), and connecting a calendar shows Google's "unverified app" screen, capped at 100 users. Testing mode is avoided because it limits sign-in to listed test users and expires access every 7 days.
 - Outlook is deferred (P2 in the PRD). The feed already works in Outlook; only its availability is missing.
 - **Native path:** once the app is wrapped with Capacitor (ADR-002), a native calendar plugin can read and write the phone's calendar directly — covering iCloud and Outlook with no provider APIs.
 
@@ -576,7 +577,7 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 | --- | --- | --- | --- |
 | Supabase Free | Database, auth, realtime, functions, cron, Vault | 500 MB database, 50,000 monthly active users, 5 GB egress, 500,000 Edge Function calls, 200 concurrent realtime connections, 2 projects; **paused after 1 week without activity**; no backups | Yes — far beyond our load. Keep it active in the days before the demo |
 | Vercel Hobby | Hosting the web app, preview deploys | Free for non-commercial use; a `*.vercel.app` address works | Yes |
-| Google Cloud | OAuth client for sign-in; Calendar API for free/busy | No charge for either; Testing mode allows up to 100 test users | Yes |
+| Google Cloud | OAuth client for sign-in; Calendar API for free/busy | No charge for either; unverified apps allow up to 100 users of sensitive scopes | Yes |
 | Web Push | Notifications | Browser push services (Apple, Google, Mozilla) don't charge | Yes |
 | GitHub Actions | CI (migrations + pgTAP) | Free minutes cover this usage | Yes |
 
@@ -584,7 +585,7 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 
 | Item | Cost | When it's needed |
 | --- | --- | --- |
-| Custom domain | ≈ CA$15–25/year | Nicer URL than `*.vercel.app`; needed for Resend and for Google verification |
+| Custom domain | ≈ CA$15–25/year | **Decided against for the buildathon.** Needed later for Resend and Google verification |
 | Resend (email OTP to non-team addresses) | Free: 3,000 emails/month, 100/day — needs a verified domain | Only if testers outside the team sign in by email |
 | Apple Developer Program | US$99/year | Native iOS app (Capacitor) or Sign in with Apple |
 | Google Play Console | US$25 one-time | Native Android app on the Play Store |
@@ -594,6 +595,8 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 ---
 
 ## 6. Build Plan
+
+> Superseded by the implementation plan, which has the current schedule for the 17 October Demo Day (see also [planning-brief.md](planning-brief.md)). The cut order below still applies.
 
 ```mermaid
 gantt
@@ -631,11 +634,11 @@ If time runs short, cut in this order: P1 items (feed, comments, suggestions) �
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
 | iPhone web push needs "Add to Home Screen" | Members who skip it get no push | Onboarding guide; in-app indicators for requests; messaging-app shares |
-| Google Testing mode: 7-day access expiry, warning screen, 100 users | Availability goes Unknown mid-build; judges see a warning if they connect | Team members as test users; reconnect before the demo; start verification after the buildathon |
+| Google app unverified (no domain) | "Unverified app" screen when connecting a calendar; 100-user cap | Publish as In production (not Testing); connect demo accounts before the demo; buy a domain and verify after the buildathon |
 | Calendar apps refresh the feed slowly (Google: hours) | Accepted items appear late in personal calendars | The app is the source of truth; show "Add to calendar" guidance; native calendar access with Capacitor later |
 | iCloud and Outlook users have no availability | Shown as Unknown | Accepted in the PRD; native calendar plugin later covers both (ADR-008) |
 | Supabase free project pauses after a week idle | Backend down on demo day | Use it daily; check the dashboard the day before the demo |
-| Built-in email only reaches team addresses | Outside testers can't use email sign-in | Google sign-in for testers; add Resend + domain if needed (§5) |
+| Built-in email only reaches team addresses | Judges can't use email sign-in | Judges sign in with Google; email codes are for the team |
 | Judges may expect an app-store app | Seen as "just a website" | Home Screen install looks and behaves like an app; show the Capacitor path (ADR-002) |
 | Single time zone per circle (BR-09) | Wrong times for split-time-zone families | Store `timestamptz` everywhere and `circles.time_zone`, so P2 support is a UI change |
 
