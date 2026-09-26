@@ -16,7 +16,7 @@ If Kindred reaches the top three, the week before 24 October is for polish.
 
 ## Demo format
 
-- **Live demo** on the team's iPhones, with the web app added to the Home Screen.
+- **Live demo** on phones, with the web app added to the Home Screen.
 - A **recorded video demo** made beforehand as a backup, from stable demo data after the feature freeze.
 - The demo follows PRD §28 (normal coordination) and §29 (coverage), so it needs **at least two, ideally three, signed-in members** in one Care Circle, with realistic sample data (a named care recipient, appointments, recurring tasks, some history).
 - Judges may try the app on their own phones by opening the URL.
