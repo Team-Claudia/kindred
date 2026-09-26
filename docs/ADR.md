@@ -10,13 +10,13 @@ Derived from [PRD.md](PRD.md) and [user-flow.md](user-flow.md). This document re
 
 ## 1. Context and Drivers
 
-Kindred is a mobile coordination layer for families sharing care. For the buildathon it must be a **working, demoable prototype** in 3 weeks, built by a small team whose phones are **all iPhones**, on **free-tier services**. We choose the **easiest, simplest option** wherever the PRD allows. Where a shortcut creates a real risk later, it is called out under *Consequences*.
+Kindred is a mobile coordination layer for families sharing care. For the buildathon it must be a **working, demoable prototype** in 3 weeks, built by a small team on **free-tier services**. We choose the **easiest, simplest option** wherever the PRD allows. Where a shortcut creates a real risk later, it is called out under *Consequences*.
 
 The PRD makes these requirements matter most to the architecture:
 
 | Driver | Source | Architectural implication |
 | --- | --- | --- |
-| Mobile product for iOS and Android; team only has iPhones; no budget | §1, §7.7 | Mobile-first web app now; native wrapper later from the same code |
+| Mobile product for iOS and Android; no budget; judges must be able to try it | §1, §7.7 | Mobile-first web app now; native wrapper later from the same code |
 | Passwordless sign-in | US 1.2 | Hosted auth provider with Google and email code (Apple later) |
 | Assignment states must change atomically | §17 | Server-side transactional state transitions, not client writes |
 | Only Care Circle members see circle data | BR-07, §26 | Authorisation enforced in the database, not only in the app |
@@ -120,18 +120,18 @@ Each decision uses the same shape: **Context → Decision → Alternatives consi
 
 ### ADR-001 — Prototype platform: a mobile-first web app (PWA)
 
-**Context.** The product is a mobile app for iOS and Android (§1). Everyone on the team has an iPhone, and we have no budget. We compared the ways to put a working prototype in front of judges:
+**Context.** The product is a mobile app for iOS and Android (§1). We have no budget, and judges need to be able to try it. We compared the ways to put a working prototype in front of judges:
 
 | Option | Runs on | Cost | Push | Phone calendar access | Judges can try it |
 | --- | --- | --- | --- | --- | --- |
 | **Web app (PWA)** | Any phone or laptop browser | $0 | Yes, once added to the Home Screen (iOS 16.4+) | No — use a calendar feed and Google's API (ADR-008) | **Yes, by opening a URL** |
-| Native iOS build on team iPhones | Registered iPhones | US$99/year Apple Developer account | Yes | Yes | Only on registered devices or via TestFlight |
-| Native iOS, free Xcode signing | Team iPhones plugged into a Mac | $0 | **No** (not allowed without a paid account) | Yes | No; builds expire after 7 days |
-| Expo Go on team iPhones | Team iPhones (team Expo login) | $0 | Yes | **No** (`expo-calendar` isn't in Expo Go) | No |
+| Native iOS build | Registered iPhones | US$99/year Apple Developer account | Yes | Yes | Only on registered devices or via TestFlight |
+| Native iOS, free Xcode signing | iPhones plugged into a Mac | $0 | **No** (not allowed without a paid account) | Yes | No; builds expire after 7 days |
+| Expo Go | Phones signed in to the team's Expo account | $0 | Yes | **No** (`expo-calendar` isn't in Expo Go) | No |
 | iOS Simulator | A Mac screen | $0 | Only faked (`simctl push`); real push needs a paid APNs key | **No** (`expo-calendar` supports real devices only) | No; screen demo only |
-| Android build | Android phones or emulator | $0 | Yes | Yes | Only Android users; the team has no Android phones |
+| Android build | Android phones or emulator | $0 | Yes | Yes | Only Android users |
 
-**Decision.** Build a **mobile-first Progressive Web App** and demo it on the team's iPhones, installed to the Home Screen so it opens full-screen with its own icon and receives push. Judges can open the same URL on their own phones.
+**Decision.** Build a **mobile-first Progressive Web App** and demo it on phones installed to the Home Screen so it opens full-screen with its own icon and receives push. Judges can open the same URL on their own phones.
 
 **Alternatives considered.** The iOS Simulator would work as a screen-share demo, but the two features that make Kindred more than a to-do list — push notifications and calendar integration — are exactly the two that don't work there. A native iOS build is the best experience but costs US$99 and Apple's lead times; it is the path after the buildathon (ADR-002).
 
@@ -515,7 +515,7 @@ supabase/
 docs/               PRD, user flow, ADR
 ```
 
-- **Testing priority:** (1) pgTAP tests for every state transition, the concurrent-claim race, BR-01 counting and RLS isolation between two circles; (2) Vitest tests for the `.ics` renderer, share-text builders and error mapping; (3) a scripted manual demo run on two iPhones. No end-to-end UI automation in 3 weeks.
+- **Testing priority:** (1) pgTAP tests for every state transition, the concurrent-claim race, BR-01 counting and RLS isolation between two circles; (2) Vitest tests for the `.ics` renderer, share-text builders and error mapping; (3) a scripted manual demo run on two phones. No end-to-end UI automation in 3 weeks.
 - **Environments:** local (`supabase start` + `vite`) and one hosted `demo` project; Vercel preview deploys for every PR. GitHub Actions runs migrations and pgTAP on every PR.
 
 ---

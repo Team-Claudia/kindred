@@ -17,7 +17,7 @@ Read it with:
 ## 1. Goal and strategy
 
 **Goal:** by the feature freeze, a deployed app at a public `*.vercel.app` URL that:
-1. runs the PRD §28 (normal coordination) and §29 (coverage) flows end to end on iPhones installed to the Home Screen, with real push notifications, a real messaging-app share and a calendar feed, and
+1. runs the PRD §28 (normal coordination) and §29 (coverage) flows end to end on phones with the app installed to the Home Screen, with real push notifications, a real messaging-app share and a calendar feed, and
 2. lets someone outside the team open the URL, tap **Sign in with Google** or **Try the demo**, and use the same flows on their own phone.
 
 **Strategy: depth over breadth.** The judging criteria ask for a *prototype* that someone else can experience, not an MVP, and there is no required feature list. So:
@@ -71,7 +71,7 @@ Comments (P1), suggested caregivers and times (P1), sharing appointment updates 
 
 ## 3. Target flows
 
-The build is judged done against these two flows from the PRD, run on real iPhones against the production URL. The names match the sample data (§8.5).
+The build is judged done against these two flows from the PRD, run on real phones against the production URL. The names match the sample data (§8.5).
 
 **Normal coordination (PRD §28):**
 1. Maya creates "Mom's Care Circle" and shares an invite link to WhatsApp; Daniel and Priya open it, sign in and join.
@@ -195,14 +195,14 @@ flowchart LR
 
 ### Checkpoints
 
-Each checkpoint is tested on **real iPhones against the production URL** by the whole team (task T2). Bugs found go into a fix PR before the next phase starts.
+Each checkpoint is tested on **real phones against the production URL** by the whole team (task T2). Bugs found go into a fix PR before the next phase starts.
 
 | Checkpoint | Done when |
 | --- | --- |
 | **M1: Foundations** | Every team member has Kindred on their Home Screen, signed in (email code or Google), are in one Care Circle joined via a shared link, and see an (empty) Home. A test push has reached at least one iPhone. CI runs pgTAP on every PR |
-| **M2: Core loop** | On two iPhones: create → assign → accept (live update on the other phone) → complete. Claim works. Two people claiming at once: one wins, the other sees "already taken" |
+| **M2: Core loop** | On two phones: create → assign → accept (live update on the other phone) → complete. Claim works. Two people claiming at once: one wins, the other sees "already taken" |
 | **M3: Coverage** | The §3 coverage flow runs end to end, including the push and the WhatsApp share. Accepted items appear in a subscribed Apple Calendar |
-| **Feature freeze** (end of Tue 13 Oct) | Both §3 flows run start to finish on three iPhones against production. A phone that has never used Kindred gets in with Google and with Try the demo. The deployment checklist (§8.4) is complete |
+| **Feature freeze** (end of Tue 13 Oct) | Both §3 flows run start to finish on three phones against production. A phone that has never used Kindred gets in with Google and with Try the demo. The deployment checklist (§8.4) is complete |
 
 **Protecting the freeze.** Tier 2 work only starts once M3 passes. If M3 is reached with little time left, skip Tier 2 and use the time for the Tier 1 tasks in Phase 4 and for fixes. Whatever isn't merged and tested by the freeze is cut.
 
@@ -326,7 +326,7 @@ The PR is then scanned for anything surprising, and merged once CI is green.
 
 PRs aren't tested on a phone one by one. Instead:
 - **Merge when CI is green.** Merging deploys to production, which is fine before the freeze because only the team uses it. Production may be briefly broken between checkpoints.
-- **Test the batch at the checkpoint.** When every task in a phase is merged, the team runs the checkpoint (§5) on their iPhones against production. Bugs go into one fix PR, then the checkpoint is re-run.
+- **Test the batch at the checkpoint.** When every task in a phase is merged, the team runs the checkpoint (§5) on their phones against production. Bugs go into one fix PR, then the checkpoint is re-run.
 - **Exception:** changes to push, Home Screen install and sign-in only fail on real devices, so try those on a phone straight after merging (tasks 1.1, 1.3, 1.4, 3.3 and 4.2).
 
 **Local development:** `supabase start` and `npm run dev` in `web/`. Testers don't need a local setup; they use the production URL.
@@ -353,7 +353,7 @@ Claude Code on a Pro plan shares one allowance with the Claude app. The allowanc
 | Environment | Web app | Backend | Used for |
 | --- | --- | --- | --- |
 | Local | `npm run dev` | `supabase start` (Docker) | Building and pgTAP tests |
-| Preview | Vercel preview per PR | Hosted Supabase project | Trying a PR on an iPhone |
+| Preview | Vercel preview per PR | Hosted Supabase project | Trying a PR on a phone |
 | Production | Vercel production from `main` (`*.vercel.app`) | Hosted Supabase project (Canada Central) | Team testing and anyone trying the prototype |
 
 There is one hosted Supabase project. The free tier allows two; the second is kept spare rather than used as staging.
