@@ -4,7 +4,7 @@ How we build and deploy the Kindred prototype. The build must be complete and de
 
 Read it with:
 - [PRD.md](PRD.md): what the product does (user stories, business rules BR-01 to BR-12, §17 state model, §28–29 key flows)
-- [user-flow.md](user-flow.md): the MVP flow as a diagram
+- [user-flow.md](user-flow.md): the prototype flow as a diagram
 - [ADR.md](ADR.md): how it's built (stack, data model, RPCs, integrations)
 - [judging-criteria.md](judging-criteria.md): why the plan favours depth over breadth
 
