@@ -8,3 +8,4 @@ Kindred helps families coordinate care without forcing them to abandon the tools
 - [MVP user flow](docs/user-flow.md)
 - [Architecture Decision Record](docs/ADR.md)
 - [Implementation planning brief](docs/planning-brief.md)
+- [Implementation plan](docs/implementation-plan.md)
