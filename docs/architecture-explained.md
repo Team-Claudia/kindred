@@ -84,7 +84,7 @@ Kindred never reads family chats and never sees what's in anyone's personal cale
 
 **What it means:**
 - Each person belongs to one Care Circle, as the PRD requires for now.
-- Every member can manage every task and appointment. Only administrators can remove members or make someone else an administrator.
+- Every member can manage every task and appointment. Only administrators can remove members or make someone else an administrator, and administrators are also told when something goes overdue.
 
 ### 5. "Who agreed to do it" is always right
 
@@ -134,14 +134,16 @@ A website can't touch the calendar on your phone, so Kindred connects to calenda
 
 ### 8. Notifications that don't give away private details
 
-**What we decided:** Kindred sends notifications through the phone's normal notification system when someone needs to respond: an assignment request, an acceptance, a coverage request or a reminder. Notifications are written in **general terms**, such as "Mom's Care Circle: an appointment update was added", so nothing sensitive appears on a locked screen.
+**What we decided:** Kindred sends notifications through the phone's normal notification system when someone needs to respond: an assignment request, an acceptance, a coverage request, a reminder, a new update, or something going **overdue** (the owner and the administrators are told). Notifications are written in **general terms**, such as "Mom's Care Circle: a new update was posted", so nothing sensitive appears on a locked screen.
+
+Everything is also kept in an **in-app list** behind the bell on Home, with unread ones marked.
 
 **Why:** the PRD asks for actionable notifications that don't expose care details (Epic 11, privacy requirements).
 
 **What it means:**
 - Notifications are **only sent if the action actually happened**, and are retried if a send fails.
 - Reminders are **checked again just before they're sent**, so nobody is reminded about a task they've handed off, or that's already done.
-- On iPhone, notifications need Kindred on the Home Screen. People who skip that still see requests on Kindred's Home screen and in their family chat.
+- On iPhone, notifications need Kindred on the Home Screen. People who skip that still see everything in the in-app list, requests on Kindred's Home screen, and shares in their family chat.
 
 ### 9. Sharing to the family chat, and joining with a link
 
@@ -158,9 +160,9 @@ A website can't touch the calendar on your phone, so Kindred connects to calenda
 
 **What we decided:** tasks and appointments are stored together as one kind of item, with the same stages, rather than as two separate things. Coverage requests are **counted, not stored as a number**: Kindred counts how many a person has made this month.
 
-**Why:** one kind of item keeps the Calendar and Tasks tabs simple and consistent. Counting means the "2 coverage requests per month" limit (BR-01) resets itself at the start of each month, with nothing to maintain.
+**Why:** one kind of item keeps the Home and This week screens simple and consistent. Counting means the "2 coverage requests per month" limit (BR-01) resets itself at the start of each month, with nothing to maintain.
 
-**What it means:** if someone deletes their account, their past updates stay visible to the family as **"Former member"** (decision 13).
+**What it means:** family updates are kept in their own list for the Care Circle, so the **Updates** tab is one simple list, and each update can point to any task or appointment, or to none. If someone deletes their account, their past updates stay visible to the family as **"Former member"** (decision 13).
 
 ### 11. One history that also measures success
 
@@ -168,7 +170,7 @@ A website can't touch the calendar on your phone, so Kindred connects to calenda
 
 **Why:** it gives families the clear record the PRD asks for, and gives us success metrics without adding a separate analytics service that would also see family data.
 
-**What it means:** we can't measure what happens before someone signs in, which is fine for a prototype.
+**What it means:** each task shows who added and changed it, and the weekly summary (decision 14) uses the same history. There's no separate "activity" screen in the prototype; the Updates tab and the weekly summary cover it. We can't measure what happens before someone signs in, which is fine for a prototype.
 
 ### 12. Building it well
 
@@ -189,6 +191,25 @@ A website can't touch the calendar on your phone, so Kindred connects to calenda
 
 **Why:** the PRD requires both (US 1.3). Keeping shared history as "Former member" is the current assumption, pending a privacy review, and is easy to change.
 
+### 14. A weekly summary, without AI
+
+**What we decided:** every Sunday morning, the **Summary** tab shows what happened that week (who did what) and what's still open (overdue items, things with no owner). Kindred builds it from the week's tasks and updates using fixed sentences. No AI is involved.
+
+**Why:** it's free, it sends no family information to another company, and it can't accidentally interpret health information or give advice. AI-written summaries stay an idea for later.
+
+**What it means:** the wording is plain and a little repetitive. Everyone gets a notification when the summary is ready, and anyone can share it to the family chat; the shared text names tasks and people, never what anyone wrote in an update.
+
+### 15. A map for each appointment
+
+**What we decided:** appointments show a small map of their location, from a map service called **Geoapify**. Tapping the map opens directions in the phone's maps app.
+
+**Why:** it's free (3,000 credits a day, with no payment card), allows use in real products, and covers both finding the address and drawing the map.
+
+**What it means:**
+- Geoapify only ever sees the location text, never the appointment's name, notes or who's going.
+- The request goes through Kindred's back office, so the service's key stays secret, and each map is kept after its first view so repeat views are free.
+- If an address can't be found, or the day's free allowance runs out, the location is simply shown as text.
+
 ---
 
 ## What it costs
@@ -202,6 +223,7 @@ A website can't touch the calendar on your phone, so Kindred connects to calenda
 | Google Cloud | Sign in with Google, and free/busy checks | Free |
 | Web push | Notifications | Free |
 | GitHub | Stores the code and runs the automatic tests | Free |
+| Geoapify | Maps for appointment locations | Free |
 
 **Costs we're choosing not to take on yet:**
 
@@ -226,6 +248,8 @@ A website can't touch the calendar on your phone, so Kindred connects to calenda
 | The free back office pauses after a week unused | The app stops working until it's woken up | Use it regularly, especially before Demo Day |
 | Email codes only reach the team | Judges can't sign in by email | Judges use Sign in with Google or Try the demo |
 | It's a website, not an App Store app | Some may see it as "just a website" | Once on the Home Screen it looks and behaves like an app, and the App Store version is a planned next step |
+| Geoapify's free daily allowance | If it runs out, maps disappear until the next day | Maps are kept after the first view; the location still shows as text |
+| Laptops show the phone layout | On a laptop, Kindred looks like a phone screen in the middle | A wide layout is planned for later |
 | One time zone per family | Families spread across time zones may see times that are off | Allowed by the PRD for now; times are stored so this is easy to add later |
 
 **Before real families use it:** get Google's approval and our own domain; release App Store and Google Play apps with Sign in with Apple; have the privacy approach reviewed against Canadian privacy and health-information laws; move to paid plans with backups; add error monitoring; and add French.

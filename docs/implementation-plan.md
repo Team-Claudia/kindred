@@ -5,6 +5,7 @@ How we build and deploy the Kindred prototype. The build must be complete and de
 Read it with:
 - [PRD.md](PRD.md): what the product does (user stories, business rules BR-01 to BR-12, §17 state model, §28–29 key flows)
 - [user-flow.md](user-flow.md): the prototype flow as a diagram
+- [wireframes/README.md](wireframes/README.md): every screen, with the decisions of 2026-09-28
 - [ADR.md](ADR.md): how it's built (stack, data model, RPCs, integrations)
 - [judging-criteria.md](judging-criteria.md): why the plan favours depth over breadth
 
@@ -36,8 +37,8 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 | Capability | PRD | Notes |
 | --- | --- | --- |
 | Sign in: **Google** (prominent), email code (team only), **Try the demo** (anonymous) | US 1.2 | Google is how people outside the team sign in, since built-in email codes only reach team addresses. Apple is deferred to native (ADR-004) |
-| Create a Care Circle, invite by link, join via `/join/<code>` | Epics 2–3, BR-12 | Invite shared through the share sheet |
-| Home screen: today, awaiting my response, needs someone, coverage requests | §9 | Status always text + colour |
+| Create a Care Circle (with each member's relationship to the care recipient), invite by link, join via `/join/<code>` | Epics 2–3, BR-12 | Invite shared through the share sheet |
+| Home screen: needs your answer (Accept / Decline), today, needs someone, coverage requests, latest update | §9 | Status always text + colour |
 | Create task or appointment (title, date/time, location, private notes, optional assignee) | US 4.2, 7.1 | One create sheet for both kinds |
 | Assign → **Accept / Decline** (one tap), **Claim** ("I'll do it"), **Complete** | US 7.2–7.5, BR-02, BR-03 | Atomic RPCs (ADR-006) |
 | **Coverage**: "Need coverage — N of 2 remaining", confirm, "I can do it", limit-reached message | Epic 8, BR-01 | Counted in the circle's time zone |
@@ -46,26 +47,29 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 | **Web push** for assignment requests, acceptances and coverage | Epic 11, ADR-010 | Needs Home Screen install on iPhone |
 | Installable PWA (manifest, icon, full-screen, "Add to Home Screen" guide) | ADR-001 | |
 | **Calendar feed** (`.ics`): accepted items appear in the owner's calendar app | US 5.2, 8.3 | ~Half a day (ADR-008) |
-| Appointment update + follow-up task | US 10.1–10.2 | Part of the §28 flow |
+| **Updates tab**: post an update linked to an item or to nothing; the thread; linked updates on item detail; follow-up task | US 10.1–10.2 | Part of the §28 flow. Text only, no @mentions |
 | Sample data and a reset script | — | So anyone trying the prototype lands on a realistic Care Circle |
 
 ### Tier 2: P0 in simplified form (build after Tier 1; cut in this order)
 
 | Capability | Simplification | Cut order |
 | --- | --- | --- |
-| Recent activity on Home | Last 10 `activity_events`, no separate feed screen. Cheap because RPCs already write the events, and it shows the "who was asked → who accepted → what was completed" record (§28) | Cut 1st (it's P1) |
-| Google Calendar connect + free/busy | One "Who's free?" check for the chosen slot in the create sheet. If cut, everyone shows **Unknown** | Cut 2nd |
-| Reminders before due time | One fixed lead time (appointments 2 h, tasks 9 am on the due day), re-checked at send (ADR-010) | Cut 3rd |
+| **This week** tab | An agenda list grouped by day with previous/next week and a filter by member, not a month grid | Keep (it's a list query) |
+| Map preview (P1) | Geoapify via the `static-map` function; geocoded once per location (ADR-017). If cut, the location shows as text | Cut 1st |
+| Weekly summary (P1) | `weekly_summary()` SQL function read on demand, fixed sentences, Sunday notification (ADR-016). If cut, the Summary tab is hidden | Cut 2nd |
+| In-app notification list (P1) | Bell on Home, `notifications` table written by the outbox worker, mark all read (ADR-010) | Cut 3rd |
+| Google Calendar connect + free/busy | One "Who's free?" check for the chosen slot in the create sheet. If cut, everyone shows **Unknown** | Cut 4th |
+| Reminders and overdue alerts | One fixed lead time (appointments 2 h, tasks 9 am on the due day); overdue alert to owner and admins at the due time; both re-checked at send (ADR-010). Overdue alerts are P1 and can be cut on their own | Cut 5th |
 | Recurrence | Daily / weekly / monthly create; edits apply to **this occurrence only** | "This and future" edits are not built |
-| Withdraw, reassign, reschedule (BR-11) | Handled by `assign`, `withdraw_assignment` and `update_item` | Cut 4th |
-| Calendar tab | An agenda list grouped by day, not a month grid | Keep (it's a list query) |
-| Tasks tab | Filter chips: Mine · Awaiting me · Needs someone · All · Completed | Keep |
-| Notification preferences | One on/off switch per §21 category | Cut 5th |
+| Withdraw, reassign, reschedule (BR-11) | Handled by `assign`, `withdraw_assignment` and `update_item` | Cut 6th |
+| Notification preferences | One on/off switch per §21 category | Cut 7th |
 | Account export and deletion | Export JSON; delete per ADR-015 | Cut last |
+
+The map, weekly summary, notification list and overdue alerts were added on 2026-09-28 from the wireframes. Together they're about 4–5 days of work, so they sit near the top of the cut order: the core loop and the rest of P0 come first.
 
 ### Tier 3: not in this build
 
-Comments (P1), suggested caregivers and times (P1), sharing appointment updates (P1), French translation (strings still go through `i18next` so this stays a translation task), "this and future" recurring edits, "assign all future occurrences", the 24-hour unanswered reminder, Sign in with Apple, Outlook/iCloud availability, success-metric views.
+Comments (P1), suggested caregivers and times (P1), sharing appointment updates (P1), a separate activity feed screen (replaced by Updates and the weekly summary), voice notes, @mentions, a photo of the care recipient, a wide laptop layout, French translation (strings still go through `i18next` so this stays a translation task), "this and future" recurring edits, "assign all future occurrences", the 24-hour unanswered reminder, Sign in with Apple, Outlook/iCloud availability, success-metric views.
 
 ---
 
@@ -78,7 +82,7 @@ The build is judged done against these two flows from the PRD, run on real phone
 2. Maya creates "Cardiology — Dr. Patel" and assigns it to Daniel (with "Who's free?" if Tier 2 free/busy is built).
 3. Daniel gets a push, opens the item and taps **Accept**. Maya's phone shows **Assigned · Daniel** without refreshing.
 4. The appointment appears in Daniel's calendar app through his subscribed feed.
-5. Daniel adds an appointment update and creates a follow-up task, "Pick up prescription by Friday", assigned to Maya.
+5. Daniel posts an update linked to the appointment and creates a follow-up task, "Pick up prescription by Friday", assigned to Maya.
 6. Maya accepts it, then marks it complete.
 
 **Coverage (PRD §29):**
@@ -96,7 +100,7 @@ The contracts every phase builds against, set up in task 0.3. When one changes, 
 
 ### 4.1 Data model
 
-As in ADR-012, with these tables in the first migration: `profiles`, `circles`, `circle_members`, `invites`, `series`, `items`, `assignment_requests`, `coverage_requests`, `appointment_updates`, `comments` (table only; no UI), `calendar_settings`, `push_subscriptions`, `notification_prefs`, `activity_events`, `outbox`. Circle time zone defaults to `America/Vancouver`.
+As in ADR-012, with these tables in the first migration: `profiles`, `circles`, `circle_members` (with `relationship`), `invites`, `series`, `items` (with `location_lat` / `location_lng`), `assignment_requests`, `coverage_requests`, `updates`, `comments` (table only; no UI), `calendar_settings`, `push_subscriptions`, `notification_prefs`, `notifications`, `activity_events`, `outbox`. Circle time zone defaults to `America/Vancouver`.
 
 ### 4.2 RPCs (all writes)
 
@@ -104,9 +108,9 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 
 | RPC | Arguments | Typed errors |
 | --- | --- | --- |
-| `create_circle` | `care_recipient_name`, `time_zone` | `already_in_circle` |
+| `create_circle` | `care_recipient_name`, `relationship`, `time_zone` | `already_in_circle` |
 | `create_invite` | — → `code` | `not_member` |
-| `join_circle` | `code` | `invite_expired`, `invite_not_found`, `already_in_other_circle` |
+| `join_circle` | `code`, `relationship?` | `invite_expired`, `invite_not_found`, `already_in_other_circle` |
 | `leave_circle`, `remove_member` | `member_id` (remove only) | `not_admin` |
 | `create_item` | `kind`, `title`, `starts_at`, `ends_at?`, `location?`, `private_notes?`, `assignee_id?`, `repeat?` (`daily`/`weekly`/`monthly`), `until?`, `follow_up_of?` | `invalid_input` |
 | `update_item` | `item_id`, `version`, `patch` (title, times, location, notes) | `stale_version`; a date/time change by a non-owner moves Assigned → Awaiting acceptance (BR-11) |
@@ -119,7 +123,8 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 | `request_coverage` | `item_id`, `version` | `not_owner`, `coverage_limit_reached` |
 | `cancel_coverage` | `item_id`, `version` | `coverage_resolved` |
 | `accept_coverage` | `item_id`, `version` | `coverage_resolved` (returns new owner name) |
-| `add_appointment_update` | `item_id`, `body` | `not_member` |
+| `post_update` | `body`, `item_id?` | `not_member`, `invalid_input` |
+| `mark_notifications_read` | `notification_id?` (all if omitted) | — |
 | `log_share` | `item_id`, `share_kind` | — |
 | `join_demo_circle` | — | For anonymous users only |
 | `reset_demo_circle` | — | Service role only |
@@ -129,22 +134,24 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 ### 4.3 Reads and live updates
 
 - Reads are plain supabase-js queries over RLS-filtered tables, wrapped in TanStack Query hooks in `web/src/lib/queries.ts`.
-- One Realtime channel per circle (`circle:<id>`) invalidates queries when `items`, `activity_events` or `coverage_requests` change.
-- **Overdue** is computed in the client (`due < now` and state not Completed/Cancelled), never stored.
+- One Realtime channel per circle (`circle:<id>`) invalidates queries when `items`, `activity_events`, `coverage_requests` or `updates` change. Each member also listens to their own `notifications` rows for the bell's unread count.
+- `weekly_summary(week_start)` is a read-only SQL function that returns the summary as structured lines; the app turns them into sentences (ADR-016).
+- **Overdue** is computed in the client (`due < now` and state not Completed/Cancelled), never stored. The overdue *alert* is an outbox job (§4.4).
 
 ### 4.4 Edge Functions
 
 | Function | Called by | Contract |
 | --- | --- | --- |
-| `outbox-worker` | DB webhook on `outbox` insert + pg_cron every minute | Sends `push` and `reminder` jobs; re-checks item state at send time |
+| `outbox-worker` | DB webhook on `outbox` insert + pg_cron every minute | Runs `push`, `reminder`, `overdue`, `weekly_summary` and `geocode` jobs; re-checks item state at send time; writes a `notifications` row per recipient, then pushes if their preference allows |
 | `calendar-feed` | Calendar apps, via Vercel rewrite `/cal/:token.ics` | Returns `text/calendar` for the member's accepted items |
 | `google-oauth` | App ("Connect Google Calendar") | Redirect flow; stores refresh token in Vault |
 | `availability` | App (create sheet) | `{circle_id, start, end}` → `{member_id: "free" \| "busy" \| "unknown"}` |
-| `account` | App (Care Circle tab) | `export` → JSON; `delete` → ADR-015 order |
+| `account` | App (Care Circle and settings) | `export` → JSON; `delete` → ADR-015 order |
+| `static-map` | App (appointment create and detail) | `?item=<id>` → map image for members only, cached; nothing if the location wasn't found (ADR-017) |
 
 ### 4.5 App routes and platform adapter
 
-Routes: `/` (Home), `/calendar`, `/tasks`, `/circle`, `/i/:itemId`, `/join/:code`, `/sign-in`, `/welcome` (create circle + Home Screen guide).
+Routes: `/` (Home), `/week`, `/updates`, `/summary`, `/circle` (Care Circle and settings), `/notifications`, `/i/:itemId`, `/join/:code`, `/sign-in`, `/welcome` (create circle + Home Screen guide). The bottom tabs are Home, This week, Updates and Summary; `/circle` opens from the member's initial and `/notifications` from the bell, both at the top of Home.
 
 `web/src/platform/` exposes: `share({text, url})`, `canShare()`, `isStandalone()`, `enablePush()`, `addCalendarFeed(url)`. Screens call these, never browser APIs directly (ADR-002).
 
@@ -174,7 +181,7 @@ flowchart LR
     subgraph P2["Phase 2 · Core loop"]
         t21["2.1 State machine"] --> t22["2.2 Create + item detail"]
         t21 --> t23["2.3 Home + live updates"]
-        t24["2.4 Tasks + Calendar tabs"]
+        t24["2.4 This week tab"]
         t25["2.5 Local seed"]
     end
     subgraph P3["Phase 3 · Coverage, sharing, push, calendar"]
@@ -184,9 +191,9 @@ flowchart LR
         t34["3.4 Calendar feed"]
     end
     subgraph P4["Phase 4 · Finish and open up"]
-        t41["4.1 Update + follow-up"]
+        t41["4.1 Updates tab + follow-up"]
         t42["4.2 Sample data + Try the demo"]
-        t43["4.3 Care Circle tab"]
+        t43["4.3 Care Circle and settings"]
         t45["4.5 Tier 2 items"]
         t44["4.4 Design pass"] --> t46["4.6 Production check"]
     end
@@ -216,7 +223,7 @@ Each task is roughly **one GitHub issue, one worktree, one Claude Code session a
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
-| 0.1 | **Accounts** (before the build starts): Supabase org + project in Canada (Central) with team emails added; Vercel Hobby linked to `Team-Claudia/kindred`; Google Cloud OAuth client with Calendar API enabled and consent screen **In production**; VAPID key pair generated. Secrets go in Supabase/Vercel settings and a shared password manager, never the repo | — | Every dashboard is reachable with the shared team account |
+| 0.1 | **Accounts** (before the build starts): Supabase org + project in Canada (Central) with team emails added; Vercel Hobby linked to `Team-Claudia/kindred`; Google Cloud OAuth client with Calendar API enabled and consent screen **In production**; VAPID key pair generated; Geoapify free account and API key (ADR-017). Secrets go in Supabase/Vercel settings and a shared password manager, never the repo | — | Every dashboard is reachable with the shared team account |
 | 0.2 | **Scaffold and pipeline**: `web/` (Vite, React, TypeScript, React Router, TanStack Query, Tailwind, shadcn/ui, `vite-plugin-pwa`, `i18next`, Vitest), `supabase/` (`supabase init`), `vercel.json` (SPA fallback + `/cal/:token.ics` rewrite), `.env.example`, a root **`CLAUDE.md`** with repo conventions (§4 and §7 of this plan, including "work from your GitHub issue; don't read the full PRD or ADR unless the issue links to a section"), `.claude/worktrees/` in `.gitignore`, and a `.worktreeinclude` listing `.env.local`, and GitHub Actions for CI and deployment (§8.2) | — | A "Hello Kindred" page is live on the production URL; CI is green |
 | 0.3 | **Schema and skeleton**: first migration with all tables (§4.1) and RLS enabled; generated types; `errors.ts`; `api.ts` and `queries.ts` stubs; route skeletons; `tokens.css`; `platform/` interfaces (§4) | — | The migration is applied to the hosted project; every route renders a placeholder |
 
@@ -226,9 +233,9 @@ Phase 0 runs in one session, in order: everything after it builds on the scaffol
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
-| 1.1 | **Sign-in**: `profiles` trigger on `auth.users`; sign-in screen with "Continue with Google" first, "Try the demo" (wired up in 4.2), then "Email me a code"; auth redirect URLs for production and previews (§8.3) | 1.2, 1.3, 1.4 | Google and email code both work on an iPhone |
-| 1.2 | **Circles and invites**: `current_circle_id()` and RLS policies; `create_circle`, `create_invite`, `join_circle` (idempotent, BR-12, 14-day expiry), `leave_circle` (last-admin promotion), `remove_member`; `/welcome` and `/join/:code` screens; invite shared through `platform/share` | 1.1, 1.3, 1.4 | pgTAP: circle X can't read circle Y; BR-12 enforced. An invite link opened from WhatsApp joins the circle |
-| 1.3 | **App shell and install**: bottom nav (Home, Calendar, Tasks, Care Circle), safe-area insets, 44 px targets, `StatusBadge` (text + colour per state), loading/empty/error states; PWA manifest and icons; **Add to Home Screen guide** | 1.1, 1.2, 1.4 | Installs to the Home Screen and opens full-screen at the default and largest text sizes |
+| 1.1 | **Sign-in** (wireframes 01–03): `profiles` trigger on `auth.users`; sign-in screen with "Continue with Google" first, "Try the demo" (wired up in 4.2), then "Email me a code"; auth redirect URLs for production and previews (§8.3) | 1.2, 1.3, 1.4 | Google and email code both work on an iPhone |
+| 1.2 | **Circles and invites**: `current_circle_id()` and RLS policies; `create_circle` (with relationship), `create_invite`, `join_circle` (idempotent, BR-12, 14-day expiry), `leave_circle` (last-admin promotion), `remove_member`; `/welcome` (wireframes 04–06) and `/join/:code` screens; invite shared through `platform/share` | 1.1, 1.3, 1.4 | pgTAP: circle X can't read circle Y; BR-12 enforced. An invite link opened from WhatsApp joins the circle |
+| 1.3 | **App shell and install**: bottom nav (Home, This week, Updates, Summary), top bar with the bell and the member's initial, safe-area insets, 44 px targets, `StatusBadge` (text + colour per state), loading/empty/error states; PWA manifest and icons; **Add to Home Screen guide** | 1.1, 1.2, 1.4 | Installs to the Home Screen and opens full-screen at the default and largest text sizes |
 | 1.4 | **Push spike** (de-risks ADR-010 early): service worker `push` handler, `enablePush()` in standalone mode, `push_subscriptions`, and a bare Edge Function that sends a test push | 1.1, 1.2, 1.3 | A test push arrives on a Home Screen install |
 
 ### 6.3 Phase 2: Core loop → M2
@@ -236,9 +243,9 @@ Phase 0 runs in one session, in order: everything after it builds on the scaffol
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
 | 2.1 | **State machine** (ADR-006): `create_item`, `assign`, `accept_assignment`, `decline_assignment`, `withdraw_assignment`, `claim`, `complete_item`, `cancel_item`, `update_item` (with BR-11), each writing `activity_events` and `outbox` rows | 2.4, 2.5 | pgTAP for every transition in PRD §17 and the concurrent-claim race |
-| 2.2 | **Create sheet and item detail**: create/edit (kind, title, date/time, location, notes, assignee); `/i/:itemId` with the right action buttons for the viewer and state; "You don't have access" for non-members; errors mapped via `errors.ts` | 2.3 (after 2.1 is merged) | Every §17 action is reachable in one tap from item detail |
-| 2.3 | **Home and live updates**: today, awaiting my response, needs someone, coverage requests, upcoming; Realtime channel per circle invalidating queries | 2.2 (after 2.1 is merged) | An acceptance on one phone shows on the other within a couple of seconds |
-| 2.4 | **Tasks and Calendar tabs**: filter chips (Mine · Awaiting me · Needs someone · All · Completed); agenda list grouped by day | 2.1, 2.5 | Both tabs list items with owner and status |
+| 2.2 | **Create sheet and item detail** (wireframes 11–18): create/edit (kind, title, date/time, location, notes, assignee); `/i/:itemId` with the right action buttons for the viewer and state; "You don't have access" for non-members; errors mapped via `errors.ts` | 2.3 (after 2.1 is merged) | Every §17 action is reachable in one tap from item detail |
+| 2.3 | **Home and live updates** (wireframe 07): needs your answer with Accept / Decline, today, needs someone, coverage requests, latest update; Realtime channel per circle invalidating queries | 2.2 (after 2.1 is merged) | An acceptance on one phone shows on the other within a couple of seconds |
+| 2.4 | **This week tab** (wireframe 08): agenda list grouped by day, previous/next week, filter by member (Everyone · each person) | 2.1, 2.5 | The week lists items with owner and status, including Awaiting and Overdue |
 | 2.5 | **Local seed**: `supabase/seed.sql` with a circle, members and items in every state for development | 2.1, 2.4 | `supabase db reset` gives a usable app locally |
 
 ### 6.4 Phase 3: Coverage, sharing, push, calendar → M3
@@ -254,11 +261,11 @@ Phase 0 runs in one session, in order: everything after it builds on the scaffol
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
-| 4.1 | **Appointment update and follow-up**: `add_appointment_update`; "Create follow-up task" from appointment detail (`follow_up_of`) | 4.2, 4.3, 4.5 | The §3 normal coordination flow runs end to end |
+| 4.1 | **Updates tab and follow-up** (wireframes 09, 14): `post_update`; the Updates thread; linked updates on item detail; "Create follow-up task" from appointment detail (`follow_up_of`) | 4.2, 4.3, 4.5 | The §3 normal coordination flow runs end to end |
 | 4.2 | **Sample data and Try the demo**: sample circle seed from T1 (§8.5); `join_demo_circle()` and `reset_demo_circle()`; anonymous sign-in behind "Try the demo"; nightly pg_cron reset and anonymous-user clean-up | 4.1, 4.3, 4.5 | A new phone taps Try the demo and lands on a populated Home; `reset_demo_circle()` restores the sample circle in under a minute |
-| 4.3 | **Care Circle tab**: members (admin: remove), invite, calendar feed link, notifications on/off, leave circle | 4.1, 4.2, 4.5 | Every item in the tab works or is hidden |
+| 4.3 | **Care Circle and settings** (wireframe 20): members with relationship (admin: remove), invite link, calendar feed link, notifications on/off, leave circle | 4.1, 4.2, 4.5 | Every item on the screen works or is hidden |
 | 4.4 | **Design-application pass**: apply the final colours, type, spacing and icons through `tokens.css`; match layouts to final screens; check WCAG 2.2 AA contrast for every state badge | Nothing: it touches every screen, so run it alone once the other Phase 4 screens are merged | Screens match the designs |
-| 4.5 | **Tier 2, in order, as time allows** (§2): recent activity on Home → Google connect + free/busy → reminders → recurrence → withdraw/reassign/reschedule UI → notification preferences → account export/delete. Each item is its own task | 4.1, 4.2, 4.3, and each other | Whatever isn't done by the freeze is cut |
+| 4.5 | **Tier 2, as time allows** (§2), built in this order: Google connect + free/busy → reminders and overdue alerts → recurrence → withdraw/reassign/reschedule UI → notification preferences → account export/delete → in-app notification list → weekly summary → map preview. When time runs short, cut from the end of this list first. Each item is its own task | 4.1, 4.2, 4.3, and each other | Whatever isn't done by the freeze is cut |
 | 4.6 | **Production check**: work through the deployment checklist (§8.4) | — | Checklist complete |
 
 ### 6.6 Team tasks (not code)
@@ -370,10 +377,10 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 | Where | Setting |
 | --- | --- |
 | Vercel env vars | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY` (same values for preview and production) |
-| Supabase function secrets | `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APP_URL` |
+| Supabase function secrets | `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEOAPIFY_API_KEY`, `APP_URL` |
 | Supabase Auth | Site URL = production URL; redirect URLs = production URL and the Vercel preview pattern; Google provider on; email OTP on (6-digit code); anonymous sign-ins on |
 | Google Cloud | Authorised redirect URIs for Supabase Auth and the `google-oauth` function; consent screen **In production** |
-| Database | pg_cron jobs (outbox catch-up every minute, recurrence extension and sample-circle reset nightly); DB webhook on `outbox` insert → `outbox-worker` |
+| Database | pg_cron jobs (outbox catch-up every minute, recurrence extension and sample-circle reset nightly, weekly summary notification Sundays 08:00); DB webhook on `outbox` insert → `outbox-worker` |
 
 ### 8.4 Deployment checklist (task 4.6, before the freeze)
 
@@ -401,11 +408,11 @@ Designs arrive as work in progress. Layout and flow changes are expensive late o
 
 | Needed before | Design delivers | Why |
 | --- | --- | --- |
-| **Phase 2** | Screen structure (wireframes) for Home, item detail, create sheet, assign/accept, coverage, onboarding | Layout and flow drive the Phase 2 and 3 screens |
+| **Phase 2** | Screen structure (wireframes) for Home, item detail, create sheet, assign/accept, coverage, onboarding | Layout and flow drive the Phase 2 and 3 screens. **Delivered 2026-09-28** in [wireframes/](wireframes/README.md), except coverage and the other screens listed there under "Still without a screen" |
 | **Phase 2** | Status badge styles for the six states + Overdue (text + colour, AA contrast) | Used on every screen |
 | **Task 4.4** | Colours, type, spacing, icon set as tokens | Applied in the design pass |
 
-Designs go in `docs/design/` as PNG exports or screenshots. Until they arrive, screens are built on default shadcn/ui styling. Constraints: phone-sized, safe-area insets, 44 px targets, status as text + colour, WCAG 2.2 AA (PRD §25).
+Wireframes live in `docs/wireframes/`: PNGs plus the HTML source they're rendered from, so Claude Code can add or change a screen (see its README). Later visual designs go there too. Until they arrive, screens are built on default shadcn/ui styling. Constraints: phone-sized, safe-area insets, 44 px targets, status as text + colour, WCAG 2.2 AA (PRD §25).
 
 ---
 
@@ -430,5 +437,6 @@ Technical risks and mitigations are in ADR §6. Risks specific to this build:
 ## 11. Open items
 
 - [ ] Team email list (private; needed for the Supabase organisation so email codes reach the team).
-- [ ] Work-in-progress designs (§9).
+- [ ] Wireframes for coverage and the other screens listed under "Still without a screen" in [wireframes/README.md](wireframes/README.md), before Phase 3.
+- [ ] Team agrees the Tier 2 cut order now that the map, weekly summary, notification list and overdue alerts are in it (§2).
 - [ ] Confirm the reminder lead times in Tier 2.

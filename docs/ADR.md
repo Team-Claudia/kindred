@@ -1,9 +1,9 @@
 # Kindred — Architecture Decision Record (ADR)
 
-Derived from [PRD.md](PRD.md) and [user-flow.md](user-flow.md). This document records the technical decisions for the Kindred prototype, why each was made, and what it costs us. For a non-technical summary, see [architecture-explained.md](architecture-explained.md).
+Derived from [PRD.md](PRD.md), [user-flow.md](user-flow.md) and the [wireframes](wireframes/README.md). This document records the technical decisions for the Kindred prototype, why each was made, and what it costs us. For a non-technical summary, see [architecture-explained.md](architecture-explained.md).
 
 **Status:** Accepted for the buildathon prototype
-**Date:** 2026-09-25
+**Date:** 2026-09-25 (updated 2026-09-28 for the wireframe decisions: ADR-016 and ADR-017 added; ADR-002, 006, 009, 010, 012, 013 and 014 changed)
 **Build window:** 3 weeks (Demo Day 2026-10-17); schedule and scope cuts are in [implementation-plan.md](implementation-plan.md)
 
 ---
@@ -27,7 +27,11 @@ The PRD makes these requirements matter most to the architecture:
 | Each recurring occurrence owned independently | BR-10 | Materialised occurrences, not computed on read |
 | 2 coverage requests per calendar month | BR-01 | Counted from a request log in the circle's time zone |
 | Canada launch, sensitive care data | §1, §26 | Data hosted in a Canadian region |
-| Activity feed, success metrics | Epic 12, §30 | One append-only event log serves both |
+| Change history, success metrics | BR-08, §30 | One append-only event log serves both |
+| Updates thread, in-app notification list | Epic 10, US 11.6 | Updates and notifications are plain tables, read live like items |
+| Weekly summary with no AI | US 10.3, §26 | Built in SQL from the week's rows; nothing leaves Kindred |
+| Overdue alerts to owner and admins | US 11.5 | A scheduled outbox job, re-checked at send time |
+| Map of an appointment's location | US 4.3 | A map service called from the server, so its key stays secret |
 
 ---
 
@@ -49,6 +53,7 @@ flowchart LR
     push>"Browser push services<br/>(Apple, Google, Mozilla)"]
     messaging[["Family messaging app<br/>(WhatsApp etc.)"]]
     email["Email one-time codes"]
+    maps[/"Geoapify<br/>(geocoding + static map)"/]
 
     member --> app
     app <--> backend
@@ -60,9 +65,10 @@ flowchart LR
     cals -- "subscribes to" --> feed
     backend --> push --> member
     backend --> email --> member
+    backend -- "location text only" --> maps
 
     classDef ext fill:#f1f5f9,stroke:#64748b,color:#0f172a
-    class google,cals,idp,push,messaging,email ext
+    class google,cals,idp,push,messaging,email,maps ext
 ```
 
 Kindred never talks to a messaging app's API (BR-06). It hands pre-filled text and a link to the phone's share sheet, and because the app is a website, the link opens the right item directly.
@@ -72,7 +78,7 @@ Kindred never talks to a messaging app's API (BR-06). It hands pre-filled text a
 ```mermaid
 flowchart TB
     subgraph device["Phone browser / Home Screen app"]
-        ui["React screens<br/>Home · Calendar · Tasks · Care Circle"]
+        ui["React screens<br/>Home · This week · Updates · Summary<br/>+ Care Circle and settings"]
         query["TanStack Query cache<br/>+ Realtime subscription"]
         sw["Service worker<br/>(offline shell, web push)"]
         sdk["supabase-js client"]
@@ -93,13 +99,14 @@ flowchart TB
             fnFeed["calendar-feed<br/>(.ics per member)"]
             fnWorker["outbox-worker<br/>(web push)"]
             fnAcct["account<br/>(export / delete)"]
+            fnMap["static-map<br/>(map image proxy)"]
         end
     end
 
     sdk --> auth
     sdk --> rest --> db
     sdk --> rpc --> db
-    sdk --> fnOauth & fnAvail & fnAcct
+    sdk --> fnOauth & fnAvail & fnAcct & fnMap
     rt --> sdk
     db --> rt
     cron --> fnWorker
@@ -108,6 +115,7 @@ flowchart TB
     fnFeed --> db
     fnOauth & fnAvail --> vault
     fnAvail --> gcal[/"Google Calendar API"/]
+    fnMap --> geo[/"Geoapify API"/]
     fnWorker --> wpush>"Browser push services"] --> sw
     calapp[/"Calendar apps"/] -- "poll" --> fnFeed
 ```
@@ -150,7 +158,7 @@ The path to native is **Capacitor**, which wraps an existing web app as an iOS a
 | Precaution | Why it keeps native open |
 | --- | --- |
 | Browser-specific features (share, push, "add to calendar", haptics) sit behind one `src/platform/` adapter | Swap each for a Capacitor plugin without touching screens |
-| Mobile-only layout: 44px touch targets, safe-area insets, no hover-only interactions | The same UI works inside a native shell |
+| Mobile-only layout: 44px touch targets, safe-area insets, no hover-only interactions. On a laptop the phone layout is shown centred; a wide layout is later (PRD §32) | The same UI works inside a native shell |
 | All links are plain paths (`/i/<itemId>`, `/join/<code>`) | Map directly to Universal Links and App Links later |
 | Auth, data and business rules live in Supabase, not in the client | A native shell reuses the backend unchanged |
 
@@ -211,7 +219,7 @@ A `profiles` row is created by a trigger on `auth.users`. No passwords are store
 
 **Context.** §17 defines six states and their transitions, and requires that concurrent actions (two people claiming the same task) cannot both succeed. The PRD also requires side effects on each transition (notify, update calendars, record activity).
 
-**Decision.** Each user action is one RPC: `create_item`, `assign`, `accept_assignment`, `decline_assignment`, `withdraw_assignment`, `claim`, `request_coverage`, `cancel_coverage`, `accept_coverage`, `complete_item`, `cancel_item`, `update_item`. Each RPC:
+**Decision.** Each user action is one RPC: `create_item`, `assign`, `accept_assignment`, `decline_assignment`, `withdraw_assignment`, `claim`, `request_coverage`, `cancel_coverage`, `accept_coverage`, `complete_item`, `cancel_item`, `update_item`. Posting an update (`post_update`) and marking notifications read (`mark_notifications_read`) are RPCs too, though they don't change an item's state. Each RPC:
 
 1. Locks the item row (`select … for update`) and checks the current state and version.
 2. Applies the transition, or raises a typed error (`already_claimed`, `assignment_no_longer_available`, `coverage_resolved`, `coverage_limit_reached`) that the app maps to the PRD's messages.
@@ -243,7 +251,7 @@ stateDiagram-v2
     state "Needs coverage" as NeedsCoverage
 ```
 
-Account deletion (US 1.3) moves the deleted user's open `Assigned`/`Needs coverage` items to `Needs someone` through the same functions. **Overdue** is derived at read time (`due_at < now()` and state not terminal) and never stored.
+Account deletion (US 1.3) moves the deleted user's open `Assigned`/`Needs coverage` items to `Needs someone` through the same functions. **Overdue** is derived at read time (`due_at < now()` and state not terminal) and never stored. The overdue alert (PRD US 11.5) is an `overdue` outbox job written with `run_at = due_at` whenever an item gets a due time, and re-checked when it runs (ADR-010).
 
 **Alternatives considered.** Client-side state changes guarded by RLS — cannot express "only if still in state X" plus side effects atomically. An XState machine in an API server — nicer to read, but adds a server we don't otherwise need.
 
@@ -325,7 +333,7 @@ sequenceDiagram
 
 **Decision.** RPCs insert rows into an `outbox` table (`kind`, `payload`, `run_at`, `attempts`, `status`) in the same transaction as the state change. The `outbox-worker` Edge Function is triggered by a database webhook on insert and by pg_cron every minute (catch-up and scheduled jobs). It claims rows with `for update skip locked`, performs the call, and retries with backoff up to 5 attempts.
 
-Job kinds: `push`, `reminder`, `unanswered_24h`.
+Job kinds: `push`, `reminder`, `unanswered_24h`, `overdue`, `weekly_summary`, `geocode`.
 
 **Alternatives considered.** Sending pushes from the app after an RPC returns (lost if the tab closes mid-flight); a queue service such as SQS (another vendor for no gain at this scale).
 
@@ -343,9 +351,11 @@ Job kinds: `push`, `reminder`, `unanswered_24h`.
 - **Reminders are scheduled on the server.** When an item becomes `Assigned`, a `reminder` job is written with `run_at = due_at − lead time`. The worker **re-checks the item at send time** (still `Assigned`, same owner, same due time) and drops stale jobs. This satisfies US 11.2–11.3 even after reassignments, coverage or completion.
 - The 24-hour "still awaiting acceptance" reminder (US 7.8) is an `unanswered_24h` job with the same check-at-send rule.
 - Before sending, the worker applies the recipient's category preferences (§21 table). **Requests** are always visible in-app regardless (US 11.4), so members who never enable push still see them on Home.
-- **Copy is generic**: e.g. "Mom's Care Circle — an appointment update was added". Update text, notes and comments are never in the payload; the notification carries only an item ID.
+- **Overdue alerts** (US 11.5): the `overdue` job runs at the due time, re-checks that the item is still open with the same due time, and notifies the owner (or proposed assignee) and every administrator once. Items with nobody on them alert only the administrators.
+- **In-app notification list** (US 11.6): for every recipient, the worker first writes a `notifications` row, then sends a push only if that recipient's category preference is on and they have a push subscription. The bell on Home reads this table (RLS: own rows only) and Realtime keeps its unread count live. `mark_notifications_read` clears one or all.
+- **Copy is generic**: e.g. "Mom's Care Circle — a new update was posted". Update text, notes and comments are never in the push payload; the notification carries only an item ID. The in-app list, which is only visible after sign-in, may show a short line of the update.
 
-**Consequences.** Push reaches only members who installed the app to their Home Screen and allowed notifications; everyone else relies on in-app indicators and the messaging-app shares. With Capacitor later, the same outbox sends native push instead.
+**Consequences.** Push reaches only members who installed the app to their Home Screen and allowed notifications; everyone else still sees everything in the in-app notification list, on Home, and through messaging-app shares. With Capacitor later, the same outbox sends native push instead.
 
 ---
 
@@ -386,7 +396,7 @@ sequenceDiagram
 
 ### ADR-012 — Data model
 
-**Context.** The model must cover circles, items (tasks and appointments), assignments, coverage with a monthly limit, updates, comments, calendar connections and feeds, notifications and an attributable activity history — and survive account deletion as "Former member" (US 1.3).
+**Context.** The model must cover circles, items (tasks and appointments), assignments, coverage with a monthly limit, a circle-wide updates thread, comments, calendar connections and feeds, notifications (push and an in-app list) and an attributable change history — and survive account deletion as "Former member" (US 1.3).
 
 **Decision.** Tasks and appointments share one `items` table with a `kind` column; they have the same state machine and differ only in a few fields. Coverage allowance is **counted, not stored**: `count(*) from coverage_requests where requester = me and created_at` falls in the current month in the circle's time zone (BR-01 includes cancelled requests; the count resets naturally each month with no job). Authors on shared content are nullable; a `null` author renders as "Former member".
 
@@ -400,12 +410,14 @@ erDiagram
     series ||--o{ items : "materialises"
     items ||--o{ assignment_requests : "proposed via"
     items ||--o{ coverage_requests : "handed off via"
-    items ||--o{ appointment_updates : has
+    circles ||--o{ updates : "thread"
+    items |o--o{ updates : "linked to (optional)"
     items ||--o{ comments : has
     items ||--o{ items : "follow-up of"
     profiles ||--o| calendar_settings : sets
     profiles ||--o{ push_subscriptions : registers
     profiles ||--|| notification_prefs : sets
+    profiles ||--o{ notifications : receives
     circles ||--o{ activity_events : logs
     circles ||--o{ outbox : queues
 
@@ -418,6 +430,7 @@ erDiagram
         uuid circle_id FK
         uuid user_id FK "unique (BR-12)"
         text role "member | admin"
+        text relationship "care recipient's relationship to this member"
         timestamptz joined_at
     }
     items {
@@ -427,6 +440,8 @@ erDiagram
         text title
         timestamptz starts_at "or due_at"
         text location
+        float location_lat "geocoded once for the map; null if not found"
+        float location_lng
         text private_notes
         text state "§17"
         uuid owner_id FK "confirmed only"
@@ -449,6 +464,23 @@ erDiagram
         uuid taken_by FK
         text status "open | taken | cancelled"
         timestamptz created_at "BR-01 count"
+    }
+    updates {
+        uuid id PK
+        uuid circle_id FK
+        uuid author_id FK "nullable → Former member"
+        uuid item_id FK "optional link"
+        text body
+        timestamptz created_at
+    }
+    notifications {
+        bigint id PK
+        uuid user_id FK
+        text kind
+        uuid item_id FK
+        text line "short in-app text"
+        timestamptz created_at
+        timestamptz read_at
     }
     calendar_settings {
         uuid user_id PK
@@ -480,15 +512,15 @@ erDiagram
     }
 ```
 
-**Consequences.** One table and one state machine for both item kinds keeps the Calendar and Tasks tabs as two queries over the same data. Every change is attributed in `activity_events`, which satisfies BR-08 and feeds the activity feed. The calendar feed needs no table of its own: each event's ID is the item ID, so calendar apps update or remove it when the item changes.
+**Consequences.** One table and one state machine for both item kinds keeps Home and This week as queries over the same data. Updates live in their own table rather than on items, so the thread is one query and an update can link to any item or none. Every change is attributed in `activity_events`, which satisfies BR-08 and shows who changed what on each item. The calendar feed needs no table of its own: each event's ID is the item ID, so calendar apps update or remove it when the item changes.
 
 ---
 
-### ADR-013 — Activity feed and product metrics from one event log
+### ADR-013 — Change history and product metrics from one event log
 
-**Context.** Epic 12 (P1) needs a chronological feed; §30 lists activation and engagement metrics. We have no time to integrate an analytics SDK well.
+**Context.** BR-08 needs every change attributed; §30 lists activation and engagement metrics. We have no time to integrate an analytics SDK well. The separate activity feed (Epic 12) is replaced in the prototype by the Updates tab and the weekly summary.
 
-**Decision.** `activity_events` is append-only and written only by RPCs. The Home feed reads it directly (RLS-scoped). Success metrics (acceptance rate, median time to accept, coverage resolution, circles with ≥2 active caregivers) are **SQL views** over `activity_events`, `items` and `coverage_requests`, queried from the Supabase dashboard. Messaging-app shares are logged by a `log_share` RPC after the share sheet resolves.
+**Decision.** `activity_events` is append-only and written only by RPCs. Item detail reads it (RLS-scoped) to show who added and changed the item, and the weekly summary (ADR-016) reads it for who completed what. Success metrics (acceptance rate, median time to accept, coverage resolution, circles with ≥2 active caregivers) are **SQL views** over `activity_events`, `items` and `coverage_requests`, queried from the Supabase dashboard. Messaging-app shares are logged by a `log_share` RPC after the share sheet resolves.
 
 **Consequences.** No third-party analytics and no extra personal-data processor. Funnel steps before sign-in (opening an invite link without signing in) aren't captured; Vercel's request logs are enough for the demo.
 
@@ -497,7 +529,7 @@ erDiagram
 ### ADR-014 — Client data flow, repo layout and testing
 
 **Decision.**
-- **Reads:** TanStack Query over supabase-js, with types generated from the schema (`supabase gen types`). One Realtime channel per circle invalidates queries when `items`, `activity_events` or `comments` change, so every member sees acceptances and handoffs live — important for the demo.
+- **Reads:** TanStack Query over supabase-js, with types generated from the schema (`supabase gen types`). One Realtime channel per circle invalidates queries when `items`, `activity_events`, `updates` or `comments` change, and each member's own `notifications` rows update the bell, so every member sees acceptances and handoffs live — important for the demo.
 - **Writes:** call the RPC, then optimistically update the cache; typed errors from ADR-006 map to the PRD's messages ("already taken", "coverage already resolved").
 - **Offline:** the service worker caches the app shell and last-seen data for reading; actions require a connection.
 - **Strings:** all UI text goes through `i18next` with an `en-CA` catalogue from day one, so French (P1, required for Quebec) is a translation task, not a refactor.
@@ -506,13 +538,13 @@ erDiagram
 
 ```
 web/                React + Vite PWA
-  src/routes/       home, calendar, tasks, circle, i/:itemId, join/:code
+  src/routes/       home, week, updates, summary, circle, notifications, i/:itemId, join/:code
   src/platform/     share, push, add-to-calendar (swap for Capacitor later)
 supabase/
   migrations/       schema, RLS, RPCs, cron jobs
-  functions/        google-oauth, availability, calendar-feed, outbox-worker, account
+  functions/        google-oauth, availability, calendar-feed, outbox-worker, account, static-map
   tests/            pgTAP tests for the state machine, RLS and BR-01
-docs/               PRD, user flow, ADR
+docs/               PRD, user flow, ADR, wireframes
 ```
 
 - **Testing priority:** (1) pgTAP tests for every state transition, the concurrent-claim race, BR-01 counting and RLS isolation between two circles; (2) Vitest tests for the `.ics` renderer, share-text builders and error mapping; (3) a scripted manual demo run on two phones. No end-to-end UI automation in 3 weeks.
@@ -529,6 +561,39 @@ docs/               PRD, user flow, ADR
 - **Delete:** in order — revoke the Google token and delete it from Vault → invalidate the calendar feed token → run `release_items_for_departing_member()` (open items → Needs someone, members notified) → null out author/actor references → delete push subscriptions, the profile and the `auth.users` row.
 
 **Consequences.** Keeping "Former member" content follows the PRD's current assumption; switching to hard deletion is a change to one function if privacy review decides otherwise.
+
+---
+
+### ADR-016 — Weekly summary: SQL templates, no AI
+
+**Context.** US 10.3 asks for a Sunday summary of what happened and what is still open. It must never interpret health information (§4) and should cost nothing. An AI model would read more naturally but adds an API bill, another company processing care data (§26), and prompt and safety work so it never gives medical advice.
+
+**Decision.** A `weekly_summary(week_start)` SQL function builds the summary **when it is read**, from `items`, `activity_events` and `updates` for that week in the circle's time zone. It returns structured lines (for example `{kind: "completed", item, by, day}` or `{kind: "overdue", item, owner, since}`), and the app turns each kind into a fixed `en-CA` sentence through `i18next`. Update text is never copied into the summary; it only counts updates and names who posted. A pg_cron job every Sunday at 08:00 (circle time zone) writes one `weekly_summary` outbox job per member, which sends "Your weekly summary is ready" (ADR-010). **Share with family** uses the same share-text builder as other shares (ADR-011), so it names items and people only.
+
+**Alternatives considered.** Storing a generated summary each Sunday (another table, and it goes stale if someone edits an item afterwards). An AI-written summary (above; it stays a P2 idea).
+
+**Consequences.** No new service, no cost, nothing leaves Kindred. The wording is repetitive, which is acceptable for a prototype. Because the templates live in `i18next`, French is a translation job like the rest of the app.
+
+---
+
+### ADR-017 — Map preview: Geoapify through an Edge Function
+
+**Context.** US 4.3 shows a small map for an appointment's location. That needs geocoding (turning "Riverside Clinic, 4th floor" into coordinates) and a map image. The budget is $0, and we want no payment card on file.
+
+| Option | Free tier | Card needed | Notes |
+| --- | --- | --- | --- |
+| **Geoapify** | 3,000 credits a day; geocoding 1 credit, a static map about 3 credits | **No** | Commercial use allowed on the free plan; needs a "Powered by Geoapify" credit and OpenStreetMap attribution |
+| Mapbox | 50,000 static images and 100,000 geocodes a month | Unclear at sign-up | Generous, but its terms limit storing geocoding results |
+| Google Maps Platform | Monthly free usage per API | **Yes**, a billing account | Most familiar, but a card on file breaks the $0 rule if usage spikes |
+| An "Open in Maps" link only | Unlimited | No | Rejected by the team in favour of an embedded map |
+
+**Decision.** Use **Geoapify**, called only from a `static-map` Edge Function so the API key stays in function secrets (§8.3 of the plan) and never reaches the browser.
+- When an appointment's location is set or changed, `create_item` / `update_item` write a `geocode` outbox job. The worker geocodes the text once and stores `location_lat` / `location_lng` on the item, or leaves them null if nothing is found.
+- The app loads `/functions/v1/static-map?item=<id>`. The function checks membership, reads the stored coordinates, fetches the image from Geoapify and returns it with a long cache header, so repeat views cost nothing.
+- Tapping the map opens `maps.apple.com` on iPhone or Google Maps elsewhere, with the coordinates.
+- The attribution line is shown under every map.
+
+**Consequences.** Geoapify receives only the location text and coordinates, never the item's title, notes or people (PRD §26). At about 4 credits per new appointment, the free tier covers several hundred appointments a day. If the quota runs out, the function returns nothing and the app shows the location as text, so nothing breaks. `geocode` joins the outbox job kinds (ADR-009).
 
 ---
 
@@ -580,6 +645,7 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 | Google Cloud | OAuth client for sign-in; Calendar API for free/busy | No charge for either; unverified apps allow up to 100 users of sensitive scopes | Yes |
 | Web Push | Notifications | Browser push services (Apple, Google, Mozilla) don't charge | Yes |
 | GitHub Actions | CI (migrations + pgTAP) | Free minutes cover this usage | Yes |
+| Geoapify Free | Geocoding and map images (ADR-017) | 3,000 credits a day, no card; attribution required | Yes — about 4 credits per new appointment |
 
 **Optional costs, only if we choose them:**
 
@@ -605,6 +671,7 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 | Supabase free project pauses after a week idle | Backend down on demo day | Use it daily; check the dashboard the day before the demo |
 | Built-in email only reaches team addresses | Judges can't use email sign-in | Judges sign in with Google; email codes are for the team |
 | Judges may expect an app-store app | Seen as "just a website" | Home Screen install looks and behaves like an app; show the Capacitor path (ADR-002) |
+| Geoapify daily quota runs out (e.g. during judging) | Maps disappear for the rest of the day | Images are cached after the first view; the app falls back to the location as text |
 | Single time zone per circle (BR-09) | Wrong times for split-time-zone families | Store `timestamptz` everywhere and `circles.time_zone`, so P2 support is a UI change |
 
 **Open PRD questions this ADR resolves or narrows**
