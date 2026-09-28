@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>Kindred wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=block" rel="stylesheet">
+<!--
+  Source for docs/wireframes/*.png. Each <section class="screen"> is one PNG.
+  Edit the HTML here, then run ./render.sh to regenerate the images.
+  Open this file in a browser with #<screen-id> to see one screen, or with no hash to see them all.
+-->
+<style>
+  :root {
+    --ink: #22211e; --muted: #5d5b55; --line: #d9d6ce; --field: #a8a59c;
+    --fill: #e8e5de; --soft: #f1efea; --shade: #aeada8; --white: #fff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "IBM Plex Sans", sans-serif; color: var(--ink); background: #f4f3ef; font-size: 15px; line-height: 1.4; }
+  body.one { background: var(--white); }
+  .screen { width: 390px; min-height: 844px; background: var(--white); display: flex; flex-direction: column; margin: 24px auto; position: relative; }
+  body.one .screen { margin: 0; }
+  body.one .screen:not(.on) { display: none; }
+  .pad { padding: 0 24px; }
+  .grow { flex: 1; }
+  .mono { font-family: "IBM Plex Mono", monospace; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; color: var(--muted); }
+
+  /* Top bar */
+  .top { height: 56px; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 20px; gap: 14px; flex-shrink: 0; }
+  .top .title { font-weight: 600; font-size: 16px; }
+  .top .brand { font-weight: 700; font-size: 18px; }
+  .top .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .top.center { justify-content: space-between; }
+  .top.center .title { position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; }
+  .top .act { font-weight: 500; font-size: 15px; }
+  .ico { width: 22px; height: 22px; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .bell { position: relative; }
+  .bell .dot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); border: 1.5px solid var(--white); }
+
+  /* Type */
+  h1 { font-size: 27px; line-height: 1.2; font-weight: 700; letter-spacing: -.01em; }
+  h2 { font-size: 18px; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 14.5px; margin-top: 6px; }
+  .small { font-size: 13px; color: var(--muted); }
+  .section { margin: 24px 0 10px; }
+
+  /* Steps */
+  .steps { margin-top: 26px; }
+  .bars { display: flex; gap: 6px; margin: 10px 0 24px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: var(--fill); }
+  .bars i.on { background: var(--ink); }
+
+  /* Fields */
+  .label { margin: 20px 0 8px; }
+  .input { border: 1.3px solid var(--field); border-radius: 10px; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; }
+  .input.area { height: auto; min-height: 86px; align-items: flex-start; padding: 12px 14px; }
+  .input.placeholder { color: var(--muted); }
+  .input .caret { margin-left: auto; }
+  .row2 { display: flex; gap: 12px; }
+  .row2 > div { flex: 1; }
+  .check { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; margin-top: 18px; }
+  .box { width: 20px; height: 20px; border: 1.3px solid var(--field); border-radius: 4px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Buttons */
+  .btn { height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 15.5px; border: 1.3px solid var(--ink); background: var(--white); }
+  .btn.primary { background: var(--ink); color: var(--white); }
+  .btn.sm { height: 34px; font-size: 14px; padding: 0 16px; border-radius: 8px; }
+  .btn.sm.pill { border-radius: 17px; font-weight: 500; }
+  .btn .ico { width: 18px; height: 18px; }
+  .btn.primary .ico { stroke: var(--white); }
+  .btns { display: flex; flex-direction: column; gap: 12px; }
+  .btnrow { display: flex; gap: 10px; }
+  .btnrow > .btn { flex: 1; }
+  .link { text-decoration: underline; text-underline-offset: 2px; }
+  .foot { padding: 20px 24px 28px; }
+  .foot .small { text-align: center; margin-top: 12px; }
+
+  /* Callout */
+  .note { background: var(--soft); border: 1px solid #e3e0d8; border-radius: 10px; padding: 12px 16px; font-size: 14px; margin-top: 20px; }
+  .banner { border: 2px solid var(--ink); border-radius: 12px; padding: 14px 16px; margin-top: 18px; font-size: 14.5px; }
+  .banner .mono { color: var(--ink); display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .banner .ico { width: 18px; height: 18px; }
+
+  /* Pills and avatars */
+  .pill { display: inline-flex; align-items: center; border: 1.2px solid var(--field); border-radius: 14px; padding: 2px 11px; font-size: 13.5px; white-space: nowrap; }
+  .pill.strong { border: 2px solid var(--ink); font-weight: 600; }
+  .pill.dash { border-style: dashed; border-color: var(--ink); }
+  .pill.on { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .av { width: 32px; height: 32px; border-radius: 50%; background: var(--fill); border: 1.2px solid var(--field); display: flex; align-items: center; justify-content: center; font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 13px; flex-shrink: 0; }
+  .av.lg { width: 44px; height: 44px; font-size: 15px; }
+  .av.dark { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .av.q { background: var(--white); border: 1.3px dashed var(--muted); }
+
+  /* Cards and item rows */
+  .card { border: 1.2px solid var(--line); border-radius: 14px; padding: 16px; }
+  .card.strong { border: 2px solid var(--ink); }
+  .card + .card { margin-top: 12px; }
+  .item { display: flex; gap: 12px; align-items: flex-start; }
+  .item .body { flex: 1; min-width: 0; }
+  .item .t { font-weight: 600; font-size: 16px; line-height: 1.3; }
+  .item .m { color: var(--muted); font-size: 14px; margin-top: 3px; }
+  .item .tags { margin-top: 8px; }
+  .item .done { text-decoration: line-through; color: var(--muted); }
+  .cb { width: 22px; height: 22px; border: 1.4px solid var(--ink); border-radius: 5px; flex-shrink: 0; margin-top: 2px; }
+  .cb.x { background: var(--fill); border-color: var(--muted); }
+  .divide { border-top: 1px solid var(--line); margin: 14px -16px; }
+  .day { margin: 22px 0 10px; }
+
+  /* Lists */
+  .list > div { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .list .body { flex: 1; }
+  .list .n { font-weight: 600; font-size: 15.5px; }
+  .kv { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .kv .mono { font-size: 11.5px; }
+  .kv .v { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+
+  /* Toggles */
+  .tg { width: 42px; height: 26px; border-radius: 13px; background: var(--fill); border: 1.2px solid var(--field); position: relative; flex-shrink: 0; }
+  .tg::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); border: 1.2px solid var(--field); }
+  .tg.on { background: var(--ink); border-color: var(--ink); }
+  .tg.on::after { left: 18px; border-color: var(--ink); }
+
+  /* Placeholder */
+  .ph { background: var(--fill); border: 1.3px dashed var(--field); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 13px; letter-spacing: .08em; color: var(--muted); }
+
+  /* Code boxes */
+  .code { display: flex; gap: 8px; margin-top: 24px; }
+  .code div { flex: 1; height: 56px; border: 1.3px solid var(--field); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; }
+  .code div.cur { border: 2px solid var(--ink); }
+
+  /* Tab bar */
+  .tabs { height: 84px; border-top: 1px solid var(--line); display: flex; padding-top: 10px; flex-shrink: 0; }
+  .tabs div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12.5px; color: var(--muted); }
+  .tabs div.on { color: var(--ink); font-weight: 700; }
+  .tabs .ico { width: 22px; height: 22px; stroke: var(--muted); }
+  .tabs div.on .ico { stroke: var(--ink); }
+
+  /* Bottom sheet */
+  .shade { background: var(--shade); padding: 36px 24px; flex: 1; }
+  .shade i { display: block; height: 12px; border-radius: 6px; background: #dcdbd7; margin-bottom: 10px; }
+  .sheet { background: var(--white); border-radius: 18px 18px 0 0; margin-top: -18px; padding: 12px 24px 28px; position: relative; }
+  .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 22px; }
+  .opt { display: flex; gap: 14px; align-items: center; border: 1.2px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 12px; }
+  .opt.sel { border: 2px solid var(--ink); }
+  .opt .tile { width: 44px; height: 44px; border-radius: 10px; background: var(--soft); border: 1.2px solid var(--field); display: flex; align-items: center; justify-content: center; }
+  .radio { width: 20px; height: 20px; border-radius: 50%; border: 1.3px solid var(--field); flex-shrink: 0; }
+  .radio.on { border: 6px solid var(--ink); }
+
+  .post { padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .post .h { display: flex; align-items: center; gap: 12px; }
+  .post .who { font-weight: 600; font-size: 16px; }
+  .post .when { margin-left: auto; color: var(--muted); font-size: 13.5px; }
+  .post p { margin: 10px 0 0; font-size: 15px; }
+  .post .pill { margin-top: 10px; gap: 6px; }
+  .bul { padding-left: 18px; font-size: 14.5px; }
+  .bul li { margin-top: 10px; }
+  .notif { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); position: relative; }
+  .notif .unread { position: absolute; left: -14px; top: 22px; width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+  .notif .tile { width: 36px; height: 36px; border-radius: 9px; background: var(--soft); border: 1.2px solid var(--field); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .notif .tile.strong { border: 2px solid var(--ink); }
+  .notif .tile .ico { width: 18px; height: 18px; }
+  .notif .t { font-weight: 600; font-size: 15px; }
+  .notif .m { color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+  .setrow { display: flex; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
+  .setrow .body { flex: 1; }
+  .setrow .n { font-weight: 600; font-size: 15px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14v10H10l-5 4z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15zM10 20a2 2 0 004 0"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-task" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="18" r="1"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M14 4l6 6-9 9-6-6V5h9z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M10 6l6 6-6 6"/></symbol>
+</svg>
+
+<!-- ============ 01 Welcome ============ -->
+<section class="screen" id="welcome" data-h="844">
+  <div class="pad" style="padding-top:28px;display:flex;align-items:center;gap:14px">
+    <div class="ph" style="width:36px;height:36px;border-radius:9px"></div><span style="font-weight:700;font-size:19px">Kindred</span>
+  </div>
+  <div class="pad" style="margin-top:36px"><div class="ph" style="height:232px">ILLUSTRATION PLACEHOLDER</div></div>
+  <div class="pad" style="margin-top:44px">
+    <h1>Everything your family is coordinating, in one place.</h1>
+    <p class="sub" style="font-size:15px;color:var(--ink)">Tasks, appointments and updates for the person you care for — shared with everyone who helps.</p>
+  </div>
+  <div class="grow"></div>
+  <div class="foot">
+    <div class="btns">
+      <div class="btn primary">Continue with Google</div>
+      <div class="btn">Email me a code</div>
+    </div>
+    <p class="small" style="color:var(--ink);font-size:14px;margin-top:16px">Just looking? <span class="link">Try the demo</span> — a sample family, no account needed.</p>
+    <p class="small">Kindred coordinates care. It does not store medical records or give medical advice.</p>
+  </div>
+</section>
+
+<!-- ============ 02 Sign in with email ============ -->
+<section class="screen" id="sign-in-email" data-h="844">
+  <div class="top"><svg class="ico"><use href="#i-back"/></svg><span class="title">Sign in with email</span></div>
+  <div class="pad" style="margin-top:28px">
+    <h1>What's your email?</h1>
+    <p class="sub">We'll send you a 6-digit code. There's no password to remember.</p>
+    <div class="mono label">Email</div>
+    <div class="input">maya@example.com</div>
+    <div class="btn primary" style="margin-top:24px">Email me a code</div>
+    <p class="small" style="text-align:center;margin-top:16px">New or returning, it's the same step.</p>
+  </div>
+</section>
+
+<!-- ============ 03 Enter code ============ -->
+<section class="screen" id="enter-code" data-h="844">
+  <div class="top"><svg class="ico"><use href="#i-back"/></svg><span class="title">Sign in with email</span></div>
+  <div class="pad" style="margin-top:28px">
+    <h1>Check your email</h1>
+    <p class="sub">We sent a 6-digit code to <b style="color:var(--ink);font-weight:600">maya@example.com</b>. Enter it here.</p>
+    <div class="code"><div>4</div><div>8</div><div>2</div><div class="cur"></div><div></div><div></div></div>
+    <p class="small" style="margin-top:18px"><span class="link">Send a new code</span> &nbsp;·&nbsp; <span class="link">Use a different email</span></p>
+    <div class="note">The code works on any device, so you can read the email on your laptop and type it on your phone.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Continue</div></div>
+</section>
+
+<!-- ============ 04 Set up: your name ============ -->
+<section class="screen" id="setup-your-name" data-h="844">
+  <div class="top"><span class="title">Set up Kindred</span></div>
+  <div class="pad steps">
+    <div class="mono">Step 1 of 3 · You</div>
+    <div class="bars"><i class="on"></i><i></i><i></i></div>
+    <h1>What should the family call you?</h1>
+    <p class="sub">Signed in as maya@example.com</p>
+    <div class="mono label">Your name</div>
+    <div class="input">Maya Reyes</div>
+    <p class="small" style="margin-top:8px">Filled in for you if you used Google.</p>
+    <div class="check"><div class="box"></div><span>I agree to the terms of use and privacy policy.</span></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Continue</div></div>
+</section>
+
+<!-- ============ 05 Set up: loved one ============ -->
+<section class="screen" id="setup-loved-one" data-h="844">
+  <div class="top"><svg class="ico"><use href="#i-back"/></svg><span class="title">Set up Kindred</span></div>
+  <div class="pad steps">
+    <div class="mono">Step 2 of 3 · Your loved one</div>
+    <div class="bars"><i class="on"></i><i class="on"></i><i></i></div>
+    <h1>Who are you caring for?</h1>
+    <p class="sub">This names the shared space everyone in the family will see.</p>
+    <div class="mono label">What the family calls them</div>
+    <div class="input">Dad</div>
+    <div class="mono label">Their relationship to you</div>
+    <div class="input">Parent<svg class="ico caret"><use href="#i-down"/></svg></div>
+    <p class="small" style="margin-top:8px">Everyone who joins picks their own.</p>
+    <div class="note">Kindred keeps logistics, not health records. Nothing here is a medical file.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Continue</div></div>
+</section>
+
+<!-- ============ 06 Set up: invite ============ -->
+<section class="screen" id="setup-invite-circle" data-h="900">
+  <div class="top"><svg class="ico"><use href="#i-back"/></svg><span class="title">Set up Kindred</span></div>
+  <div class="pad steps">
+    <div class="mono">Step 3 of 3 · Care Circle</div>
+    <div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <h1>Invite your Care Circle</h1>
+    <p class="sub">Everyone you invite sees the same tasks, appointments and updates for Dad.</p>
+    <div class="btn" style="margin-top:22px"><svg class="ico"><use href="#i-share"/></svg>Share invite link</div>
+    <p class="small" style="margin-top:8px">Opens WhatsApp, Messages or email on your phone. The link works for 14 days.</p>
+    <div class="mono section">Care Circle · 2 people</div>
+    <div class="list">
+      <div><div class="av lg">M</div><div class="body"><div class="n">Maya Reyes</div><div class="small">maya@example.com</div></div><span class="pill">You · Admin</span></div>
+      <div><div class="av lg">A</div><div class="body"><div class="n">Ada Reyes</div><div class="small">ada@example.com</div></div><span class="pill">Joined</span></div>
+    </div>
+    <p class="small" style="margin-top:10px">People show here once they've opened the link and joined.</p>
+    <div class="note"><div class="check" style="margin:0"><div class="box" style="background:var(--white)"></div><span>Also make Ada an admin. Admins can remove members and are told when something goes overdue.</span></div></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Go to Kindred</div><p class="small link">Skip for now — invite people later</p></div>
+</section>
+
+<!-- ============ 07 Home ============ -->
+<section class="screen" id="home" data-h="1180">
+  <div class="top"><span class="brand">Kindred</span><div class="right"><span class="bell"><svg class="ico"><use href="#i-bell"/></svg><span class="dot"></span></span><div class="av">M</div></div></div>
+  <div class="pad" style="margin-top:24px">
+    <h1>Good morning, Maya</h1>
+    <p class="sub">Dad's care · Care Circle of 3</p>
+    <div class="note pills" style="margin-top:16px"><span class="pill" style="background:var(--white)">3 tasks</span><span class="pill" style="background:var(--white)">2 appointments</span><span class="pill strong" style="background:var(--white)">1 overdue</span></div>
+
+    <div class="mono section">Needs your answer · 1</div>
+    <div class="card strong">
+      <div class="item"><div class="body"><div class="t">Call the pharmacy about the new dose schedule</div><div class="m">Ada asked you · Due Fri 5:00 pm</div></div></div>
+      <div class="btnrow" style="margin-top:14px"><div class="btn sm primary">Accept</div><div class="btn sm">Decline</div></div>
+    </div>
+
+    <div class="mono section">Today · Thursday 25</div>
+    <div class="card">
+      <div class="item"><div class="av">M</div><div class="body"><div class="t">Cardiology appointment</div><div class="m">2:00 pm · Maya driving · Riverside Clinic</div></div><span class="pill">Appointment</span></div>
+      <div class="divide"></div>
+      <div class="item"><div class="av">J</div><div class="body"><div class="t">Refill blood pressure meds</div><div class="m">Due yesterday · Jonah</div></div><span class="pill strong">Overdue</span></div>
+    </div>
+
+    <div class="mono section">Needs someone</div>
+    <div class="card">
+      <div class="item"><div class="av q">?</div><div class="body"><div class="t">Physio ride</div><div class="m">Fri 26 · 9:30 am · Nobody has claimed this</div></div><div class="btn sm pill">I'll do it</div></div>
+    </div>
+
+    <div class="mono section">Latest update</div>
+    <div class="card">
+      <div class="item"><div class="av">J</div><div class="body"><div class="t" style="display:flex">Jonah<span class="small" style="margin-left:auto;font-weight:400">Yesterday 6:40 pm</span></div><div class="m" style="color:var(--ink);font-size:15px">Stuck at work until seven. Can anyone else pick up the prescription before the pharmacy closes?</div></div></div>
+    </div>
+  </div>
+  <div class="grow"></div>
+  <div class="pad" style="padding-bottom:18px"><div class="btn primary"><svg class="ico"><use href="#i-plus"/></svg>Quick add</div></div>
+  <div class="tabs"><div class="on"><svg class="ico"><use href="#i-home"/></svg>Home</div><div><svg class="ico"><use href="#i-cal"/></svg>This week</div><div><svg class="ico"><use href="#i-chat"/></svg>Updates</div><div><svg class="ico"><use href="#i-doc"/></svg>Summary</div></div>
+</section>
+
+<!-- ============ 08 This week ============ -->
+<section class="screen" id="this-week" data-h="1120">
+  <div class="top"><span class="title">Dad's care</span><div class="right"><svg class="ico"><use href="#i-plus"/></svg></div></div>
+  <div class="pad" style="margin-top:24px">
+    <div style="display:flex;align-items:center"><h1>This week</h1><div style="margin-left:auto;display:flex;gap:6px"><div class="btn sm" style="padding:0 8px"><svg class="ico"><use href="#i-left"/></svg></div><div class="btn sm" style="padding:0 8px"><svg class="ico"><use href="#i-right"/></svg></div></div></div>
+    <p class="sub">Mon 22 – Sun 28 September · 3 tasks, 2 appointments</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:18px"><span class="mono">Show</span><div class="pills"><span class="pill on">Everyone</span><span class="pill">Maya</span><span class="pill">Jonah</span><span class="pill">Ada</span></div></div>
+
+    <div class="mono day">Wednesday 24</div>
+    <div class="card strong">
+      <div class="item"><div class="cb"></div><div class="body"><div class="t">Refill blood pressure meds</div><div class="m">Due 5:00 pm · Jonah</div><div class="tags pills"><span class="pill strong">Overdue</span><span class="pill">Task</span></div></div><div class="av">J</div></div>
+    </div>
+    <div class="card">
+      <div class="item"><div class="cb x"></div><div class="body"><div class="t done">Groceries drop-off</div><div class="m">Done 11:04 am · Ada</div></div><div class="av">A</div></div>
+    </div>
+
+    <div class="mono day">Thursday 25 · Today</div>
+    <div class="card">
+      <div class="item"><div class="av">M</div><div class="body"><div class="t">Cardiology appointment</div><div class="m">2:00 pm · Maya driving · Riverside Clinic</div></div><span class="pill">Appointment</span></div>
+    </div>
+
+    <div class="mono day">Friday 26</div>
+    <div class="card strong">
+      <div class="item"><div class="av q">?</div><div class="body"><div class="t">Physio ride</div><div class="m">9:30 am · Nobody has claimed this</div><div class="tags pills"><span class="pill">Needs someone</span></div></div><span class="pill">Appointment</span></div>
+      <div class="btnrow" style="margin-top:12px"><div class="btn sm pill">I'll do it</div><div class="btn sm pill">Assign someone</div></div>
+    </div>
+    <div class="card">
+      <div class="item"><div class="cb"></div><div class="body"><div class="t">Call the pharmacy about the new dose schedule</div><div class="m">Due 5:00 pm · Asked Maya</div><div class="tags pills"><span class="pill dash">Awaiting Maya</span></div></div><div class="av q">M</div></div>
+    </div>
+  </div>
+  <div class="grow"></div>
+  <div class="tabs"><div><svg class="ico"><use href="#i-home"/></svg>Home</div><div class="on"><svg class="ico"><use href="#i-cal"/></svg>This week</div><div><svg class="ico"><use href="#i-chat"/></svg>Updates</div><div><svg class="ico"><use href="#i-doc"/></svg>Summary</div></div>
+</section>
+
+<!-- ============ 09 Updates ============ -->
+<section class="screen" id="updates" data-h="1040">
+  <div class="top"><span class="title">Dad's care</span><div class="right"><svg class="ico"><use href="#i-plus"/></svg></div></div>
+  <div class="pad" style="margin-top:24px">
+    <h1>Updates</h1>
+    <p class="sub">Everything the family has shared, in one place.</p>
+    <div class="input placeholder" style="margin-top:18px;height:52px;border-radius:12px">Share an update with the circle…</div>
+    <div class="post"><div class="h"><div class="av lg">M</div><span class="who">Maya</span><span class="when">Today 3:12 pm</span></div>
+      <p>Back from cardiology. Everything went fine and the next visit is booked for six weeks out. Notes are in the appointment.</p>
+      <span class="pill"><svg class="ico" style="width:14px;height:14px"><use href="#i-tag"/></svg>Cardiology appointment</span></div>
+    <div class="post"><div class="h"><div class="av lg">J</div><span class="who">Jonah</span><span class="when">Yesterday 6:40 pm</span></div>
+      <p>Stuck at work until seven. Can anyone else pick up the prescription before the pharmacy closes?</p>
+      <span class="pill"><svg class="ico" style="width:14px;height:14px"><use href="#i-tag"/></svg>Refill blood pressure meds</span></div>
+    <div class="post"><div class="h"><div class="av lg">A</div><span class="who">Ada</span><span class="when">Yesterday 11:20 am</span></div>
+      <p>Dropped the groceries off and put the milk away. Dad was in good spirits and ate lunch.</p>
+      <span class="pill"><svg class="ico" style="width:14px;height:14px"><use href="#i-tag"/></svg>Groceries drop-off</span></div>
+    <div class="post" style="border:0"><div class="h"><div class="av lg">A</div><span class="who">Ada</span><span class="when">Tuesday 8:05 am</span></div>
+      <p>Added Friday's physio ride to the week. I can't drive that day, so it needs an owner.</p></div>
+  </div>
+  <div class="grow"></div>
+  <div class="tabs"><div><svg class="ico"><use href="#i-home"/></svg>Home</div><div><svg class="ico"><use href="#i-cal"/></svg>This week</div><div class="on"><svg class="ico"><use href="#i-chat"/></svg>Updates</div><div><svg class="ico"><use href="#i-doc"/></svg>Summary</div></div>
+</section>
+
+<!-- ============ 10 Weekly summary ============ -->
+<section class="screen" id="weekly-summary" data-h="1060">
+  <div class="top"><span class="title">Dad's care</span></div>
+  <div class="pad" style="margin-top:24px">
+    <h1>What happened, what's next</h1>
+    <p class="sub">Week of 22–28 September · made Sunday 8:00 am from 3 tasks, 2 appointments and 4 updates.</p>
+    <div class="card" style="margin-top:20px">
+      <div class="mono">What happened</div>
+      <ul class="bul">
+        <li>Ada did the groceries drop-off on Wednesday.</li>
+        <li>Maya took Dad to cardiology on Thursday and posted an update.</li>
+        <li>Maya did the pharmacy call on Friday.</li>
+        <li>Nobody claimed Friday's physio ride.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="mono">What's still open</div>
+      <ul class="bul">
+        <li>Refill blood pressure meds — Jonah, overdue since Wednesday.</li>
+        <li>Physio ride on Wednesday 1 October, 9:30 am — needs someone.</li>
+      </ul>
+      <div class="pills" style="margin-top:14px"><span class="btn sm pill strong">Reassign the refill</span><span class="btn sm pill">Claim the physio ride</span></div>
+    </div>
+    <div class="note">Kindred puts this together from what the family logged: who did what, and what is still open. It never interprets health information or gives medical advice.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot" style="padding-bottom:18px"><div class="btn primary"><svg class="ico"><use href="#i-share"/></svg>Share with family</div><p class="small">Everyone in the Care Circle already sees this summary.</p></div>
+  <div class="tabs"><div><svg class="ico"><use href="#i-home"/></svg>Home</div><div><svg class="ico"><use href="#i-cal"/></svg>This week</div><div><svg class="ico"><use href="#i-chat"/></svg>Updates</div><div class="on"><svg class="ico"><use href="#i-doc"/></svg>Summary</div></div>
+</section>
+
+<!-- ============ 11 Quick add ============ -->
+<section class="screen" id="quick-add" data-h="844">
+  <div class="shade"><i style="width:60%"></i><i style="width:84%"></i><i style="width:40%"></i><br><i style="width:72%"></i><i style="width:52%"></i></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">What do you want to add?</h1>
+    <p class="sub">It goes straight into the shared week for Dad's care.</p>
+    <div class="opt"><div class="tile"><svg class="ico"><use href="#i-task"/></svg></div><div><div style="font-weight:600;font-size:16px">Task</div><div class="small" style="font-size:14px">Something that needs doing, with a due date.</div></div></div>
+    <div class="opt"><div class="tile"><svg class="ico"><use href="#i-cal"/></svg></div><div><div style="font-weight:600;font-size:16px">Appointment</div><div class="small" style="font-size:14px">A date, a time and a place someone has to be.</div></div></div>
+    <div class="opt"><div class="tile"><svg class="ico"><use href="#i-chat"/></svg></div><div><div style="font-weight:600;font-size:16px">Update or note</div><div class="small" style="font-size:14px">Tell the circle what happened.</div></div></div>
+    <div class="btn" style="margin-top:20px">Cancel</div>
+  </div>
+</section>
+
+<!-- ============ 12 New task ============ -->
+<section class="screen" id="new-task" data-h="960">
+  <div class="top center"><span class="act">Cancel</span><span class="title">New task</span><span class="act">Save</span></div>
+  <div class="pad">
+    <div class="mono label">Task</div>
+    <div class="input">Refill blood pressure meds</div>
+    <div class="row2"><div><div class="mono label">Due date</div><div class="input">Wed 24 Sep</div></div><div><div class="mono label">Time (optional)</div><div class="input">5:00 pm</div></div></div>
+    <div class="mono label">Repeat</div>
+    <div class="input">Doesn't repeat<svg class="ico caret"><use href="#i-right"/></svg></div>
+    <div class="mono label">Notes</div>
+    <div class="input area">Pharmacy on Fraser St. The repeat is already on file, just needs collecting.</div>
+    <div class="mono label">Ask someone to do it</div>
+    <div style="display:flex;gap:22px;margin-top:4px">
+      <div style="text-align:center"><div class="av lg" style="width:52px;height:52px">M</div><div class="small link" style="margin-top:6px">Maya</div></div>
+      <div style="text-align:center"><div class="av lg dark" style="width:52px;height:52px">J</div><div class="small link" style="margin-top:6px;color:var(--ink);font-weight:700">Jonah</div></div>
+      <div style="text-align:center"><div class="av lg" style="width:52px;height:52px">A</div><div class="small link" style="margin-top:6px">Ada</div></div>
+      <div style="text-align:center"><div class="av lg q" style="width:52px;height:52px">?</div><div class="small link" style="margin-top:6px">Nobody yet</div></div>
+    </div>
+    <div class="note">Jonah is asked to accept. Until he does, it shows as <b>Awaiting Jonah</b>, not as his.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Add to this week</div></div>
+</section>
+
+<!-- ============ 13 New appointment ============ -->
+<section class="screen" id="new-appointment" data-h="1030">
+  <div class="top center"><span class="act">Cancel</span><span class="title">New appointment</span><span class="act">Save</span></div>
+  <div class="pad">
+    <div class="mono label">Appointment</div>
+    <div class="input">Cardiology appointment</div>
+    <div class="row2"><div><div class="mono label">Date</div><div class="input">Thu 25 Sep</div></div><div><div class="mono label">Start time</div><div class="input">2:00 pm</div></div></div>
+    <div class="mono label">Repeat</div>
+    <div class="input">Doesn't repeat<svg class="ico caret"><use href="#i-right"/></svg></div>
+    <div class="mono label">Location</div>
+    <div class="input">Riverside Clinic, 4th floor</div>
+    <div class="ph" style="height:96px;margin-top:10px">MAP PREVIEW</div>
+    <p class="small" style="font-size:11.5px;margin-top:4px;text-align:right">Powered by Geoapify · © OpenStreetMap contributors</p>
+    <div class="mono label" style="margin-top:12px">Who is taking Dad?</div>
+    <div style="display:flex;gap:22px;margin-top:4px">
+      <div style="text-align:center"><div class="av lg dark" style="width:52px;height:52px">M</div><div class="small link" style="margin-top:6px;color:var(--ink);font-weight:700">Maya</div></div>
+      <div style="text-align:center"><div class="av lg" style="width:52px;height:52px">J</div><div class="small link" style="margin-top:6px">Jonah</div></div>
+      <div style="text-align:center"><div class="av lg" style="width:52px;height:52px">A</div><div class="small link" style="margin-top:6px">Ada</div></div>
+      <div style="text-align:center"><div class="av lg q" style="width:52px;height:52px">?</div><div class="small link" style="margin-top:6px">Nobody yet</div></div>
+    </div>
+    <div class="mono label">Notes for the family</div>
+    <div class="input area" style="min-height:66px">Bring the list of current medications. Parking is on the north side.</div>
+    <div class="note">You picked yourself, so it's yours straight away and shows in This week with your name on it.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Add to this week</div></div>
+</section>
+
+<!-- ============ 14 New update ============ -->
+<section class="screen" id="new-update" data-h="880">
+  <div class="top center"><span class="act">Cancel</span><span class="title">New update</span><span class="act">Post</span></div>
+  <div class="pad">
+    <div style="display:flex;align-items:center;gap:12px;margin-top:20px"><div class="av lg">M</div><span class="small" style="font-size:14.5px">Maya, posting to the Care Circle</span></div>
+    <div class="mono label">What happened?</div>
+    <div class="input area" style="min-height:150px;font-size:16px">Back from cardiology. Everything went fine and the next visit is booked for six weeks out.</div>
+    <div class="mono label" style="margin-top:26px">Link this to</div>
+    <div class="pills"><span class="pill strong" style="font-size:14.5px;padding:5px 14px">Cardiology appointment</span><span class="pill" style="font-size:14.5px;padding:5px 14px">Refill blood pressure meds</span><span class="pill" style="font-size:14.5px;padding:5px 14px">Physio ride</span><span class="pill" style="font-size:14.5px;padding:5px 14px">Nothing in particular</span></div>
+    <div class="note">Posting tells Jonah and Ada, and the update also shows on the appointment it's linked to.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Post to updates</div></div>
+</section>
+
+<!-- ============ 15 Assign to ============ -->
+<section class="screen" id="assign-to" data-h="900">
+  <div class="shade"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">Ask someone to do this</h1>
+    <p class="sub">Physio ride · Friday 9:30 am</p>
+    <div class="mono" style="margin-top:18px">Who's free at 9:30</div>
+    <div class="opt"><div class="radio"></div><div class="av lg">M</div><div style="flex:1"><div style="font-weight:600">Maya <span class="small">· you</span></div><div class="small">2 things this week</div></div><span class="pill">Busy</span></div>
+    <div class="opt sel"><div class="radio on"></div><div class="av lg">J</div><div style="flex:1"><div style="font-weight:600">Jonah</div><div class="small">1 thing this week, 1 overdue</div></div><span class="pill strong">Free</span></div>
+    <div class="opt"><div class="radio"></div><div class="av lg">A</div><div style="flex:1"><div style="font-weight:600">Ada</div><div class="small">No calendar connected</div></div><span class="pill dash">Unknown</span></div>
+    <div class="opt"><div class="radio"></div><div class="av lg q">?</div><div><div style="font-weight:600">Leave it unclaimed</div><div class="small">Stays visible to everyone until someone takes it</div></div></div>
+    <p class="small" style="margin-top:10px">Free or busy comes from connected Google calendars. Nobody sees what's in them.</p>
+    <div class="note" style="margin-top:12px">Jonah gets a request to accept or decline. It shows as <b>Awaiting Jonah</b> until he answers.</div>
+    <div class="btnrow" style="margin-top:18px"><div class="btn">Cancel</div><div class="btn primary" style="flex:1.3">Ask Jonah</div></div>
+  </div>
+</section>
+
+<!-- ============ 16 Task awaiting your answer ============ -->
+<section class="screen" id="task-awaiting-you" data-h="900">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Task</span><svg class="ico"><use href="#i-more"/></svg></div>
+  <div class="pad">
+    <div class="banner"><div class="mono"><svg class="ico"><use href="#i-task"/></svg>Ada asked you to do this</div>It isn't yours until you accept. If you decline, it goes back to <b>Needs someone</b> and Ada is told.</div>
+    <div style="margin-top:18px"><span class="pill dash">Awaiting your answer</span></div>
+    <h1 style="margin-top:10px">Call the pharmacy about the new dose schedule</h1>
+    <div style="margin-top:12px">
+      <div class="kv"><span class="mono">Asked</span><span class="v"><div class="av q">M</div>Maya (you)</span></div>
+      <div class="kv"><span class="mono">Due</span><span class="v">Friday 26 Sep, 5:00 pm</span></div>
+      <div class="kv"><span class="mono">Added by</span><span class="v">Ada · Tuesday</span></div>
+    </div>
+    <div class="card" style="margin-top:18px"><div class="mono">Notes</div><p style="margin-top:8px;font-size:15px">Ask whether the repeat can be collected weekly instead of monthly, so nobody has to remember the date.</p></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btns"><div class="btn primary"><svg class="ico"><use href="#i-check"/></svg>Accept</div><div class="btn">Decline</div></div></div>
+</section>
+
+<!-- ============ 17 Task detail ============ -->
+<section class="screen" id="task-detail" data-h="1040">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Task</span><span style="display:flex;gap:14px"><svg class="ico"><use href="#i-share"/></svg><svg class="ico"><use href="#i-more"/></svg></span></div>
+  <div class="pad">
+    <div style="margin-top:20px"><span class="pill">Task</span></div>
+    <h1 style="margin-top:10px">Call the pharmacy about the new dose schedule</h1>
+    <div style="margin-top:12px">
+      <div class="kv"><span class="mono">Owner</span><span class="v"><div class="av">M</div>Maya</span></div>
+      <div class="kv"><span class="mono">Due</span><span class="v">Friday 26 Sep, 5:00 pm</span></div>
+      <div class="kv"><span class="mono">Added by</span><span class="v">Ada · Tuesday</span></div>
+    </div>
+    <div class="card" style="margin-top:18px"><div class="mono">Notes</div><p style="margin-top:8px;font-size:15px">Ask whether the repeat can be collected weekly instead of monthly, so nobody has to remember the date.</p></div>
+    <div class="mono section">Linked updates</div>
+    <div class="card"><div class="post" style="padding:0;border:0"><div class="h"><div class="av">J</div><span class="who">Jonah</span><span class="when">Yesterday</span></div><p>Pharmacy said to call after 10 am, they are short-staffed in the mornings.</p></div></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btns"><div class="btn primary"><svg class="ico"><use href="#i-check"/></svg>Mark done</div><div class="btn">Need coverage · 1 of 2 left this month</div></div><p class="small link">Reassign</p></div>
+</section>
+
+<!-- ============ 18 Overdue task ============ -->
+<section class="screen" id="task-overdue" data-h="940">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Task</span><svg class="ico"><use href="#i-more"/></svg></div>
+  <div class="pad">
+    <div class="banner"><div class="mono"><svg class="ico"><use href="#i-clock"/></svg>Overdue since Wednesday</div>Jonah and the admins (Maya) were told yesterday evening. Nothing happens automatically — someone has to pick it up.</div>
+    <div style="margin-top:18px"><span class="pill strong">Overdue</span></div>
+    <h1 style="margin-top:10px">Refill blood pressure meds</h1>
+    <div style="margin-top:12px">
+      <div class="kv"><span class="mono">Owner</span><span class="v"><div class="av">J</div>Jonah</span></div>
+      <div class="kv"><span class="mono">Was due</span><span class="v">Wednesday 24 Sep, 5:00 pm</span></div>
+    </div>
+    <div class="mono section">Hand it to someone else</div>
+    <div class="opt" style="margin-top:0"><div class="av lg">M</div><div style="flex:1"><div style="font-weight:600">Maya <span class="small">· you</span></div><div class="small">2 things this week</div></div><span class="btn sm pill">Take it</span></div>
+    <div class="opt"><div class="av lg">A</div><div style="flex:1"><div style="font-weight:600">Ada</div><div class="small">1 thing this week</div></div><span class="btn sm pill">Ask Ada</span></div>
+    <div class="opt"><div class="av lg q">?</div><div style="flex:1"><div style="font-weight:600">Ask the whole circle</div><div class="small">Posts to updates and leaves it unclaimed</div></div></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btns"><div class="btn primary">Mark done instead</div><div class="btn">Change the due date</div></div></div>
+</section>
+
+<!-- ============ 19 Notifications ============ -->
+<section class="screen" id="notifications" data-h="860">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Notifications</span><span class="act">Mark all read</span></div>
+  <div class="pad" style="margin-top:24px;padding-left:38px">
+    <h1 style="margin-left:-14px">What you missed</h1>
+    <p class="sub" style="margin-left:-14px">Also sent to your phone when notifications are on.</p>
+    <div style="margin-top:12px">
+      <div class="notif"><span class="unread"></span><div class="tile strong"><svg class="ico"><use href="#i-clock"/></svg></div><div><div class="t">Refill blood pressure meds is overdue</div><div class="m">Jonah was reminded. You were told because you're an admin. · 1h ago</div></div></div>
+      <div class="notif"><span class="unread"></span><div class="tile"><svg class="ico"><use href="#i-task"/></svg></div><div><div class="t">Ada asked you to do the pharmacy call</div><div class="m">Due Friday 5:00 pm · Waiting for your answer · 3h ago</div></div></div>
+      <div class="notif"><div class="tile"><svg class="ico"><use href="#i-chat"/></svg></div><div><div class="t">Ada posted an update</div><div class="m">Groceries dropped off, Dad in good spirits. · Yesterday</div></div></div>
+      <div class="notif"><div class="tile"><svg class="ico"><use href="#i-cal"/></svg></div><div><div class="t">Friday's physio ride still has no owner</div><div class="m">Added by Ada · 2 days ago</div></div></div>
+      <div class="notif" style="border:0"><div class="tile"><svg class="ico"><use href="#i-doc"/></svg></div><div><div class="t">Your weekly summary is ready</div><div class="m">Week of 15–21 September · Sunday 8:00 am</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 20 Care Circle and settings ============ -->
+<section class="screen" id="care-circle-settings" data-h="1440">
+  <div class="top"><svg class="ico"><use href="#i-back"/></svg><span class="title">Care Circle and settings</span></div>
+  <div class="pad" style="margin-top:24px">
+    <h1>Dad's Care Circle</h1>
+    <p class="sub">Opened from your initial at the top of Home.</p>
+
+    <div class="mono section">Members · 3</div>
+    <div class="list">
+      <div><div class="av lg">M</div><div class="body"><div class="n">Maya Reyes</div><div class="small">Parent</div></div><span class="pill">You · Admin</span></div>
+      <div><div class="av lg">J</div><div class="body"><div class="n">Jonah Reyes</div><div class="small">Parent</div></div><span class="pill">Member</span><svg class="ico"><use href="#i-more"/></svg></div>
+      <div><div class="av lg">A</div><div class="body"><div class="n">Ada Reyes</div><div class="small">Spouse</div></div><span class="pill">Admin</span><svg class="ico"><use href="#i-more"/></svg></div>
+    </div>
+    <div class="btn" style="margin-top:14px"><svg class="ico"><use href="#i-share"/></svg>Share invite link</div>
+
+    <div class="mono section">Your calendar</div>
+    <div class="setrow"><div class="body"><div class="n">Google Calendar</div><div class="small">Connected · the family only sees free or busy</div></div><span class="btn sm pill">Disconnect</span></div>
+    <div class="setrow"><div class="body"><div class="n">Add Kindred to my calendar</div><div class="small">Things you accept show up in your calendar app</div></div><span class="btn sm pill">Add</span></div>
+    <div class="setrow"><div class="body"><div class="n">Include tasks</div><div class="small">Appointments are always included</div></div><div class="tg"></div></div>
+
+    <div class="mono section">Notify me about</div>
+    <div class="setrow"><div class="body"><div class="n">Requests</div><div class="small">Asked to do something, cover requests</div></div><div class="tg on"></div></div>
+    <div class="setrow"><div class="body"><div class="n">Reminders and overdue</div><div class="small">Things you own that are due or overdue</div></div><div class="tg on"></div></div>
+    <div class="setrow"><div class="body"><div class="n">Changes</div><div class="small">Changes to things you own or were asked to do</div></div><div class="tg on"></div></div>
+    <div class="setrow"><div class="body"><div class="n">Updates</div><div class="small">New posts in Updates</div></div><div class="tg on"></div></div>
+    <div class="setrow"><div class="body"><div class="n">Weekly summary</div><div class="small">Sundays at 8:00 am</div></div><div class="tg on"></div></div>
+    <div class="setrow"><div class="body"><div class="n">Everything else</div><div class="small">Others creating or finishing things</div></div><div class="tg"></div></div>
+
+    <div class="mono section">Your account</div>
+    <div class="setrow"><div class="body"><div class="n">Export my data</div></div><svg class="ico"><use href="#i-right"/></svg></div>
+    <div class="setrow"><div class="body"><div class="n">Leave Dad's Care Circle</div></div><svg class="ico"><use href="#i-right"/></svg></div>
+    <div class="setrow" style="border:0"><div class="body"><div class="n">Delete my account</div><div class="small">Things you own go back to Needs someone</div></div><svg class="ico"><use href="#i-right"/></svg></div>
+  </div>
+  <div class="grow" style="min-height:24px"></div>
+</section>
+
+<!-- ============ Join: invite link ============ -->
+<section class="screen" id="join-invite" data-h="844">
+  <div class="pad" style="padding-top:28px;display:flex;align-items:center;gap:14px">
+    <div class="ph" style="width:36px;height:36px;border-radius:9px"></div><span style="font-weight:700;font-size:19px">Kindred</span>
+  </div>
+  <div class="pad" style="margin-top:40px">
+    <div class="mono">You're invited</div>
+    <h1 style="margin-top:10px">Maya invited you to Dad's Care Circle</h1>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:22px">
+      <div style="display:flex"><div class="av lg">M</div><div class="av lg" style="margin-left:-10px">A</div></div>
+      <span class="small" style="font-size:14.5px">Maya and Ada are already in</span>
+    </div>
+    <div class="note" style="margin-top:26px">Kindred is where the family keeps track of who's doing what for Dad: tasks, appointments and updates, in one place.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot">
+    <div class="btns"><div class="btn primary">Continue with Google</div><div class="btn">Email me a code</div></div>
+    <p class="small">Invite from Maya · works until 9 October</p>
+  </div>
+</section>
+
+<!-- ============ Join: relationship ============ -->
+<section class="screen" id="join-relationship" data-h="844">
+  <div class="top"><span class="title">Join Dad's Care Circle</span></div>
+  <div class="pad" style="margin-top:28px">
+    <h1>One last thing</h1>
+    <p class="sub">Signed in as jonah@example.com</p>
+    <div class="mono label">Your name</div>
+    <div class="input">Jonah Reyes</div>
+    <div class="mono label">Dad is your…</div>
+    <div class="input">Parent<svg class="ico caret"><use href="#i-down"/></svg></div>
+    <p class="small" style="margin-top:8px">Shown next to your name in the member list.</p>
+    <div class="check"><div class="box"></div><span>I agree to the terms of use and privacy policy.</span></div>
+    <div class="note">You can be in one Care Circle at a time. If you're already in another, Kindred asks you to leave it first.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Join Dad's Care Circle</div></div>
+</section>
+
+<!-- ============ Add to Home Screen ============ -->
+<section class="screen" id="add-to-home-screen" data-h="844">
+  <div class="pad" style="margin-top:36px">
+    <h1>Add Kindred to your Home Screen</h1>
+    <p class="sub">On iPhone, Kindred can only send you notifications once it's on your Home Screen. It takes three taps.</p>
+    <div class="opt" style="margin-top:22px"><div class="av lg dark">1</div><div style="flex:1"><div style="font-weight:600">Tap the Share button</div><div class="small">At the bottom of Safari</div></div><svg class="ico"><use href="#i-share"/></svg></div>
+    <div class="opt"><div class="av lg dark">2</div><div style="flex:1"><div style="font-weight:600">Choose "Add to Home Screen"</div><div class="small">Scroll down the list if you don't see it</div></div><svg class="ico"><use href="#i-plus"/></svg></div>
+    <div class="opt"><div class="av lg dark">3</div><div style="flex:1"><div style="font-weight:600">Open Kindred from the new icon</div><div class="small">You'll stay signed in</div></div><div class="ph" style="width:30px;height:30px;border-radius:8px"></div></div>
+    <p class="small link" style="text-align:center;margin-top:22px">Not now — remind me later</p>
+  </div>
+  <div class="grow"></div>
+  <div style="height:84px;background:var(--soft);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;padding-bottom:14px">
+    <svg class="ico" style="stroke:var(--muted)"><use href="#i-left"/></svg><svg class="ico" style="stroke:var(--muted)"><use href="#i-right"/></svg>
+    <span style="border:2px solid var(--ink);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg class="ico"><use href="#i-share"/></svg></span>
+    <svg class="ico" style="stroke:var(--muted)"><use href="#i-doc"/></svg><svg class="ico" style="stroke:var(--muted)"><use href="#i-more"/></svg>
+  </div>
+</section>
+
+<!-- ============ Allow notifications ============ -->
+<section class="screen" id="allow-notifications" data-h="844">
+  <div class="pad" style="margin-top:44px">
+    <div class="notif" style="border:0;padding:0"><div class="tile strong" style="width:52px;height:52px"><svg class="ico" style="width:26px;height:26px"><use href="#i-bell"/></svg></div></div>
+    <h1 style="margin-top:20px">Turn on notifications?</h1>
+    <p class="sub">Kindred tells you when:</p>
+    <ul class="bul" style="margin-top:6px">
+      <li>Someone asks you to do something</li>
+      <li>Something you agreed to is coming up</li>
+      <li>Someone needs cover</li>
+      <li>Something you own goes overdue (admins hear about everything overdue)</li>
+      <li>Someone posts an update</li>
+    </ul>
+    <div class="note">Your lock screen never shows care details, just "Dad's Care Circle: you have a new request".</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot">
+    <div class="btns"><div class="btn primary">Turn on notifications</div><div class="btn">Not now</div></div>
+    <p class="small">Change this any time in Care Circle and settings.</p>
+  </div>
+</section>
+
+<!-- ============ Repeat options ============ -->
+<section class="screen" id="repeat-options" data-h="844">
+  <div class="shade"><i style="width:60%"></i><i style="width:84%"></i><i style="width:40%"></i></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">Repeat</h1>
+    <p class="sub">Refill blood pressure meds</p>
+    <div class="opt"><div class="radio"></div><div style="font-weight:600">Doesn't repeat</div></div>
+    <div class="opt"><div class="radio"></div><div style="font-weight:600">Every day</div></div>
+    <div class="opt sel"><div class="radio on"></div><div><div style="font-weight:600">Every week</div><div class="small">On Wednesdays</div></div></div>
+    <div class="opt"><div class="radio"></div><div><div style="font-weight:600">Every month</div><div class="small">On the 24th</div></div></div>
+    <div class="mono label" style="margin-top:22px">Ends</div>
+    <div class="row2"><div><div class="input">Never<svg class="ico caret"><use href="#i-down"/></svg></div></div><div><div class="input placeholder">Pick a date</div></div></div>
+    <div class="note">Each week is its own task, so different people can take different weeks.</div>
+    <div class="btn primary" style="margin-top:18px">Done</div>
+  </div>
+</section>
+
+<!-- ============ Appointment detail ============ -->
+<section class="screen" id="appointment-detail" data-h="1240">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Appointment</span><span style="display:flex;gap:14px"><svg class="ico"><use href="#i-share"/></svg><svg class="ico"><use href="#i-more"/></svg></span></div>
+  <div class="pad">
+    <div style="margin-top:20px"><span class="pill">Appointment</span></div>
+    <h1 style="margin-top:10px">Cardiology appointment</h1>
+    <div style="margin-top:12px">
+      <div class="kv"><span class="mono">Owner</span><span class="v"><div class="av">M</div>Maya</span></div>
+      <div class="kv"><span class="mono">When</span><span class="v">Thursday 25 Sep, 2:00 pm</span></div>
+      <div class="kv" style="border:0"><span class="mono">Where</span><span class="v">Riverside Clinic, 4th floor</span></div>
+    </div>
+    <div class="ph" style="height:110px">MAP · TAP FOR DIRECTIONS</div>
+    <p class="small" style="font-size:11.5px;margin-top:4px;text-align:right">Powered by Geoapify · © OpenStreetMap contributors</p>
+    <div class="card" style="margin-top:14px"><div class="mono">Notes for the family</div><p style="margin-top:8px;font-size:15px">Bring the list of current medications. Parking is on the north side.</p></div>
+    <div class="mono section">Updates · 1</div>
+    <div class="card"><div class="post" style="padding:0;border:0"><div class="h"><div class="av">M</div><span class="who">Maya</span><span class="when">Today 3:12 pm</span></div><p>Back from cardiology. Everything went fine and the next visit is booked for six weeks out.</p></div></div>
+    <div class="mono section">Follow-up tasks</div>
+    <div class="card"><div class="item"><div class="av q">?</div><div class="body"><div class="t">Add the next cardiology visit to the calendar</div><div class="m">Due Fri 3 Oct · Nobody has claimed this</div></div><span class="pill">Needs someone</span></div></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btns"><div class="btn primary"><svg class="ico"><use href="#i-chat"/></svg>Add update</div><div class="btn">Create follow-up task</div></div></div>
+</section>
+
+<!-- ============ Share an item ============ -->
+<section class="screen" id="share-item" data-h="844">
+  <div class="shade"><i style="width:40%"></i><i style="width:78%"></i><i style="width:56%"></i></div>
+  <div class="sheet" style="background:var(--soft)">
+    <div class="grab"></div>
+    <div class="card" style="background:var(--white)">
+      <div class="small" style="font-size:12.5px">Message</div>
+      <p style="margin-top:6px;font-size:15px">Dad's care — <b>Physio ride</b>, Friday 26 Sep at 9:30 am. Nobody has taken it yet. Can you?<br><span class="link">kindred.example/i/7f3c9a</span></p>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:18px;padding:0 4px">
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">WhatsApp</div></div>
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">Messages</div></div>
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">Mail</div></div>
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">More</div></div>
+    </div>
+    <div class="card" style="background:var(--white);margin-top:18px;padding:0 16px">
+      <div class="setrow"><div class="body n">Copy</div></div>
+      <div class="setrow" style="border:0"><div class="body n">Copy link</div></div>
+    </div>
+    <p class="small" style="margin-top:14px">This is the phone's own share sheet. Kindred fills in the message; private notes are left out unless you choose ⋯ › Share with notes.</p>
+  </div>
+</section>
+
+<!-- ============ Need coverage ============ -->
+<section class="screen" id="need-coverage" data-h="920">
+  <div class="shade"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">Ask the family to cover?</h1>
+    <p class="sub">Cardiology appointment · Today 2:00 pm</p>
+    <div class="banner" style="margin-top:16px"><div class="mono">Your cover requests</div><b>1 of 2 left this month.</b> Resets on 1 October. Cancelling a request still counts.</div>
+    <div class="mono" style="margin-top:20px">Who's free at 2:00 pm</div>
+    <div class="list">
+      <div><div class="av">J</div><div class="body n">Jonah</div><span class="pill">Busy</span></div>
+      <div><div class="av">A</div><div class="body n">Ada</div><span class="pill dash">Unknown</span></div>
+    </div>
+    <div class="check"><div class="box" style="background:var(--ink)"></div><span>Then share it to the family chat</span></div>
+    <div class="note">Everyone in the circle is asked. It stays yours until someone taps <b>I can do it</b>.</div>
+    <div class="btnrow" style="margin-top:18px"><div class="btn">Cancel</div><div class="btn primary" style="flex:1.3">Ask for cover</div></div>
+  </div>
+</section>
+
+<!-- ============ Coverage request (seen by others) ============ -->
+<section class="screen" id="coverage-request" data-h="1040">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Appointment</span><span style="display:flex;gap:14px"><svg class="ico"><use href="#i-share"/></svg><svg class="ico"><use href="#i-more"/></svg></span></div>
+  <div class="pad">
+    <div class="banner"><div class="mono"><svg class="ico"><use href="#i-clock"/></svg>Maya needs cover</div>Maya can't make it any more and asked the family. Whoever taps <b>I can do it</b> first takes it over.</div>
+    <div style="margin-top:18px"><span class="pill dash">Needs coverage</span></div>
+    <h1 style="margin-top:10px">Cardiology appointment</h1>
+    <div style="margin-top:12px">
+      <div class="kv"><span class="mono">Owner</span><span class="v"><div class="av">M</div>Maya, until someone covers</span></div>
+      <div class="kv"><span class="mono">When</span><span class="v">Today, 2:00 pm</span></div>
+      <div class="kv" style="border:0"><span class="mono">Where</span><span class="v">Riverside Clinic, 4th floor</span></div>
+    </div>
+    <div class="ph" style="height:96px">MAP · TAP FOR DIRECTIONS</div>
+    <div class="card" style="margin-top:16px"><div class="mono">Notes for the family</div><p style="margin-top:8px;font-size:15px">Bring the list of current medications. Parking is on the north side.</p></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary"><svg class="ico"><use href="#i-check"/></svg>I can do it</div><p class="small">If someone takes it first, you'll see who's covering.</p></div>
+</section>
+
+<!-- ============ Coverage limit reached ============ -->
+<section class="screen" id="coverage-limit" data-h="844">
+  <div class="shade"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">You've used your 2 cover requests this month</h1>
+    <p class="sub">Call the pharmacy · Friday 5:00 pm</p>
+    <p style="margin-top:14px;font-size:15px">Your allowance resets on 1 October. Until then, you can still:</p>
+    <div class="opt"><div class="tile"><svg class="ico"><use href="#i-share"/></svg></div><div><div style="font-weight:600">Message the family</div><div class="small">Share this task to the family chat and ask</div></div></div>
+    <div class="opt"><div class="tile"><svg class="ico"><use href="#i-task"/></svg></div><div><div style="font-weight:600">Ask one person directly</div><div class="small">They're asked to accept, like any request</div></div></div>
+    <div class="btn" style="margin-top:20px">Keep it</div>
+  </div>
+</section>
+
+<script>
+  const id = location.hash.slice(1);
+  if (id) {
+    document.body.classList.add('one');
+    const s = document.getElementById(id);
+    if (s) { s.classList.add('on'); s.style.minHeight = s.dataset.h + 'px'; }
+  } else {
+    document.querySelectorAll('.screen').forEach(s => s.style.minHeight = s.dataset.h + 'px');
+  }
+</script>
+</body>
+</html>

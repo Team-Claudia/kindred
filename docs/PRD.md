@@ -213,7 +213,7 @@ For example:
 - Request coverage.
 - Accept coverage.
 - Share to messaging app.
-- Add an appointment update.
+- Post an update for the family.
 
 ---
 
@@ -252,55 +252,61 @@ The prototype will include:
 11. Task ownership.
 12. Coverage and handoffs.
 13. Two coverage requests per caregiver per calendar month.
-14. Appointment updates.
+14. Family updates (one shared thread; each update can link to a task or appointment).
 15. Follow-up tasks.
-16. Push notifications and reminders.
-17. Messaging app sharing.
-18. Shared activity feed.
-19. Contextual comments.
-20. Recurring tasks and appointments (simple repeats).
-21. Account deletion and personal data export.
+16. Push notifications, reminders and overdue alerts.
+17. In-app notification list.
+18. Messaging app sharing.
+19. Weekly summary.
+20. Map preview for appointment locations.
+21. Contextual comments.
+22. Recurring tasks and appointments (simple repeats).
+23. Account deletion and personal data export.
+
+Screen-by-screen wireframes are in [wireframes/README.md](wireframes/README.md).
 
 ---
 
 ## 9. Information Architecture
 
-Kindred will use a simple mobile bottom navigation structure.
+Kindred uses a bottom navigation bar with four tabs: **Home**, **This week**, **Updates** and **Summary**. **Care Circle and settings** opens from the member's initial at the top of Home, and the in-app notification list opens from the bell beside it.
 
 ### Home
 
 Shows:
 
+- Counts of tasks, appointments and overdue items.
+- Assignments awaiting my response, with **Accept** and **Decline**.
 - Today's responsibilities.
-- Assignments awaiting my response.
-- Upcoming responsibilities.
 - Tasks needing someone.
 - Coverage requests.
-- Recent family activity.
+- The latest update.
+- **Quick add** (task, appointment, or update).
 
-### Calendar
+### This week
 
 Shows:
 
-- Appointments.
-- Scheduled caregiving tasks.
+- Appointments and tasks for the week, grouped by day, with previous and next week.
 - Confirmed caregiver.
 - Awaiting-acceptance assignments.
 - Unassigned items.
-- Availability indicators.
+- Overdue and completed items.
+- A filter by member (Everyone or one person).
 
-### Tasks
+### Updates
 
 Shows:
 
-- My tasks.
-- Awaiting my acceptance.
-- All tasks.
-- Needs someone.
-- Needs coverage.
-- Completed tasks.
+- Every update the family has posted, newest first, each with the item it is linked to (Epic 10).
 
-### Care Circle
+### Summary
+
+Shows:
+
+- The weekly summary: what happened and what is still open (User Story 10.3).
+
+### Care Circle and settings
 
 Shows:
 
@@ -416,6 +422,14 @@ A **Care Circle** represents the group coordinating care for one person.
 - **Then** Kindred creates a new Care Circle
 - **And** makes me its initial administrator.
 
+**Scenario: Relationship to the care recipient**
+
+- **Given** I am creating or joining a Care Circle
+- **When** I choose the care recipient's relationship to me (for example Parent or Spouse)
+- **Then** Kindred shows it beside my name in the member list.
+
+*Each member sets their own relationship. The prototype does not ask for a photo of the care recipient, to avoid storing images of someone who has not signed up.*
+
 **Scenario: Missing required information**
 
 - **Given** I am creating a Care Circle
@@ -443,7 +457,7 @@ A **Care Circle** represents the group coordinating care for one person.
 
 - **Given** a member changes an item they do not own
 - **When** the change is saved
-- **Then** the activity feed records who made the change
+- **Then** Kindred records who made the change and shows it on the item
 - **And** the current owner or proposed assignee is notified.
 
 **Scenario: Member management is limited to administrators**
@@ -458,7 +472,7 @@ A **Care Circle** represents the group coordinating care for one person.
 - **When** I leave the Care Circle
 - **Then** Kindred makes the longest-standing remaining member an administrator.
 
-*Decision: all members have equal permissions over tasks and appointments. The administrator role exists only for member management (removing members, granting administrator). A Care Circle may have several administrators.*
+*Decision: all members have equal permissions over tasks and appointments. The administrator role adds member management (removing members, granting administrator) and overdue alerts (User Story 11.5). It gives no extra power over items. A Care Circle may have several administrators.*
 
 ---
 
@@ -511,8 +525,9 @@ A **Care Circle** represents the group coordinating care for one person.
 **Scenario: View calendar**
 
 - **Given** my Care Circle contains scheduled tasks or appointments
-- **When** I open the Calendar tab
-- **Then** I can see those items organized by date and time.
+- **When** I open the **This week** tab
+- **Then** I can see those items organized by date and time
+- **And** I can move to the previous or next week.
 
 **Scenario: View confirmed ownership**
 
@@ -562,6 +577,36 @@ A **Care Circle** represents the group coordinating care for one person.
 - **Given** an appointment has been created
 - **When** another member opens the Care Circle calendar
 - **Then** they can see the appointment and its assignment status.
+
+---
+
+### User Story 4.3 — See Where an Appointment Is
+
+**As a** caregiver,
+**I want to** see an appointment's location on a map,
+**so that** I know where I'm going without copying the address into another app.
+
+**Acceptance Criteria**
+
+**Scenario: Map preview**
+
+- **Given** an appointment has a location
+- **When** I create it or open it
+- **Then** Kindred shows a small map of that location.
+
+**Scenario: Directions**
+
+- **Given** I am viewing the map
+- **When** I tap it
+- **Then** my phone's maps app opens with directions to the location.
+
+**Scenario: Location not found**
+
+- **Given** the location can't be found on a map (for example "Dad's house")
+- **When** I view the appointment
+- **Then** Kindred shows the location as text without a map.
+
+*Prototype: the map comes from a third-party map service, which receives the location text but nothing else about the appointment (see [ADR.md](ADR.md), ADR-017).*
 
 ---
 
@@ -1260,33 +1305,45 @@ Sharing uses the phone's standard share sheet with pre-filled text and a Kindred
 
 ---
 
-## 20. Epic 10 — Appointment Updates and Knowledge Sharing
+## 20. Epic 10 — Family Updates and Knowledge Sharing
 
-### User Story 10.1 — Add an Appointment Update
+Updates are short reports of what happened ("Back from cardiology, next visit in six weeks"). They sit in one **Updates** thread for the Care Circle. The thread is not a chat: the family's messaging app stays the place for conversation (§7.2).
 
-**As a** caregiver who attended an appointment,
-**I want to** record what happened,
+### User Story 10.1 — Post an Update
+
+**As a** caregiver,
+**I want to** record what happened, for example after an appointment or a visit,
 **so that** knowledge is not lost or held by one family member.
 
 **Acceptance Criteria**
 
-**Scenario: Add update**
+**Scenario: Post update**
 
-- **Given** an appointment exists
-- **When** I select **Add update**
-- **Then** I can enter a written summary.
+- **Given** I am in a Care Circle
+- **When** I select **Update or note** from Quick add, or **Add update** on an item
+- **Then** I can write an update
+- **And** optionally link it to one task or appointment.
 
 **Scenario: Family views update**
 
-- **Given** I save an update
-- **When** another Care Circle member opens the appointment
-- **Then** they can read the update.
+- **Given** I post an update
+- **When** another Care Circle member opens **Updates**
+- **Then** they see it at the top of the thread with its linked item
+- **And** if it is linked, they also see it on that task or appointment.
+
+**Scenario: Family is told**
+
+- **Given** I post an update
+- **When** it is saved
+- **Then** the other members are notified according to their preferences (User Story 11.4).
 
 **Scenario: Protect update details in notifications**
 
 - **Given** an update is saved
 - **When** notifications are sent
 - **Then** push notifications do not expose sensitive details on the lock screen.
+
+*Prototype: updates are text only. Voice notes and @mentions are later ideas (§32).*
 
 ---
 
@@ -1309,6 +1366,43 @@ Sharing uses the phone's standard share sheet with pre-filled text and a Kindred
 - **Given** I save the follow-up task
 - **When** another Care Circle member views it
 - **Then** they can see its due date, assignment status, owner if confirmed, and linked appointment.
+
+---
+
+### User Story 10.3 — Weekly Summary
+
+**As a** caregiver,
+**I want to** read a short summary of the week,
+**so that** I can catch up without scrolling through every item and update.
+
+**Acceptance Criteria**
+
+**Scenario: What happened**
+
+- **Given** it is Sunday morning
+- **When** I open **Summary**
+- **Then** I see what was completed in the past week and by whom, and which items were missed or had no owner.
+
+**Scenario: What's still open**
+
+- **Given** some items are overdue or need someone
+- **When** I view the summary
+- **Then** Kindred lists them with a one-tap action (for example **Claim** or **Reassign**).
+
+**Scenario: Share the summary**
+
+- **Given** I am viewing the summary
+- **When** I select **Share with family**
+- **Then** my messaging app opens with the summary text and a Kindred link
+- **And** the text names items and people only; update text is never included (as in User Story 9.5).
+
+**Scenario: No medical interpretation**
+
+- **Given** updates mention health information
+- **When** the summary is made
+- **Then** it reports only who did what and what is open, and never interprets health information or gives advice.
+
+*Decision: the summary is built from fixed sentence templates over the week's items and updates, not written by AI. This costs nothing and sends no care information to another company. AI-written summaries remain a later idea (§32).*
 
 ---
 
@@ -1407,13 +1501,14 @@ Notification categories and defaults:
 | Category | Includes | Default |
 | --- | --- | --- |
 | Requests | Assignment requests, coverage requests, re-confirmation requests | On |
-| Reminders | Upcoming responsibilities I own, unanswered assignments near due time | On |
+| Reminders and overdue | Upcoming responsibilities I own, unanswered assignments near due time, overdue alerts (User Story 11.5) | On |
 | Changes | Changes, reassignments, and cancellations affecting items I own or was asked to take | On |
-| Appointment updates | Updates added to appointments in my Care Circle | On |
+| Updates | New posts in Updates (Epic 10) | On |
+| Weekly summary | The summary is ready (User Story 10.3) | On |
 | Comments | Comments on items I own or commented on | On |
-| Activity | Other members completing or creating items | Off |
+| Everything else | Other members completing or creating items | Off |
 
-All categories can be turned off for push. Requests always remain visible in the app regardless of this setting.
+All categories can be turned off for push. Everything still appears in the in-app notification list (User Story 11.6), and requests always remain visible on Home.
 
 **Scenario: In-app indicator remains even when notifications are disabled**
 
@@ -1423,7 +1518,74 @@ All categories can be turned off for push. Requests always remain visible in the
 
 ---
 
+### User Story 11.5 — Overdue Alerts
+
+**As a** Care Circle administrator,
+**I want to** know when something has gone overdue,
+**so that** a missed responsibility is picked up rather than silently forgotten.
+
+**Acceptance Criteria**
+
+**Scenario: Item goes overdue**
+
+- **Given** a task or appointment is still open after its due time
+- **When** it becomes overdue
+- **Then** Kindred notifies its owner (or proposed assignee, if not yet accepted) and every administrator, once.
+
+**Scenario: Nothing happens automatically**
+
+- **Given** an item is overdue
+- **When** I open it
+- **Then** Kindred shows who was told and offers **Take it**, ask someone else, ask the whole circle, **Mark done** or change the due date
+- **And** ownership does not change until someone acts.
+
+**Scenario: Item handled before it goes overdue**
+
+- **Given** an item is completed, cancelled or rescheduled before its due time
+- **When** the original due time passes
+- **Then** no overdue alert is sent.
+
+*Items that need someone and have no owner or proposed assignee alert only the administrators.*
+
+---
+
+### User Story 11.6 — In-App Notification List
+
+**As a** caregiver,
+**I want to** see the notifications I've missed in one list,
+**so that** I can catch up even if push notifications are off or didn't reach me.
+
+**Acceptance Criteria**
+
+**Scenario: See what I missed**
+
+- **Given** Kindred has notified me about something
+- **When** I tap the bell on Home
+- **Then** I see my notifications, newest first, with unread ones marked.
+
+**Scenario: Open from the list**
+
+- **Given** a notification relates to an item
+- **When** I tap it
+- **Then** Kindred opens that item and marks the notification read.
+
+**Scenario: Mark all read**
+
+- **Given** I have unread notifications
+- **When** I select **Mark all read**
+- **Then** the unread marks and the badge on the bell clear.
+
+**Scenario: Push turned off**
+
+- **Given** I have turned off push for a category, or haven't added Kindred to my Home Screen
+- **When** Kindred would notify me
+- **Then** the notification still appears in the list.
+
+---
+
 ## 22. Epic 12 — Activity Feed
+
+*Prototype: replaced by the **Updates** tab (Epic 10) and the weekly summary (User Story 10.3). Kindred still records every change and who made it, which shows on each item and feeds the success metrics (§30), but there is no separate activity screen. The story below is kept for a later release.*
 
 ### User Story 12.1 — See What Changed
 
@@ -1466,6 +1628,8 @@ Activity may include:
 Kindred should not build a full chat platform during the prototype.
 
 Comments should exist where they help clarify a specific task or appointment.
+
+*Prototype: updates linked to an item already show on that item (Epic 10), which covers most of this need. Comments stay P1.*
 
 ### User Story 13.1 — Comment on a Task
 
@@ -1555,7 +1719,7 @@ Only authorized Care Circle members may view tasks, appointments, updates, comme
 
 ### BR-08 — Equal Member Permissions
 
-Every Care Circle member may create, edit, cancel, assign, reassign, and withdraw assignments on any task or appointment in that circle. Administrators additionally manage membership (removing members and granting the administrator role). Every change is attributed in the activity feed.
+Every Care Circle member may create, edit, cancel, assign, reassign, and withdraw assignments on any task or appointment in that circle. Administrators additionally manage membership (removing members and granting the administrator role) and receive overdue alerts (User Story 11.5). Every change is attributed to the member who made it.
 
 ---
 
@@ -1632,7 +1796,9 @@ Because caregiving information may be sensitive:
 - Push notifications should minimize sensitive lock-screen information.
 - Appointment notes should only be accessible to authorized Care Circle members.
 - Messaging app shares should avoid automatically exposing sensitive appointment notes.
-- Kindred should collect only the minimum information needed to coordinate care.
+- Kindred should collect only the minimum information needed to coordinate care. The prototype does not store photos of the care recipient.
+- The map service sees only an appointment's location text, never its title, notes or people (User Story 4.3).
+- The weekly summary is made inside Kindred; no care information is sent to an AI service (User Story 10.3).
 
 ---
 
@@ -1647,11 +1813,12 @@ Kindred should prioritize **actionable notifications**, not activity volume.
 - Someone requested coverage.
 - You accepted or received a responsibility through a handoff.
 - An appointment you own changed.
-- An appointment update relevant to you was added.
+- An update was posted.
+- Something you own, or something in a circle you administer, is overdue.
 
 **Lower-Priority Activity**
 
-Events such as another caregiver completing their own routine task should generally appear in the activity feed instead of generating a push notification.
+Events such as another caregiver completing their own routine task should generally appear in the in-app notification list and the weekly summary instead of generating a push notification.
 
 ---
 
@@ -1762,7 +1929,7 @@ Measure:
 - Tasks completed.
 - Percentage of responsibilities with confirmed owners.
 - Appointments created.
-- Appointment updates added.
+- Updates posted.
 - Coverage requests created.
 - Coverage requests accepted.
 - Percentage of coverage requests resolved.
@@ -1828,14 +1995,18 @@ Through interviews and product surveys, determine whether Kindred helps users ex
 | P0 | Share pending assignments to messaging app |
 | P0 | Share coverage requests to messaging app |
 | P0 | Share appointments to messaging app |
-| P0 | Appointment notes/updates |
+| P0 | Updates thread (updates optionally linked to a task or appointment) |
+| P0 | Care recipient's relationship to each member |
 | P0 | Task and appointment reminders |
 | P0 | Recurring tasks and appointments (daily/weekly/monthly) |
 | P0 | Withdraw, reassign, and reschedule assignments |
 | P0 | Account deletion and data export |
 | P1 | Suggested caregivers based on availability |
 | P1 | Suggested appointment times |
-| P1 | Activity feed |
+| P1 | Weekly summary, built from templates (no AI) |
+| P1 | In-app notification list |
+| P1 | Overdue alerts to the owner and administrators |
+| P1 | Map preview for appointment locations |
 | P1 | Task comments |
 | P1 | Share appointment updates to messaging app |
 | P1 | French language support (required before availability in Quebec) |
@@ -1844,7 +2015,12 @@ Through interviews and product surveys, determine whether Kindred helps users ex
 | P2 | Belonging to more than one Care Circle |
 | P2 | Advanced recurrence rules (e.g., every second Tuesday) |
 | P2 | Deeper messaging app automation where technically feasible |
-| P2 | AI-generated appointment summaries |
+| P2 | Activity feed as its own screen (replaced in the prototype by Updates and the weekly summary) |
+| P2 | AI-generated appointment and weekly summaries |
+| P2 | Voice notes in updates |
+| P2 | @mentions in updates |
+| P2 | Photo of the care recipient |
+| P2 | Wide layout for laptops and tablets |
 | P2 | Contribution/fairness insights |
 | P2 | AI caregiving assistant |
 | P2 | Configurable coverage-request limit as a Care Circle setting (replaces the fixed prototype limit of 2 per caregiver per month; see BR-01) |
@@ -1941,3 +2117,12 @@ That supports the central product thesis:
 | 2026-09-25 | Technical and non-functional requirements are out of scope for the PRD; technical decisions are recorded in the ADR | [ADR.md](ADR.md) |
 | 2026-09-25 | The buildathon prototype is a mobile web app installed to the Home Screen; native iOS/Android apps follow from the same codebase | §1, User Story 1.2, [ADR.md](ADR.md) ADR-001, ADR-002 |
 | 2026-09-25 | Prototype calendar integration: accepted items reach personal calendars through a subscribed Kindred calendar link; availability comes from Google Calendar free/busy only | User Stories 5.1–5.2, [ADR.md](ADR.md) ADR-008 |
+| 2026-09-28 | Keep explicit Accept / Decline; the wireframes add screens for it | BR-02, User Story 7.3, [wireframes](wireframes/README.md) |
+| 2026-09-28 | Navigation: Home, This week, Updates and Summary tabs; Care Circle and settings open from the member's initial | §9 |
+| 2026-09-28 | Updates become one Care Circle thread; each update can link to any task or appointment; no @mentions or voice notes in the prototype. This replaces the separate activity feed | Epics 10 and 12, §32 |
+| 2026-09-28 | Weekly summary, built from templates with no AI | User Story 10.3, §26 |
+| 2026-09-28 | Overdue alerts go to the owner and every administrator | User Story 11.5, User Story 2.2, BR-08 |
+| 2026-09-28 | In-app notification list alongside web push | User Story 11.6 |
+| 2026-09-28 | Appointments show an embedded map of their location | User Story 4.3, §26, [ADR.md](ADR.md) ADR-017 |
+| 2026-09-28 | Each member records the care recipient's relationship to them; no photo of the care recipient | User Story 2.1, §26 |
+| 2026-09-28 | Wide (laptop) layout is later; the prototype stays phone-only | §32 |

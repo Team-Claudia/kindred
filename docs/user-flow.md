@@ -1,6 +1,6 @@
 # Kindred — Prototype User Flow
 
-Derived from [PRD.md](PRD.md). Each group in the chart is labelled with the PRD epics and business rules it covers; features marked **(P1)** are post-P0 per §32 Prototype Prioritization.
+Derived from [PRD.md](PRD.md). Each group in the chart is labelled with the PRD epics and business rules it covers; features marked **(P1)** are post-P0 per §32 Prototype Prioritization. The screens for each step are in [wireframes/README.md](wireframes/README.md).
 
 ## Key
 
@@ -43,21 +43,23 @@ flowchart TD
         connectCal -- No --> unknown["Availability shown as Unknown"]
     end
 
-    subgraph nav["App tabs · §9, Epics 1, 4, 12"]
+    subgraph nav["App tabs · §9, Epics 1, 4, 10, 11"]
         tabs["Bottom navigation"]
-        tabs --> home["Home<br/>today, awaiting me, needs someone,<br/>coverage requests"]
-        tabs --> calTab["Calendar tab<br/>items by date with owner + status"]
-        tabs --> tasksTab["Tasks tab<br/>mine, awaiting me, all, completed"]
-        tabs --> circleTab["Care Circle tab"]
-        home --> feed["Activity feed (P1)<br/>every change attributed"]
-        circleTab --> settings["Members, invitations,<br/>notification preferences"]
+        tabs --> home["Home<br/>needs my answer, today,<br/>needs someone, latest update"]
+        tabs --> weekTab["This week tab<br/>items by day with owner + status"]
+        tabs --> updatesTab["Updates tab<br/>family updates, newest first"]
+        tabs --> summaryTab["Summary tab (P1)<br/>weekly: what happened, what's open"]
+        home --> bell["Notification list (P1)<br/>everything I was told, unread marked"]
+        home --> circleTab["Care Circle and settings<br/>(from my initial)"]
+        circleTab --> settings["Members, invite link,<br/>notification preferences"]
         circleTab --> syncPrefs[/"Calendar sync preferences<br/>(appointments on, tasks off by default)"/]
         circleTab --> disconnect[/"Disconnect calendar"/]
         circleTab --> account["Account: export data<br/>or delete account"]
+        summaryTab -.-> shareSummary[["Share summary<br/>to messaging app"]]
     end
 
     subgraph assignSG["Create & assign · Epics 4, 6, 7 · BR-10"]
-        create["Create task or appointment<br/>(title, date, time)"]
+        create["Create task or appointment<br/>(title, date, time;<br/>appointments show a map, P1)"]
         create --> repeat{"Repeat?"}
         repeat -- "Daily / weekly / monthly" --> series["Series of occurrences,<br/>each owned separately"]
         repeat -- No --> checkAvail
@@ -100,9 +102,10 @@ flowchart TD
         assigned --> sync[/"Sync accepted item to<br/>owner's connected calendar"/]
         sync --> remind>"Reminder before due time"]
         remind --> canDo{"Can owner still do it?"}
+        remind -. "still open after due time" .-> overdue>"Overdue alert (P1):<br/>owner + administrators"]
         canDo -- Yes --> doIt["Complete task /<br/>attend appointment"]
         doIt --> isAppt{"Appointment?"}
-        isAppt -- Yes --> update["Add appointment update"]
+        isAppt -- Yes --> update["Post update<br/>(linked to the appointment)"]
         update --> updateNotif>"Family notified<br/>(no lock-screen details)"]
         update -.-> shareUpdate[["Share 'update available'<br/>link to messaging app (P1)"]]
         update --> followUp{"Follow-up needed?"}
@@ -127,17 +130,20 @@ flowchart TD
     freeBusy --> tabs
     unknown --> tabs
     inCircle -- "Yes" --> tabs
-    calTab --> create
-    tasksTab --> create
-    calTab --> detail
-    tasksTab --> detail
-    feed -. "tap item" .-> detail
+    home -- "Quick add" --> create
+    weekTab --> create
+    weekTab --> detail
+    home --> detail
+    bell -. "tap item" .-> detail
+    updatesTab -. "tap linked item" .-> detail
     withdrawn --> needsSomeone
     reassigned --> awaiting
     reconfirm --> awaiting
     blocked -.-> detail
     transfer --> assigned
-    completed --> feed
+    completed -.-> summaryTab
+    overdue -.-> detail
+    update --> updatesTab
     account -. "delete: owned items" .-> needsSomeone
 
     classDef state fill:#e0e7ff,stroke:#4f46e5,color:#1e1b4b
@@ -145,27 +151,27 @@ flowchart TD
     classDef cal fill:#fef3c7,stroke:#d97706,color:#78350f
     classDef notif fill:#fce7f3,stroke:#db2777,color:#831843
     class needsSomeone,awaiting,assigned,needsCoverage,completed,cancelled state
-    class invite,shareAssign,shareItem,shareUpdate,shareCov msg
+    class invite,shareAssign,shareItem,shareUpdate,shareCov,shareSummary msg
     class freeBusy,syncPrefs,disconnect,checkAvail,suggest,sync,transfer cal
-    class notifyAssignee,nearDue,declined,withdrawn,reassigned,reconfirm,edited,commentNotif,remind,updateNotif,notifyCov notif
+    class notifyAssignee,nearDue,declined,withdrawn,reassigned,reconfirm,edited,commentNotif,remind,updateNotif,notifyCov,overdue notif
 ```
 
 ## PRD coverage
 
 | PRD section | Where it appears |
 | --- | --- |
-| Epic 1 — Accounts (sign-in, export, deletion) | Onboarding, Care Circle tab |
+| Epic 1 — Accounts (sign-in, export, deletion) | Onboarding, Care Circle and settings |
 | Epic 2 — Care Circles, equal permissions | Onboarding, Change an item |
-| Epic 3 — Invitations | Onboarding, Care Circle tab |
-| Epic 4 — Shared calendar | Calendar tab, Create & assign |
-| Epic 5 — Calendar integration | Onboarding, Care Circle tab, Do the work, Coverage |
+| Epic 3 — Invitations | Onboarding, Care Circle and settings |
+| Epic 4 — Shared calendar, map preview | This week tab, Create & assign |
+| Epic 5 — Calendar integration | Onboarding, Care Circle and settings, Do the work, Coverage |
 | Epic 6 — Availability | Onboarding, Create & assign |
 | Epic 7 — Tasks, assignment, recurrence, changes | Create & assign, Change an item, Do the work |
 | Epic 8 — Coverage | Coverage & handoffs |
 | Epic 9 — Messaging app sharing | Green nodes throughout |
-| Epic 10 — Appointment updates | Do the work |
-| Epic 11 — Notifications | Pink nodes throughout, Care Circle tab |
-| Epic 12 — Activity feed | App tabs |
+| Epic 10 — Updates and weekly summary | Updates tab, Summary tab, Do the work |
+| Epic 11 — Notifications, overdue alerts, notification list | Pink nodes throughout, notification list, Care Circle and settings |
+| Epic 12 — Activity feed (replaced by Updates and the summary) | App tabs |
 | Epic 13 — Comments | Change an item |
 | §17 — Assignment states and transitions | Blue rounded nodes, Change an item |
 | BR-01 — Coverage limit | Coverage & handoffs |
