@@ -1,6 +1,6 @@
-# Kindred — MVP User Flow
+# Kindred — Prototype User Flow
 
-Derived from [PRD.md](PRD.md). Each group in the chart is labelled with the PRD epics and business rules it covers; features marked **(P1)** are post-P0 per §32 MVP Prioritization.
+Derived from [PRD.md](PRD.md). Each group in the chart is labelled with the PRD epics and business rules it covers; features marked **(P1)** are post-P0 per §32 Prototype Prioritization.
 
 ## Key
 

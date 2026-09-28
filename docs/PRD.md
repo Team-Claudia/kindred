@@ -4,7 +4,7 @@
 
 **Product name:** Kindred
 **Platform:** Mobile app — iOS/Android
-**Product stage:** MVP / validation stage — first delivered as a working prototype for the productBC buildathon (3-week build). The prototype runs as a mobile web app that members add to their phone's Home Screen; native iOS/Android apps follow from the same codebase (see [ADR.md](ADR.md), ADR-001 and ADR-002)
+**Product stage:** Prototype — a working prototype built for the productBC buildathon (3-week build). It runs as a mobile web app that members add to their phone's Home Screen; native iOS/Android apps follow from the same codebase (see [ADR.md](ADR.md), ADR-001 and ADR-002)
 **Launch market:** Canada
 **Primary user:** Working adults who share unpaid caregiving responsibilities for an aging parent, spouse, or other family member with siblings, partners, or relatives.
 
@@ -61,7 +61,7 @@ Kindred should help families:
 
 ## 4. Non-Goals
 
-The MVP will not attempt to:
+The prototype will not attempt to:
 
 - Diagnose medical conditions.
 - Provide medical advice.
@@ -235,9 +235,9 @@ The experience should remain simple enough for family members with different lev
 
 ---
 
-## 8. MVP Scope
+## 8. Prototype Scope
 
-The MVP will include:
+The prototype will include:
 
 1. Account creation and authentication.
 2. Family Care Circles.
@@ -359,7 +359,7 @@ Shows:
 - **When** I open the link, install the app, and sign in
 - **Then** Kindred still adds me to the Care Circle from the original invitation.
 
-*Assumption: passwordless methods only for MVP, to reduce support load and suit less technically confident family members. Sign in with Apple is required by the App Store whenever Sign in with Google is offered.*
+*Assumption: passwordless methods only for the prototype, to reduce support load and suit less technically confident family members. Sign in with Apple is required by the App Store whenever Sign in with Google is offered.*
 
 *Prototype: the web app offers Sign in with Google and the email one-time code. Sign in with Apple and the "invitation link before the app is installed" scenario arrive with the native apps. In the prototype, the invitation link opens the web app directly, so there is nothing to install first (see [ADR.md](ADR.md), ADR-004 and ADR-011).*
 
@@ -914,7 +914,7 @@ Because the caregiver is voluntarily claiming the task themselves, a second acce
 - **When** I request coverage
 - **Then** the request applies to one occurrence and counts as one coverage request.
 
-*Decision: MVP supports simple repeats only (daily, weekly, monthly). Rules such as "every second Tuesday" are out of scope.*
+*Decision: the prototype supports simple repeats only (daily, weekly, monthly). Rules such as "every second Tuesday" are out of scope.*
 
 ---
 
@@ -1131,7 +1131,7 @@ Because a caregiver is voluntarily selecting **I can do it**, no additional acce
 
 ## 19. Epic 9 — Messaging App Integration
 
-For MVP, messaging app integration means **sharing Kindred information into the family's messaging app (e.g., WhatsApp) and linking family members back into the correct Kindred item**.
+For the prototype, messaging app integration means **sharing Kindred information into the family's messaging app (e.g., WhatsApp) and linking family members back into the correct Kindred item**.
 
 Sharing uses the phone's standard share sheet with pre-filled text and a Kindred link. There is no direct integration with any messaging app's API, and Kindred does not need to read users' private messaging app conversations.
 
@@ -1463,7 +1463,7 @@ Activity may include:
 
 ## 23. Epic 13 — Contextual Comments
 
-Kindred should not build a full chat platform during MVP.
+Kindred should not build a full chat platform during the prototype.
 
 Comments should exist where they help clarify a specific task or appointment.
 
@@ -1505,7 +1505,7 @@ The limit:
 
 After reaching the limit, users may still communicate with family members or directly reassign responsibilities where appropriate, but cannot initiate another formal **Need coverage** request until the next calendar month.
 
-This fixed limit of 2 is an MVP simplification. See **32. MVP Prioritization** for the plan to make this limit configurable per Care Circle in a future release.
+This fixed limit of 2 is a prototype simplification. See **32. Prototype Prioritization** for the plan to make this limit configurable per Care Circle in a future release.
 
 ---
 
@@ -1543,7 +1543,7 @@ A task or appointment assigned by someone else should not be treated as a confir
 
 ### BR-06 — Messaging App as Communication Channel
 
-Kindred may generate structured content and links for sharing through the family's messaging app (e.g., WhatsApp) via the phone's share sheet, but does not integrate with messaging app APIs or require access to users' private messaging conversation history for MVP.
+Kindred may generate structured content and links for sharing through the family's messaging app (e.g., WhatsApp) via the phone's share sheet, but does not integrate with messaging app APIs or require access to users' private messaging conversation history for the prototype.
 
 ---
 
@@ -1561,7 +1561,7 @@ Every Care Circle member may create, edit, cancel, assign, reassign, and withdra
 
 ### BR-09 — Single Time Zone
 
-For MVP, Kindred assumes all members of a Care Circle are in the same time zone. Items, reminders, availability, and the monthly coverage-request reset (BR-01) all use the device's local time zone. Support for members in different time zones is deferred.
+For the prototype, Kindred assumes all members of a Care Circle are in the same time zone. Items, reminders, availability, and the monthly coverage-request reset (BR-01) all use the device's local time zone. Support for members in different time zones is deferred.
 
 ---
 
@@ -1579,7 +1579,7 @@ If anyone other than the owner changes the date or time of an **Assigned** item,
 
 ### BR-12 — One Care Circle per User
 
-For MVP, each user belongs to exactly one Care Circle. A user who already belongs to a Care Circle cannot create or join another; if they open an invitation to a different Care Circle, Kindred explains that they must leave their current one first.
+For the prototype, each user belongs to exactly one Care Circle. A user who already belongs to a Care Circle cannot create or join another; if they open an invitation to a different Care Circle, Kindred explains that they must leave their current one first.
 
 ---
 
@@ -1655,7 +1655,7 @@ Events such as another caregiver completing their own routine task should genera
 
 ---
 
-## 28. Key MVP User Flow — Normal Coordination
+## 28. Key Prototype User Flow — Normal Coordination
 
 Maya creates **Mom's Care Circle** and invites her siblings through her messaging app.
 
@@ -1699,7 +1699,7 @@ The family now has a clear record of:
 
 ---
 
-## 29. Key MVP User Flow — Coverage
+## 29. Key Prototype User Flow — Coverage
 
 Maya has previously accepted responsibility for driving Mom to an appointment.
 
@@ -1804,7 +1804,7 @@ Through interviews and product surveys, determine whether Kindred helps users ex
 
 ---
 
-## 32. MVP Prioritization
+## 32. Prototype Prioritization
 
 | Priority | Capability |
 | --- | --- |
@@ -1847,7 +1847,7 @@ Through interviews and product surveys, determine whether Kindred helps users ex
 | P2 | AI-generated appointment summaries |
 | P2 | Contribution/fairness insights |
 | P2 | AI caregiving assistant |
-| P2 | Configurable coverage-request limit as a Care Circle setting (replaces the fixed MVP limit of 2 per caregiver per month; see BR-01) |
+| P2 | Configurable coverage-request limit as a Care Circle setting (replaces the fixed prototype limit of 2 per caregiver per month; see BR-01) |
 
 ---
 
@@ -1894,26 +1894,26 @@ The following remain product discovery questions:
 - How long should an assignment remain **Awaiting acceptance** before Kindred reminds the assignee?
 - Should the assigner be able to withdraw a pending assignment? **Decided: yes, any member can (BR-08, User Story 7.8).**
 - Should an assigner be able to send the same responsibility to multiple potential caregivers, or only one person at a time?
-- What happens if an assignment remains unanswered close to its due date? **Current MVP assumption: assignee and assigner are reminded 24 hours before (User Story 7.8).**
+- What happens if an assignment remains unanswered close to its due date? **Current prototype assumption: assignee and assigner are reminded 24 hours before (User Story 7.8).**
 - Should declined assignments include an optional reason?
-- Should accepted tasks automatically sync to the user's calendar, or only appointments? **Current MVP assumption: appointments by default; tasks are opt-in (User Story 5.2).**
+- Should accepted tasks automatically sync to the user's calendar, or only appointments? **Current prototype assumption: appointments by default; tasks are opt-in (User Story 5.2).**
 - Is free/busy information sufficient for effective coordination?
 - How frequently will users use messaging app sharing?
 - Does the care recipient ever need their own Kindred account?
 - Should appointment updates use a structured template or free text?
 - How should Kindred support less technically confident family members?
-- Is two coverage requests per month the right limit, and should this be configurable per Care Circle rather than fixed for all users? **Current MVP assumption: fixed at 2, with per-Care-Circle configurability planned as a later-phase item (see MVP Prioritization).**
-- Should unused coverage requests roll over? **Current MVP assumption: no.**
-- Should other caregivers see someone's remaining monthly coverage allowance? **Current MVP assumption: no.**
-- With Google Calendar as the only P0 calendar, iPhone users on iCloud Calendar will show as **Unknown**. Should MVP read on-device calendars (iOS EventKit / Android Calendar Provider) to cover them? Answered in the ADR (ADR-008): not possible for the web prototype; revisit with the native app.
+- Is two coverage requests per month the right limit, and should this be configurable per Care Circle rather than fixed for all users? **Current prototype assumption: fixed at 2, with per-Care-Circle configurability planned as a later-phase item (see Prototype Prioritization).**
+- Should unused coverage requests roll over? **Current prototype assumption: no.**
+- Should other caregivers see someone's remaining monthly coverage allowance? **Current prototype assumption: no.**
+- With Google Calendar as the only P0 calendar, iPhone users on iCloud Calendar will show as **Unknown**. Should the prototype read on-device calendars (iOS EventKit / Android Calendar Provider) to cover them? Answered in the ADR (ADR-008): not possible for the web prototype; revisit with the native app.
 - Should shared content (updates, comments) be kept as "Former member" when an account is deleted, or removed? Needs privacy/legal review.
-- When is French language support needed, and does the MVP launch include Quebec?
+- When is French language support needed, and does the launch include Quebec?
 
 ---
 
-## 36. Definition of MVP Success
+## 36. Definition of Prototype Success
 
-Kindred's MVP is successful if families are not simply creating accounts but **changing how responsibility is coordinated**.
+The Kindred prototype is successful if families are not simply creating accounts but **changing how responsibility is coordinated**.
 
 The strongest early signal would be Care Circles in which multiple family members repeatedly:
 
@@ -1933,11 +1933,11 @@ That supports the central product thesis:
 
 | Date | Decision | Where it is applied |
 | --- | --- | --- |
-| 2026-09-25 | MVP launch market is Canada | §1 |
+| 2026-09-25 | Launch market is Canada | §1 |
 | 2026-09-25 | All Care Circle members have equal permissions over tasks and appointments; administrators only manage membership | User Story 2.2, BR-08 |
-| 2026-09-25 | MVP supports simple recurrence (daily, weekly, monthly) with each occurrence owned independently | User Stories 7.6–7.7, BR-10 |
-| 2026-09-25 | MVP assumes all members of a Care Circle share one time zone | BR-09 |
-| 2026-09-25 | Each user belongs to exactly one Care Circle in MVP | BR-12 |
+| 2026-09-25 | The prototype supports simple recurrence (daily, weekly, monthly) with each occurrence owned independently | User Stories 7.6–7.7, BR-10 |
+| 2026-09-25 | The prototype assumes all members of a Care Circle share one time zone | BR-09 |
+| 2026-09-25 | Each user belongs to exactly one Care Circle in the prototype | BR-12 |
 | 2026-09-25 | Technical and non-functional requirements are out of scope for the PRD; technical decisions are recorded in the ADR | [ADR.md](ADR.md) |
 | 2026-09-25 | The buildathon prototype is a mobile web app installed to the Home Screen; native iOS/Android apps follow from the same codebase | §1, User Story 1.2, [ADR.md](ADR.md) ADR-001, ADR-002 |
 | 2026-09-25 | Prototype calendar integration: accepted items reach personal calendars through a subscribed Kindred calendar link; availability comes from Google Calendar free/busy only | User Stories 5.1–5.2, [ADR.md](ADR.md) ADR-008 |
