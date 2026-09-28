@@ -55,9 +55,9 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 | Capability | Simplification | Cut order |
 | --- | --- | --- |
 | **This week** tab | An agenda list grouped by day with previous/next week and a filter by member, not a month grid | Keep (it's a list query) |
-| Map preview (P1) | Geoapify via the `static-map` function; geocoded once per location (ADR-017). If cut, the location shows as text | Cut 1st |
-| Weekly summary (P1) | `weekly_summary()` SQL function read on demand, fixed sentences, Sunday notification (ADR-016). If cut, the Summary tab is hidden | Cut 2nd |
-| In-app notification list (P1) | Bell on Home, `notifications` table written by the outbox worker, mark all read (ADR-010) | Cut 3rd |
+| Map preview (P1) | Wireframes 18, 23. Geoapify via the `static-map` function; geocoded once per location (ADR-017). If cut, the location shows as text | Cut 1st |
+| Weekly summary (P1) | Wireframe 14. `weekly_summary()` SQL function read on demand, fixed sentences, Sunday notification (ADR-016). If cut, the Summary tab is hidden | Cut 2nd |
+| In-app notification list (P1) | Wireframe 29. Bell on Home, `notifications` table written by the outbox worker, mark all read (ADR-010) | Cut 3rd |
 | Google Calendar connect + free/busy | One "Who's free?" check for the chosen slot in the create sheet. If cut, everyone shows **Unknown** | Cut 4th |
 | Reminders and overdue alerts | One fixed lead time (appointments 2 h, tasks 9 am on the due day); overdue alert to owner and admins at the due time; both re-checked at send (ADR-010). Overdue alerts are P1 and can be cut on their own | Cut 5th |
 | Recurrence | Daily / weekly / monthly create; edits apply to **this occurrence only** | "This and future" edits are not built |
@@ -234,26 +234,26 @@ Phase 0 runs in one session, in order: everything after it builds on the scaffol
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
 | 1.1 | **Sign-in** (wireframes 01–03): `profiles` trigger on `auth.users`; sign-in screen with "Continue with Google" first, "Try the demo" (wired up in 4.2), then "Email me a code"; auth redirect URLs for production and previews (§8.3) | 1.2, 1.3, 1.4 | Google and email code both work on an iPhone |
-| 1.2 | **Circles and invites**: `current_circle_id()` and RLS policies; `create_circle` (with relationship), `create_invite`, `join_circle` (idempotent, BR-12, 14-day expiry), `leave_circle` (last-admin promotion), `remove_member`; `/welcome` (wireframes 04–06) and `/join/:code` screens; invite shared through `platform/share` | 1.1, 1.3, 1.4 | pgTAP: circle X can't read circle Y; BR-12 enforced. An invite link opened from WhatsApp joins the circle |
-| 1.3 | **App shell and install**: bottom nav (Home, This week, Updates, Summary), top bar with the bell and the member's initial, safe-area insets, 44 px targets, `StatusBadge` (text + colour per state), loading/empty/error states; PWA manifest and icons; **Add to Home Screen guide** | 1.1, 1.2, 1.4 | Installs to the Home Screen and opens full-screen at the default and largest text sizes |
-| 1.4 | **Push spike** (de-risks ADR-010 early): service worker `push` handler, `enablePush()` in standalone mode, `push_subscriptions`, and a bare Edge Function that sends a test push | 1.1, 1.2, 1.3 | A test push arrives on a Home Screen install |
+| 1.2 | **Circles and invites**: `current_circle_id()` and RLS policies; `create_circle` (with relationship), `create_invite`, `join_circle` (idempotent, BR-12, 14-day expiry), `leave_circle` (last-admin promotion), `remove_member`; `/welcome` (wireframes 04–06) and `/join/:code` (wireframes 07–08) screens; invite shared through `platform/share` | 1.1, 1.3, 1.4 | pgTAP: circle X can't read circle Y; BR-12 enforced. An invite link opened from WhatsApp joins the circle |
+| 1.3 | **App shell and install** (wireframe 09): bottom nav (Home, This week, Updates, Summary), top bar with the bell and the member's initial, safe-area insets, 44 px targets, `StatusBadge` (text + colour per state), loading/empty/error states; PWA manifest and icons; **Add to Home Screen guide** | 1.1, 1.2, 1.4 | Installs to the Home Screen and opens full-screen at the default and largest text sizes |
+| 1.4 | **Push spike** (de-risks ADR-010 early; permission screen is wireframe 10): service worker `push` handler, `enablePush()` in standalone mode, `push_subscriptions`, and a bare Edge Function that sends a test push | 1.1, 1.2, 1.3 | A test push arrives on a Home Screen install |
 
 ### 6.3 Phase 2: Core loop → M2
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
 | 2.1 | **State machine** (ADR-006): `create_item`, `assign`, `accept_assignment`, `decline_assignment`, `withdraw_assignment`, `claim`, `complete_item`, `cancel_item`, `update_item` (with BR-11), each writing `activity_events` and `outbox` rows | 2.4, 2.5 | pgTAP for every transition in PRD §17 and the concurrent-claim race |
-| 2.2 | **Create sheet and item detail** (wireframes 11–18): create/edit (kind, title, date/time, location, notes, assignee); `/i/:itemId` with the right action buttons for the viewer and state; "You don't have access" for non-members; errors mapped via `errors.ts` | 2.3 (after 2.1 is merged) | Every §17 action is reachable in one tap from item detail |
-| 2.3 | **Home and live updates** (wireframe 07): needs your answer with Accept / Decline, today, needs someone, coverage requests, latest update; Realtime channel per circle invalidating queries | 2.2 (after 2.1 is merged) | An acceptance on one phone shows on the other within a couple of seconds |
-| 2.4 | **This week tab** (wireframe 08): agenda list grouped by day, previous/next week, filter by member (Everyone · each person) | 2.1, 2.5 | The week lists items with owner and status, including Awaiting and Overdue |
+| 2.2 | **Create sheet and item detail** (wireframes 15–23): create/edit (kind, title, date/time, location, notes, assignee); `/i/:itemId` with the right action buttons for the viewer and state; "You don't have access" for non-members; errors mapped via `errors.ts` | 2.3 (after 2.1 is merged) | Every §17 action is reachable in one tap from item detail |
+| 2.3 | **Home and live updates** (wireframe 11): needs your answer with Accept / Decline, today, needs someone, coverage requests, latest update; Realtime channel per circle invalidating queries | 2.2 (after 2.1 is merged) | An acceptance on one phone shows on the other within a couple of seconds |
+| 2.4 | **This week tab** (wireframe 12): agenda list grouped by day, previous/next week, filter by member (Everyone · each person) | 2.1, 2.5 | The week lists items with owner and status, including Awaiting and Overdue |
 | 2.5 | **Local seed**: `supabase/seed.sql` with a circle, members and items in every state for development | 2.1, 2.4 | `supabase db reset` gives a usable app locally |
 
 ### 6.4 Phase 3: Coverage, sharing, push, calendar → M3
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
-| 3.1 | **Coverage**: `coverage_remaining`, `request_coverage`, `cancel_coverage`, `accept_coverage` (BR-01 per calendar month in the circle's time zone, cancelled requests included); UI with "Need coverage — N of 2 remaining this month", confirm step (≤ 2 taps), limit-reached message, "I can do it" | 3.2, 3.3, 3.4 | pgTAP: 3rd request in a month fails, resets on the 1st, a second "I can do it" gets `coverage_resolved` |
-| 3.2 | **Sharing**: share-text builders for task, assignment, coverage, appointment and invite (private notes and update text excluded, US 9.4–9.5) with Vitest tests; Share button on item detail; "Copy link" and `wa.me` fallback; `log_share` | 3.1, 3.3, 3.4 | The share sheet opens on iPhone with the right text and link |
+| 3.1 | **Coverage** (wireframes 22, 25–27): `coverage_remaining`, `request_coverage`, `cancel_coverage`, `accept_coverage` (BR-01 per calendar month in the circle's time zone, cancelled requests included); UI with "Need coverage — N of 2 remaining this month", confirm step (≤ 2 taps), limit-reached message, "I can do it" | 3.2, 3.3, 3.4 | pgTAP: 3rd request in a month fails, resets on the 1st, a second "I can do it" gets `coverage_resolved` |
+| 3.2 | **Sharing** (wireframe 24): share-text builders for task, assignment, coverage, appointment and invite (private notes and update text excluded, US 9.4–9.5) with Vitest tests; Share button on item detail; "Copy link" and `wa.me` fallback; `log_share` | 3.1, 3.3, 3.4 | The share sheet opens on iPhone with the right text and link |
 | 3.3 | **Push from the outbox**: `outbox-worker` (claim with `skip locked`, retries, generic copy per ADR-010), DB webhook + per-minute cron; `notificationclick` opens `/i/<id>`. Pushes for assignment requests, acceptances and coverage | 3.1, 3.2, 3.4 | A push reaches a Home Screen install within ~5 s of the action |
 | 3.4 | **Calendar feed**: `calendar-feed` returns `.ics` of accepted appointments (tasks if opted in), event UID = item ID, secret token per member; "Add Kindred to my calendar" opens `webcal://` | 3.1, 3.2, 3.3 | Subscribed in Apple Calendar on an iPhone and shows the accepted item |
 
@@ -261,9 +261,9 @@ Phase 0 runs in one session, in order: everything after it builds on the scaffol
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
-| 4.1 | **Updates tab and follow-up** (wireframes 09, 14): `post_update`; the Updates thread; linked updates on item detail; "Create follow-up task" from appointment detail (`follow_up_of`) | 4.2, 4.3, 4.5 | The §3 normal coordination flow runs end to end |
+| 4.1 | **Updates tab and follow-up** (wireframes 13, 19, 23): `post_update`; the Updates thread; linked updates on item detail; "Create follow-up task" from appointment detail (`follow_up_of`) | 4.2, 4.3, 4.5 | The §3 normal coordination flow runs end to end |
 | 4.2 | **Sample data and Try the demo**: sample circle seed from T1 (§8.5); `join_demo_circle()` and `reset_demo_circle()`; anonymous sign-in behind "Try the demo"; nightly pg_cron reset and anonymous-user clean-up | 4.1, 4.3, 4.5 | A new phone taps Try the demo and lands on a populated Home; `reset_demo_circle()` restores the sample circle in under a minute |
-| 4.3 | **Care Circle and settings** (wireframe 20): members with relationship (admin: remove), invite link, calendar feed link, notifications on/off, leave circle | 4.1, 4.2, 4.5 | Every item on the screen works or is hidden |
+| 4.3 | **Care Circle and settings** (wireframe 30): members with relationship (admin: remove), invite link, calendar feed link, notifications on/off, leave circle | 4.1, 4.2, 4.5 | Every item on the screen works or is hidden |
 | 4.4 | **Design-application pass**: apply the final colours, type, spacing and icons through `tokens.css`; match layouts to final screens; check WCAG 2.2 AA contrast for every state badge | Nothing: it touches every screen, so run it alone once the other Phase 4 screens are merged | Screens match the designs |
 | 4.5 | **Tier 2, as time allows** (§2), built in this order: Google connect + free/busy → reminders and overdue alerts → recurrence → withdraw/reassign/reschedule UI → notification preferences → account export/delete → in-app notification list → weekly summary → map preview. When time runs short, cut from the end of this list first. Each item is its own task | 4.1, 4.2, 4.3, and each other | Whatever isn't done by the freeze is cut |
 | 4.6 | **Production check**: work through the deployment checklist (§8.4) | — | Checklist complete |
@@ -408,7 +408,7 @@ Designs arrive as work in progress. Layout and flow changes are expensive late o
 
 | Needed before | Design delivers | Why |
 | --- | --- | --- |
-| **Phase 2** | Screen structure (wireframes) for Home, item detail, create sheet, assign/accept, coverage, onboarding | Layout and flow drive the Phase 2 and 3 screens. **Delivered 2026-09-28** in [wireframes/](wireframes/README.md), except coverage and the other screens listed there under "Still without a screen" |
+| **Phase 2** | Screen structure (wireframes) for Home, item detail, create sheet, assign/accept, coverage, onboarding | Layout and flow drive the Phase 2 and 3 screens. **Delivered 2026-09-28** in [wireframes/](wireframes/README.md), including coverage |
 | **Phase 2** | Status badge styles for the six states + Overdue (text + colour, AA contrast) | Used on every screen |
 | **Task 4.4** | Colours, type, spacing, icon set as tokens | Applied in the design pass |
 
@@ -437,6 +437,6 @@ Technical risks and mitigations are in ADR §6. Risks specific to this build:
 ## 11. Open items
 
 - [ ] Team email list (private; needed for the Supabase organisation so email codes reach the team).
-- [ ] Wireframes for coverage and the other screens listed under "Still without a screen" in [wireframes/README.md](wireframes/README.md), before Phase 3.
+- [ ] Team review of the wireframes, especially the screens added on 2026-09-28 (see [wireframes/README.md](wireframes/README.md)).
 - [ ] Team agrees the Tier 2 cut order now that the map, weekly summary, notification list and overdue alerts are in it (§2).
 - [ ] Confirm the reminder lead times in Tier 2.

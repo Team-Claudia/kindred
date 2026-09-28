@@ -432,12 +432,14 @@
 </section>
 
 <!-- ============ 12 New task ============ -->
-<section class="screen" id="new-task" data-h="900">
+<section class="screen" id="new-task" data-h="960">
   <div class="top center"><span class="act">Cancel</span><span class="title">New task</span><span class="act">Save</span></div>
   <div class="pad">
     <div class="mono label">Task</div>
     <div class="input">Refill blood pressure meds</div>
     <div class="row2"><div><div class="mono label">Due date</div><div class="input">Wed 24 Sep</div></div><div><div class="mono label">Time (optional)</div><div class="input">5:00 pm</div></div></div>
+    <div class="mono label">Repeat</div>
+    <div class="input">Doesn't repeat<svg class="ico caret"><use href="#i-right"/></svg></div>
     <div class="mono label">Notes</div>
     <div class="input area">Pharmacy on Fraser St. The repeat is already on file, just needs collecting.</div>
     <div class="mono label">Ask someone to do it</div>
@@ -454,12 +456,14 @@
 </section>
 
 <!-- ============ 13 New appointment ============ -->
-<section class="screen" id="new-appointment" data-h="960">
+<section class="screen" id="new-appointment" data-h="1030">
   <div class="top center"><span class="act">Cancel</span><span class="title">New appointment</span><span class="act">Save</span></div>
   <div class="pad">
     <div class="mono label">Appointment</div>
     <div class="input">Cardiology appointment</div>
     <div class="row2"><div><div class="mono label">Date</div><div class="input">Thu 25 Sep</div></div><div><div class="mono label">Start time</div><div class="input">2:00 pm</div></div></div>
+    <div class="mono label">Repeat</div>
+    <div class="input">Doesn't repeat<svg class="ico caret"><use href="#i-right"/></svg></div>
     <div class="mono label">Location</div>
     <div class="input">Riverside Clinic, 4th floor</div>
     <div class="ph" style="height:96px;margin-top:10px">MAP PREVIEW</div>
@@ -495,17 +499,19 @@
 </section>
 
 <!-- ============ 15 Assign to ============ -->
-<section class="screen" id="assign-to" data-h="844">
+<section class="screen" id="assign-to" data-h="900">
   <div class="shade"></div>
   <div class="sheet">
     <div class="grab"></div>
     <h1 style="font-size:24px">Ask someone to do this</h1>
     <p class="sub">Physio ride · Friday 9:30 am</p>
-    <div class="opt"><div class="radio"></div><div class="av lg">M</div><div><div style="font-weight:600">Maya <span class="small">· you</span></div><div class="small">2 things this week</div></div></div>
-    <div class="opt sel"><div class="radio on"></div><div class="av lg">J</div><div><div style="font-weight:600">Jonah</div><div class="small">1 thing this week, 1 overdue</div></div></div>
-    <div class="opt"><div class="radio"></div><div class="av lg">A</div><div><div style="font-weight:600">Ada</div><div class="small">1 thing this week</div></div></div>
+    <div class="mono" style="margin-top:18px">Who's free at 9:30</div>
+    <div class="opt"><div class="radio"></div><div class="av lg">M</div><div style="flex:1"><div style="font-weight:600">Maya <span class="small">· you</span></div><div class="small">2 things this week</div></div><span class="pill">Busy</span></div>
+    <div class="opt sel"><div class="radio on"></div><div class="av lg">J</div><div style="flex:1"><div style="font-weight:600">Jonah</div><div class="small">1 thing this week, 1 overdue</div></div><span class="pill strong">Free</span></div>
+    <div class="opt"><div class="radio"></div><div class="av lg">A</div><div style="flex:1"><div style="font-weight:600">Ada</div><div class="small">No calendar connected</div></div><span class="pill dash">Unknown</span></div>
     <div class="opt"><div class="radio"></div><div class="av lg q">?</div><div><div style="font-weight:600">Leave it unclaimed</div><div class="small">Stays visible to everyone until someone takes it</div></div></div>
-    <div class="note">Jonah gets a request to accept or decline. It shows as <b>Awaiting Jonah</b> until he answers.</div>
+    <p class="small" style="margin-top:10px">Free or busy comes from connected Google calendars. Nobody sees what's in them.</p>
+    <div class="note" style="margin-top:12px">Jonah gets a request to accept or decline. It shows as <b>Awaiting Jonah</b> until he answers.</div>
     <div class="btnrow" style="margin-top:18px"><div class="btn">Cancel</div><div class="btn primary" style="flex:1.3">Ask Jonah</div></div>
   </div>
 </section>
@@ -529,8 +535,8 @@
 </section>
 
 <!-- ============ 17 Task detail ============ -->
-<section class="screen" id="task-detail" data-h="980">
-  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Task</span><svg class="ico"><use href="#i-more"/></svg></div>
+<section class="screen" id="task-detail" data-h="1040">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Task</span><span style="display:flex;gap:14px"><svg class="ico"><use href="#i-share"/></svg><svg class="ico"><use href="#i-more"/></svg></span></div>
   <div class="pad">
     <div style="margin-top:20px"><span class="pill">Task</span></div>
     <h1 style="margin-top:10px">Call the pharmacy about the new dose schedule</h1>
@@ -544,7 +550,7 @@
     <div class="card"><div class="post" style="padding:0;border:0"><div class="h"><div class="av">J</div><span class="who">Jonah</span><span class="when">Yesterday</span></div><p>Pharmacy said to call after 10 am, they are short-staffed in the mornings.</p></div></div>
   </div>
   <div class="grow"></div>
-  <div class="foot"><div class="btns"><div class="btn primary"><svg class="ico"><use href="#i-check"/></svg>Mark done</div><div class="btn">Reassign</div></div></div>
+  <div class="foot"><div class="btns"><div class="btn primary"><svg class="ico"><use href="#i-check"/></svg>Mark done</div><div class="btn">Need coverage · 1 of 2 left this month</div></div><p class="small link">Reassign</p></div>
 </section>
 
 <!-- ============ 18 Overdue task ============ -->
@@ -617,6 +623,201 @@
     <div class="setrow" style="border:0"><div class="body"><div class="n">Delete my account</div><div class="small">Things you own go back to Needs someone</div></div><svg class="ico"><use href="#i-right"/></svg></div>
   </div>
   <div class="grow" style="min-height:24px"></div>
+</section>
+
+<!-- ============ Join: invite link ============ -->
+<section class="screen" id="join-invite" data-h="844">
+  <div class="pad" style="padding-top:28px;display:flex;align-items:center;gap:14px">
+    <div class="ph" style="width:36px;height:36px;border-radius:9px"></div><span style="font-weight:700;font-size:19px">Kindred</span>
+  </div>
+  <div class="pad" style="margin-top:40px">
+    <div class="mono">You're invited</div>
+    <h1 style="margin-top:10px">Maya invited you to Dad's Care Circle</h1>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:22px">
+      <div style="display:flex"><div class="av lg">M</div><div class="av lg" style="margin-left:-10px">A</div></div>
+      <span class="small" style="font-size:14.5px">Maya and Ada are already in</span>
+    </div>
+    <div class="note" style="margin-top:26px">Kindred is where the family keeps track of who's doing what for Dad: tasks, appointments and updates, in one place.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot">
+    <div class="btns"><div class="btn primary">Continue with Google</div><div class="btn">Email me a code</div></div>
+    <p class="small">Invite from Maya · works until 9 October</p>
+  </div>
+</section>
+
+<!-- ============ Join: relationship ============ -->
+<section class="screen" id="join-relationship" data-h="844">
+  <div class="top"><span class="title">Join Dad's Care Circle</span></div>
+  <div class="pad" style="margin-top:28px">
+    <h1>One last thing</h1>
+    <p class="sub">Signed in as jonah@example.com</p>
+    <div class="mono label">Your name</div>
+    <div class="input">Jonah Reyes</div>
+    <div class="mono label">Dad is your…</div>
+    <div class="input">Parent<svg class="ico caret"><use href="#i-down"/></svg></div>
+    <p class="small" style="margin-top:8px">Shown next to your name in the member list.</p>
+    <div class="check"><div class="box"></div><span>I agree to the terms of use and privacy policy.</span></div>
+    <div class="note">You can be in one Care Circle at a time. If you're already in another, Kindred asks you to leave it first.</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary">Join Dad's Care Circle</div></div>
+</section>
+
+<!-- ============ Add to Home Screen ============ -->
+<section class="screen" id="add-to-home-screen" data-h="844">
+  <div class="pad" style="margin-top:36px">
+    <h1>Add Kindred to your Home Screen</h1>
+    <p class="sub">On iPhone, Kindred can only send you notifications once it's on your Home Screen. It takes three taps.</p>
+    <div class="opt" style="margin-top:22px"><div class="av lg dark">1</div><div style="flex:1"><div style="font-weight:600">Tap the Share button</div><div class="small">At the bottom of Safari</div></div><svg class="ico"><use href="#i-share"/></svg></div>
+    <div class="opt"><div class="av lg dark">2</div><div style="flex:1"><div style="font-weight:600">Choose "Add to Home Screen"</div><div class="small">Scroll down the list if you don't see it</div></div><svg class="ico"><use href="#i-plus"/></svg></div>
+    <div class="opt"><div class="av lg dark">3</div><div style="flex:1"><div style="font-weight:600">Open Kindred from the new icon</div><div class="small">You'll stay signed in</div></div><div class="ph" style="width:30px;height:30px;border-radius:8px"></div></div>
+    <p class="small link" style="text-align:center;margin-top:22px">Not now — remind me later</p>
+  </div>
+  <div class="grow"></div>
+  <div style="height:84px;background:var(--soft);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;padding-bottom:14px">
+    <svg class="ico" style="stroke:var(--muted)"><use href="#i-left"/></svg><svg class="ico" style="stroke:var(--muted)"><use href="#i-right"/></svg>
+    <span style="border:2px solid var(--ink);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg class="ico"><use href="#i-share"/></svg></span>
+    <svg class="ico" style="stroke:var(--muted)"><use href="#i-doc"/></svg><svg class="ico" style="stroke:var(--muted)"><use href="#i-more"/></svg>
+  </div>
+</section>
+
+<!-- ============ Allow notifications ============ -->
+<section class="screen" id="allow-notifications" data-h="844">
+  <div class="pad" style="margin-top:44px">
+    <div class="notif" style="border:0;padding:0"><div class="tile strong" style="width:52px;height:52px"><svg class="ico" style="width:26px;height:26px"><use href="#i-bell"/></svg></div></div>
+    <h1 style="margin-top:20px">Turn on notifications?</h1>
+    <p class="sub">Kindred tells you when:</p>
+    <ul class="bul" style="margin-top:6px">
+      <li>Someone asks you to do something</li>
+      <li>Something you agreed to is coming up</li>
+      <li>Someone needs cover</li>
+      <li>Something you own goes overdue (admins hear about everything overdue)</li>
+      <li>Someone posts an update</li>
+    </ul>
+    <div class="note">Your lock screen never shows care details, just "Dad's Care Circle: you have a new request".</div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot">
+    <div class="btns"><div class="btn primary">Turn on notifications</div><div class="btn">Not now</div></div>
+    <p class="small">Change this any time in Care Circle and settings.</p>
+  </div>
+</section>
+
+<!-- ============ Repeat options ============ -->
+<section class="screen" id="repeat-options" data-h="844">
+  <div class="shade"><i style="width:60%"></i><i style="width:84%"></i><i style="width:40%"></i></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">Repeat</h1>
+    <p class="sub">Refill blood pressure meds</p>
+    <div class="opt"><div class="radio"></div><div style="font-weight:600">Doesn't repeat</div></div>
+    <div class="opt"><div class="radio"></div><div style="font-weight:600">Every day</div></div>
+    <div class="opt sel"><div class="radio on"></div><div><div style="font-weight:600">Every week</div><div class="small">On Wednesdays</div></div></div>
+    <div class="opt"><div class="radio"></div><div><div style="font-weight:600">Every month</div><div class="small">On the 24th</div></div></div>
+    <div class="mono label" style="margin-top:22px">Ends</div>
+    <div class="row2"><div><div class="input">Never<svg class="ico caret"><use href="#i-down"/></svg></div></div><div><div class="input placeholder">Pick a date</div></div></div>
+    <div class="note">Each week is its own task, so different people can take different weeks.</div>
+    <div class="btn primary" style="margin-top:18px">Done</div>
+  </div>
+</section>
+
+<!-- ============ Appointment detail ============ -->
+<section class="screen" id="appointment-detail" data-h="1240">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Appointment</span><span style="display:flex;gap:14px"><svg class="ico"><use href="#i-share"/></svg><svg class="ico"><use href="#i-more"/></svg></span></div>
+  <div class="pad">
+    <div style="margin-top:20px"><span class="pill">Appointment</span></div>
+    <h1 style="margin-top:10px">Cardiology appointment</h1>
+    <div style="margin-top:12px">
+      <div class="kv"><span class="mono">Owner</span><span class="v"><div class="av">M</div>Maya</span></div>
+      <div class="kv"><span class="mono">When</span><span class="v">Thursday 25 Sep, 2:00 pm</span></div>
+      <div class="kv" style="border:0"><span class="mono">Where</span><span class="v">Riverside Clinic, 4th floor</span></div>
+    </div>
+    <div class="ph" style="height:110px">MAP · TAP FOR DIRECTIONS</div>
+    <p class="small" style="font-size:11.5px;margin-top:4px;text-align:right">Powered by Geoapify · © OpenStreetMap contributors</p>
+    <div class="card" style="margin-top:14px"><div class="mono">Notes for the family</div><p style="margin-top:8px;font-size:15px">Bring the list of current medications. Parking is on the north side.</p></div>
+    <div class="mono section">Updates · 1</div>
+    <div class="card"><div class="post" style="padding:0;border:0"><div class="h"><div class="av">M</div><span class="who">Maya</span><span class="when">Today 3:12 pm</span></div><p>Back from cardiology. Everything went fine and the next visit is booked for six weeks out.</p></div></div>
+    <div class="mono section">Follow-up tasks</div>
+    <div class="card"><div class="item"><div class="av q">?</div><div class="body"><div class="t">Add the next cardiology visit to the calendar</div><div class="m">Due Fri 3 Oct · Nobody has claimed this</div></div><span class="pill">Needs someone</span></div></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btns"><div class="btn primary"><svg class="ico"><use href="#i-chat"/></svg>Add update</div><div class="btn">Create follow-up task</div></div></div>
+</section>
+
+<!-- ============ Share an item ============ -->
+<section class="screen" id="share-item" data-h="844">
+  <div class="shade"><i style="width:40%"></i><i style="width:78%"></i><i style="width:56%"></i></div>
+  <div class="sheet" style="background:var(--soft)">
+    <div class="grab"></div>
+    <div class="card" style="background:var(--white)">
+      <div class="small" style="font-size:12.5px">Message</div>
+      <p style="margin-top:6px;font-size:15px">Dad's care — <b>Physio ride</b>, Friday 26 Sep at 9:30 am. Nobody has taken it yet. Can you?<br><span class="link">kindred.example/i/7f3c9a</span></p>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:18px;padding:0 4px">
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">WhatsApp</div></div>
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">Messages</div></div>
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">Mail</div></div>
+      <div style="text-align:center"><div class="ph" style="width:58px;height:58px;border-radius:14px;font-size:10px">APP</div><div class="small" style="margin-top:6px;color:var(--ink)">More</div></div>
+    </div>
+    <div class="card" style="background:var(--white);margin-top:18px;padding:0 16px">
+      <div class="setrow"><div class="body n">Copy</div></div>
+      <div class="setrow" style="border:0"><div class="body n">Copy link</div></div>
+    </div>
+    <p class="small" style="margin-top:14px">This is the phone's own share sheet. Kindred fills in the message; private notes are left out unless you choose ⋯ › Share with notes.</p>
+  </div>
+</section>
+
+<!-- ============ Need coverage ============ -->
+<section class="screen" id="need-coverage" data-h="920">
+  <div class="shade"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">Ask the family to cover?</h1>
+    <p class="sub">Cardiology appointment · Today 2:00 pm</p>
+    <div class="banner" style="margin-top:16px"><div class="mono">Your cover requests</div><b>1 of 2 left this month.</b> Resets on 1 October. Cancelling a request still counts.</div>
+    <div class="mono" style="margin-top:20px">Who's free at 2:00 pm</div>
+    <div class="list">
+      <div><div class="av">J</div><div class="body n">Jonah</div><span class="pill">Busy</span></div>
+      <div><div class="av">A</div><div class="body n">Ada</div><span class="pill dash">Unknown</span></div>
+    </div>
+    <div class="check"><div class="box" style="background:var(--ink)"></div><span>Then share it to the family chat</span></div>
+    <div class="note">Everyone in the circle is asked. It stays yours until someone taps <b>I can do it</b>.</div>
+    <div class="btnrow" style="margin-top:18px"><div class="btn">Cancel</div><div class="btn primary" style="flex:1.3">Ask for cover</div></div>
+  </div>
+</section>
+
+<!-- ============ Coverage request (seen by others) ============ -->
+<section class="screen" id="coverage-request" data-h="1040">
+  <div class="top center"><svg class="ico"><use href="#i-back"/></svg><span class="title">Appointment</span><span style="display:flex;gap:14px"><svg class="ico"><use href="#i-share"/></svg><svg class="ico"><use href="#i-more"/></svg></span></div>
+  <div class="pad">
+    <div class="banner"><div class="mono"><svg class="ico"><use href="#i-clock"/></svg>Maya needs cover</div>Maya can't make it any more and asked the family. Whoever taps <b>I can do it</b> first takes it over.</div>
+    <div style="margin-top:18px"><span class="pill dash">Needs coverage</span></div>
+    <h1 style="margin-top:10px">Cardiology appointment</h1>
+    <div style="margin-top:12px">
+      <div class="kv"><span class="mono">Owner</span><span class="v"><div class="av">M</div>Maya, until someone covers</span></div>
+      <div class="kv"><span class="mono">When</span><span class="v">Today, 2:00 pm</span></div>
+      <div class="kv" style="border:0"><span class="mono">Where</span><span class="v">Riverside Clinic, 4th floor</span></div>
+    </div>
+    <div class="ph" style="height:96px">MAP · TAP FOR DIRECTIONS</div>
+    <div class="card" style="margin-top:16px"><div class="mono">Notes for the family</div><p style="margin-top:8px;font-size:15px">Bring the list of current medications. Parking is on the north side.</p></div>
+  </div>
+  <div class="grow"></div>
+  <div class="foot"><div class="btn primary"><svg class="ico"><use href="#i-check"/></svg>I can do it</div><p class="small">If someone takes it first, you'll see who's covering.</p></div>
+</section>
+
+<!-- ============ Coverage limit reached ============ -->
+<section class="screen" id="coverage-limit" data-h="844">
+  <div class="shade"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h1 style="font-size:24px">You've used your 2 cover requests this month</h1>
+    <p class="sub">Call the pharmacy · Friday 5:00 pm</p>
+    <p style="margin-top:14px;font-size:15px">Your allowance resets on 1 October. Until then, you can still:</p>
+    <div class="opt"><div class="tile"><svg class="ico"><use href="#i-share"/></svg></div><div><div style="font-weight:600">Message the family</div><div class="small">Share this task to the family chat and ask</div></div></div>
+    <div class="opt"><div class="tile"><svg class="ico"><use href="#i-task"/></svg></div><div><div style="font-weight:600">Ask one person directly</div><div class="small">They're asked to accept, like any request</div></div></div>
+    <div class="btn" style="margin-top:20px">Keep it</div>
+  </div>
 </section>
 
 <script>

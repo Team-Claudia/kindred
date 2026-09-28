@@ -12,9 +12,12 @@ CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 # Order sets the file number. Keep in step with README.md.
 SCREENS=(
   welcome sign-in-email enter-code setup-your-name setup-loved-one setup-invite-circle
+  join-invite join-relationship add-to-home-screen allow-notifications
   home this-week updates weekly-summary
-  quick-add new-task new-appointment new-update
-  assign-to task-awaiting-you task-detail task-overdue notifications
+  quick-add new-task repeat-options new-appointment new-update
+  assign-to task-awaiting-you task-detail appointment-detail
+  share-item need-coverage coverage-request coverage-limit
+  task-overdue notifications
   care-circle-settings
 )
 
