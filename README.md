@@ -10,3 +10,4 @@ Kindred helps families coordinate care without forcing them to abandon the tools
 - [How Kindred is built (plain English)](docs/architecture-explained.md)
 - [Implementation plan](docs/implementation-plan.md)
 - [Demo Day](docs/demo-day.md)
+- [Wireframes](docs/wireframes/README.md)
