@@ -2,8 +2,17 @@
 // for Capacitor plugins later (ADR-002). Screens import from here, never call
 // browser APIs directly.
 
+import {
+  notificationPermission,
+  subscribeToPush,
+  type NotificationPermissionState,
+  type PushResult,
+} from './push'
+
+export type { NotificationPermissionState, PushResult }
+export { notificationPermission }
+
 export type ShareResult = 'shared' | 'cancelled' | 'unsupported'
-export type PushResult = 'enabled' | 'denied' | 'needs_install' | 'unsupported'
 
 export interface Platform {
   /**
@@ -24,6 +33,8 @@ export interface Platform {
   isStandalone(): boolean
   /** Asks for notification permission and saves the push subscription (task 1.4). */
   enablePush(): Promise<PushResult>
+  /** The notification permission so far: 'default' until the member is asked. */
+  notificationPermission(): NotificationPermissionState
   /** Hands the calendar feed URL to the phone's calendar app to subscribe. */
   addCalendarFeed(url: string): void
   /**
@@ -81,8 +92,9 @@ export function isStandalone(): boolean {
 }
 
 export async function enablePush(): Promise<PushResult> {
-  // Filled in by task 1.4 (push spike).
-  throw new Error('enablePush is not implemented yet')
+  // iPhone only offers push to apps added to the Home Screen.
+  if (!isStandalone()) return 'needs_install'
+  return subscribeToPush()
 }
 
 export function addCalendarFeed(url: string): void {
@@ -115,6 +127,7 @@ export const platform: Platform = {
   appUrl,
   isStandalone,
   enablePush,
+  notificationPermission,
   addCalendarFeed,
   deviceSetting,
 }

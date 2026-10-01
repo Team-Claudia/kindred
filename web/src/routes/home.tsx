@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { HomeTopBar } from '@/components/home-top-bar'
 import { InstallGuide } from '@/components/install-guide'
 import { PlaceholderScreen } from '@/components/placeholder-screen'
+import { PushPrompt } from '@/components/push-prompt'
 import { ShareButton } from '@/components/share-button'
 import { useInstallGuide } from '@/lib/install-guide'
 import { platform } from '@/platform'
@@ -24,6 +25,8 @@ export default function Home() {
           content={{ text: t('shell.testShareText'), url: platform.appUrl('/') }}
         />
       </PlaceholderScreen>
+      {/* From the Home Screen, explain notifications before the phone asks (task 1.4). */}
+      <PushPrompt />
     </>
   )
 }
