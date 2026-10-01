@@ -692,6 +692,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"delete_push_subscription":
+{ Args: { "endpoint": string }; Returns: undefined
+                           },
 "invite_preview":
 { Args: { "code": string }; Returns: {
               "care_recipient_name": string,"expires_at": string,"in_other_circle": boolean,"inviter_name": string,"is_member": boolean,"member_count": number,"member_names": (string)[]
@@ -751,6 +754,9 @@ isOneToOne: false
                            },
 "save_profile":
 { Args: { "display_name": string,"user_id": string }; Returns: undefined
+                           },
+"save_push_subscription":
+{ Args: { "endpoint": string,"keys": Json }; Returns: undefined
                            },
 "set_admin":
 { Args: { "member_id": string }; Returns: undefined
