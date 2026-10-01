@@ -191,7 +191,7 @@ The path to native is **Capacitor**, which wraps an existing web app as an iOS a
 
 **Decision.** Use **Supabase Auth**:
 - **Google**: Supabase's standard web OAuth redirect, with only the basic `openid email profile` scopes, which need no Google app verification.
-- **Email OTP**: a 6-digit code, not a magic link, so it works when email is read on another device and inside a Home Screen app. Supabase's built-in email only delivers to the project team's own addresses at 2 messages/hour, so outside testers need a custom SMTP provider (Resend free tier) and a domain (§5).
+- **Email OTP**: a 6-digit code, not a magic link, so it works when email is read on another device and inside a Home Screen app. Supabase's built-in email only delivers to the project team's own addresses at 2 messages/hour and can't use custom templates, so codes are sent through custom SMTP (Brevo free tier, 300 emails/day, no domain needed). Without a domain the sender is a free address that can't pass DKIM/DMARC, so codes may land in spam (§5, §6).
 - **"Try the demo"** (for judges): Supabase **anonymous sign-in** creates a guest user and adds them to a pre-filled demo Care Circle. No email or Google account needed. Guest users get the same RLS rules as anyone else, and a nightly job removes them and resets the demo circle.
 - **Apple**: added with the native app (ADR-002). Sign in with Apple on the web also needs the paid Apple Developer account, and the App Store rule that requires it only applies to native apps.
 
@@ -651,8 +651,8 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 
 | Item | Cost | When it's needed |
 | --- | --- | --- |
-| Custom domain | ≈ CA$15–25/year | **Decided against for the buildathon.** Needed later for Resend and Google verification |
-| Resend (email OTP to non-team addresses) | Free: 3,000 emails/month, 100/day — needs a verified domain | Only if testers outside the team sign in by email |
+| Custom domain | ≈ CA$15–25/year | **Decided against for the buildathon.** Needed later for email deliverability (DKIM/DMARC) and Google verification |
+| Brevo (email OTP through custom SMTP) | Free: 300 emails/day, no domain needed | **In use.** Needed for code emails at all (the built-in email can't send a code template) |
 | Apple Developer Program | US$99/year | Native iOS app (Capacitor) or Sign in with Apple |
 | Google Play Console | US$25 one-time | Native Android app on the Play Store |
 
@@ -669,7 +669,7 @@ A second person tapping **I can do it** a moment later finds the row no longer i
 | Calendar apps refresh the feed slowly (Google: hours) | Accepted items appear late in personal calendars | The app is the source of truth; show "Add to calendar" guidance; native calendar access with Capacitor later |
 | iCloud and Outlook users have no availability | Shown as Unknown | Accepted in the PRD; native calendar plugin later covers both (ADR-008) |
 | Supabase free project pauses after a week idle | Backend down on demo day | Use it daily; check the dashboard the day before the demo |
-| Built-in email only reaches team addresses | Judges can't use email sign-in | Judges sign in with Google; email codes are for the team |
+| Code emails come from a free address with no DKIM/DMARC | Codes may land in spam | Judges sign in with Google; tell testers to check spam; a domain verified in Brevo fixes it |
 | Judges may expect an app-store app | Seen as "just a website" | Home Screen install looks and behaves like an app; show the Capacitor path (ADR-002) |
 | Geoapify daily quota runs out (e.g. during judging) | Maps disappear for the rest of the day | Images are cached after the first view; the app falls back to the location as text |
 | Single time zone per circle (BR-09) | Wrong times for split-time-zone families | Store `timestamptz` everywhere and `circles.time_zone`, so P2 support is a UI change |
