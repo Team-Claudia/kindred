@@ -3,15 +3,19 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import * as api from '@/lib/api'
+import { useAuth, type AuthState } from '@/lib/auth'
 import * as circles from '@/lib/circles'
 import { RpcError } from '@/lib/errors'
 import Join from './join'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 vi.mock('@/lib/api', () => ({ invitePreview: vi.fn(), joinCircle: vi.fn() }))
+vi.mock('@/lib/auth', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/auth')>()),
+  useAuth: vi.fn(),
+}))
 vi.mock('@/lib/circles', async (importOriginal) => ({
   ...(await importOriginal<typeof circles>()),
-  useAuthUser: vi.fn(),
   useProfile: vi.fn(),
 }))
 
@@ -26,9 +30,9 @@ const preview: api.InvitePreview = {
 }
 
 const signedIn = {
-  user: { id: 'user-1', email: 'jonah@example.test', user_metadata: {} },
-  loading: false,
-} as unknown as ReturnType<typeof circles.useAuthUser>
+  status: 'signed_in',
+  session: { user: { id: 'user-1', email: 'jonah@example.test', user_metadata: {} } },
+} as unknown as AuthState
 
 function renderJoin() {
   const router = createMemoryRouter(
@@ -46,7 +50,7 @@ function renderJoin() {
 }
 
 beforeEach(() => {
-  vi.mocked(circles.useAuthUser).mockReturnValue({ user: null, loading: false })
+  vi.mocked(useAuth).mockReturnValue({ status: 'signed_out' })
   vi.mocked(circles.useProfile).mockReturnValue({
     isPending: false,
     data: { display_name: 'Jonah Reyes' },
@@ -90,7 +94,7 @@ test('explains an unknown invite in plain language', async () => {
 })
 
 test('asks someone in another circle to leave it first', async () => {
-  vi.mocked(circles.useAuthUser).mockReturnValue(signedIn)
+  vi.mocked(useAuth).mockReturnValue(signedIn)
   vi.mocked(api.invitePreview).mockResolvedValue({ ...preview, in_other_circle: true })
   renderJoin()
   expect(
@@ -99,7 +103,7 @@ test('asks someone in another circle to leave it first', async () => {
 })
 
 test('opens Home for someone already in the circle', async () => {
-  vi.mocked(circles.useAuthUser).mockReturnValue(signedIn)
+  vi.mocked(useAuth).mockReturnValue(signedIn)
   vi.mocked(api.invitePreview).mockResolvedValue({ ...preview, is_member: true })
   renderJoin()
   expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
@@ -107,7 +111,7 @@ test('opens Home for someone already in the circle', async () => {
 })
 
 test('joins a signed-in visitor with their name and relationship', async () => {
-  vi.mocked(circles.useAuthUser).mockReturnValue(signedIn)
+  vi.mocked(useAuth).mockReturnValue(signedIn)
   vi.mocked(api.joinCircle).mockResolvedValue('circle-1')
   renderJoin()
 

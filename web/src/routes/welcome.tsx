@@ -18,13 +18,11 @@ import {
 import { ShareButton } from '@/components/share-button'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
+import { googleName, myCircleKey, signInPath, useAuth } from '@/lib/auth'
 import {
   circleKeys,
   firstName,
-  nameFromAccount,
   relationshipLabel,
-  signInPath,
-  useAuthUser,
   useCircleMembers,
   useMyMembership,
   useProfile,
@@ -37,7 +35,9 @@ import { platform } from '@/platform'
 // who's already in a circle lands straight on step 3, the invite step.
 export default function Welcome() {
   const { t } = useTranslation()
-  const { user, loading } = useAuthUser()
+  const auth = useAuth()
+  const loading = auth.status === 'loading'
+  const user = auth.status === 'signed_in' ? auth.session.user : null
   const profile = useProfile(user?.id)
   const membership = useMyMembership(user?.id)
   const queryClient = useQueryClient()
@@ -51,11 +51,11 @@ export default function Welcome() {
 
   const create = useMutation({
     mutationFn: api.createCircle,
-    // ['my-circle'] is the sign-in guard's "is this person in a circle?" (task 1.1).
+    // myCircleKey is the sign-in guard's "is this person in a circle?" (task 1.1).
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ['my-membership'] }),
-        queryClient.invalidateQueries({ queryKey: ['my-circle'] }),
+        queryClient.invalidateQueries({ queryKey: myCircleKey }),
       ]),
   })
 
@@ -89,7 +89,7 @@ export default function Welcome() {
   }
 
   // Filled in from the profile, or from Google, until the member edits it.
-  const displayName = name ?? (profile.data?.display_name || nameFromAccount(user))
+  const displayName = name ?? (profile.data?.display_name || googleName(user) || '')
   const nameError = showErrors && !displayName.trim() ? t('circleSetup.nameRequired') : undefined
   const termsError = showErrors && !agreed ? t('circleSetup.termsRequired') : undefined
   const recipientError =
