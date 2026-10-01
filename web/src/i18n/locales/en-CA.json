@@ -129,8 +129,6 @@
     "preparingInvite": "Getting your link ready…",
     "shareHint": "Opens WhatsApp, Messages or email on your phone. The link works for 14 days.",
     "shareText": "Join {{name}}'s Care Circle on Kindred",
-    "copyInstead": "Sharing isn't available here. Copy this link and send it to your family:",
-    "inviteLink": "Invite link",
     "members_one": "Care Circle · {{count}} person",
     "members_other": "Care Circle · {{count}} people",
     "membersHint": "People show here once they've opened the link and joined.",

@@ -29,11 +29,6 @@ export function relationshipLabel(t: TFunction, value: string | null): string | 
     : value
 }
 
-// The link a member shares to invite someone (ADR-011).
-export function inviteUrl(code: string): string {
-  return new URL(`/join/${encodeURIComponent(code)}`, window.location.origin).toString()
-}
-
 // Where to send a signed-out visitor so they come back to the invite after
 // signing in.
 export function signInPath(next: string): string {

@@ -250,6 +250,13 @@ begin
     raise exception 'invite_expired';
   end if;
 
+  -- Wait for any leave or removal in progress. If the last member just left,
+  -- the circle (and this invite) is gone.
+  perform 1 from public.circles c where c.id = v_invite.circle_id for share;
+  if not found then
+    raise exception 'invite_not_found';
+  end if;
+
   perform public.save_profile(v_user, join_circle.display_name);
 
   begin

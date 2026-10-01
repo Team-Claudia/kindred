@@ -20,7 +20,10 @@ vi.mock('@/lib/circles', async (importOriginal) => ({
   useMyMembership: vi.fn(),
   useCircleMembers: vi.fn(),
 }))
-vi.mock('@/platform', () => ({ platform: { share: vi.fn() } }))
+vi.mock('@/platform', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/platform')>()
+  return { ...actual, platform: { ...actual.platform, share: vi.fn() } }
+})
 
 type Query<T extends (...args: never[]) => unknown> = ReturnType<T>
 
@@ -140,15 +143,14 @@ test('shares an invite link and lists who has joined', async () => {
   })
 })
 
-test('shows the link to copy when sharing is unavailable', async () => {
+test('offers Copy link when sharing is unavailable', async () => {
   inCircle(true)
   vi.mocked(platform.share).mockResolvedValue('unsupported')
   renderWelcome()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Share invite link' }))
-  expect(await screen.findByLabelText('Invite link')).toHaveValue(
-    `${window.location.origin}/join/ABCD1234`,
-  )
+  expect(await screen.findByRole('button', { name: 'Copy link' })).toBeInTheDocument()
+  expect(screen.getByText(`${window.location.origin}/join/ABCD1234`)).toBeInTheDocument()
 })
 
 test('lets an admin make another member an admin', async () => {

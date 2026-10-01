@@ -15,12 +15,12 @@ import {
   StepProgress,
   TextField,
 } from '@/components/circle-setup'
+import { ShareButton } from '@/components/share-button'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import {
   circleKeys,
   firstName,
-  inviteUrl,
   nameFromAccount,
   relationshipLabel,
   signInPath,
@@ -189,9 +189,6 @@ function InviteStep({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [fallbackLink, setFallbackLink] = useState<string | null>(null)
-  const [shareError, setShareError] = useState<unknown>(null)
-
   // Make the code as soon as the step opens, so tapping Share opens the share
   // sheet straight away (iOS only allows it right after a tap). A query, not
   // a mutation, so it runs once however often the screen renders.
@@ -199,7 +196,7 @@ function InviteStep({
     queryKey: circleKeys.newInvite(circleId),
     queryFn: api.createInvite,
     staleTime: Infinity,
-    retry: false,
+    retry: 2,
     refetchOnWindowFocus: false,
   })
 
@@ -211,24 +208,8 @@ function InviteStep({
     onSettled: () => queryClient.invalidateQueries({ queryKey: circleKeys.members }),
   })
 
-  async function share() {
-    if (!invite.data) return
-    const url = inviteUrl(invite.data)
-    setShareError(null)
-    try {
-      const result = await platform.share({
-        text: t('welcome.shareText', { name: recipientName }),
-        url,
-      })
-      if (result === 'unsupported') setFallbackLink(url)
-    } catch (error) {
-      setShareError(error)
-      setFallbackLink(url)
-    }
-  }
-
   const list = members.data ?? []
-  const error = invite.error ?? promote.error ?? members.error ?? shareError
+  const error = promote.error ?? members.error
 
   return (
     <SetupScreen
@@ -250,23 +231,29 @@ function InviteStep({
       </Heading>
 
       <div className="flex flex-col gap-2">
-        <Button variant="outline" size="lg" disabled={!invite.data} onClick={() => void share()}>
-          <Share aria-hidden />
-          {invite.data ? t('welcome.shareInvite') : t('welcome.preparingInvite')}
-        </Button>
-        <p className="text-sm text-muted-foreground">{t('welcome.shareHint')}</p>
-        {fallbackLink && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm">{t('welcome.copyInstead')}</p>
-            <input
-              readOnly
-              aria-label={t('welcome.inviteLink')}
-              value={fallbackLink}
-              onFocus={(event) => event.currentTarget.select()}
-              className="h-12 w-full rounded-lg border border-input bg-muted px-4 font-mono text-base"
-            />
-          </div>
+        {invite.data ? (
+          <ShareButton
+            size="lg"
+            label={t('welcome.shareInvite')}
+            content={{
+              text: t('welcome.shareText', { name: recipientName }),
+              url: platform.appUrl(`/join/${invite.data}`),
+            }}
+          />
+        ) : invite.isError ? (
+          <>
+            <ErrorText>{errorMessage(invite.error)}</ErrorText>
+            <Button variant="outline" size="lg" onClick={() => void invite.refetch()}>
+              {t('common.tryAgain')}
+            </Button>
+          </>
+        ) : (
+          <Button variant="outline" size="lg" disabled>
+            <Share aria-hidden />
+            {t('welcome.preparingInvite')}
+          </Button>
         )}
+        <p className="text-sm text-muted-foreground">{t('welcome.shareHint')}</p>
         <ErrorText>{error ? errorMessage(error) : null}</ErrorText>
       </div>
 
