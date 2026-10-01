@@ -2,7 +2,8 @@
 // turned notifications on for. Temporary; outbox-worker (task 3.3) can reuse
 // sendPush below.
 //
-// Secrets: VAPID_PRIVATE_KEY and VAPID_SUBJECT (e.g. a mailto: or https: URL).
+// Secrets: VAPID_PRIVATE_KEY and VAPID_SUBJECT (exactly "mailto:" + address, no
+// spaces; Apple rejects a malformed subject with 403 BadJwtToken).
 // VAPID_PUBLIC_KEY is optional: when unset it is derived from the private key.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 

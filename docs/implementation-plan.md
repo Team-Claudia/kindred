@@ -36,7 +36,7 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 
 | Capability | PRD | Notes |
 | --- | --- | --- |
-| Sign in: **Google** (prominent), email code, **Try the demo** (anonymous) | US 1.2 | Google is the main way in for people outside the team: email codes are sent through Brevo from a free address, so they can land in spam. Apple is deferred to native (ADR-004) |
+| Sign in: **Google** (prominent), email code, **Try the demo** (anonymous) | US 1.2 | Google is the main way in for people outside the team; email codes are sent through the team Gmail account (about 500 a day). Apple is deferred to native (ADR-004) |
 | Create a Care Circle (with each member's relationship to the care recipient), invite by link, join via `/join/<code>` | Epics 2–3, BR-12 | Invite shared through the share sheet |
 | Home screen: needs your answer (Accept / Decline), today, needs someone, coverage requests, latest update | §9 | Status always text + colour |
 | Create task or appointment (title, date/time, location, private notes, optional assignee) | US 4.2, 7.1 | One create sheet for both kinds |
@@ -401,8 +401,8 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 | Where | Setting |
 | --- | --- |
 | Vercel env vars | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY` (same values for preview and production) |
-| Supabase function secrets | `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEOAPIFY_API_KEY`, `APP_URL` |
-| Supabase Auth | Site URL = production URL; redirect URL = production URL only (no preview wildcard: anyone can create a matching `.vercel.app` site, so Google sign-in on a preview returns to production); Google provider on; email OTP on (6-digit code); anonymous sign-ins on; custom SMTP through Brevo (free tier) with the Confirm signup and Magic Link templates showing the code (`supabase/templates/sign-in-code.html`) |
+| Supabase function secrets | `VAPID_PRIVATE_KEY` (pair of `VITE_VAPID_PUBLIC_KEY`), `VAPID_SUBJECT` (exactly `mailto:` + address, no spaces or brackets; Apple rejects anything else with `403 BadJwtToken`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEOAPIFY_API_KEY`, `APP_URL` |
+| Supabase Auth | Site URL = production URL; redirect URL = production URL only (no preview wildcard: anyone can create a matching `.vercel.app` site, so Google sign-in on a preview returns to production); Google provider on; email OTP on (6-digit code); anonymous sign-ins on; custom SMTP through the team Gmail account (`smtp.gmail.com:587`, an app password) with the Confirm signup and Magic Link templates showing the code (`supabase/templates/sign-in-code.html`) |
 | Google Cloud | Authorised redirect URIs for Supabase Auth and the `google-oauth` function; consent screen **In production** |
 | Database | pg_cron jobs (outbox catch-up every minute, recurrence extension and sample-circle reset nightly, weekly summary notification Sundays 08:00); DB webhook on `outbox` insert → `outbox-worker` |
 
