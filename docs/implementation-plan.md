@@ -36,7 +36,7 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 
 | Capability | PRD | Notes |
 | --- | --- | --- |
-| Sign in: **Google** (prominent), email code (team only), **Try the demo** (anonymous) | US 1.2 | Google is how people outside the team sign in, since built-in email codes only reach team addresses. Apple is deferred to native (ADR-004) |
+| Sign in: **Google** (prominent), email code, **Try the demo** (anonymous) | US 1.2 | Google is the main way in for people outside the team: email codes are sent through Brevo from a free address, so they can land in spam. Apple is deferred to native (ADR-004) |
 | Create a Care Circle (with each member's relationship to the care recipient), invite by link, join via `/join/<code>` | Epics 2–3, BR-12 | Invite shared through the share sheet |
 | Home screen: needs your answer (Accept / Decline), today, needs someone, coverage requests, latest update | §9 | Status always text + colour |
 | Create task or appointment (title, date/time, location, private notes, optional assignee) | US 4.2, 7.1 | One create sheet for both kinds |
@@ -284,7 +284,7 @@ Phase 0 runs in one session, in order: everything after it builds on the scaffol
 | --- | --- | --- | --- |
 | 4.1 | **Updates tab and follow-up** (wireframes 13, 19, 23): `post_update`; the Updates thread; linked updates on item detail; "Create follow-up task" from appointment detail (`follow_up_of`) | 4.2, 4.3, 4.5 | The §3 normal coordination flow runs end to end |
 | 4.2 | **Sample data and Try the demo**: sample circle seed from T1 (§8.5); `join_demo_circle()` and `reset_demo_circle()`; anonymous sign-in behind "Try the demo"; nightly pg_cron reset and anonymous-user clean-up | 4.1, 4.3, 4.5 | A new phone taps Try the demo and lands on a populated Home; `reset_demo_circle()` restores the sample circle in under a minute |
-| 4.3 | **Care Circle and settings** (wireframe 30): members with relationship (admin: remove), invite link, calendar feed link, notifications on/off, leave circle | 4.1, 4.2, 4.5 | Every item on the screen works or is hidden |
+| 4.3 | **Care Circle and settings** (wireframe 30): members with relationship (admin: remove), invite link, calendar feed link, notifications on/off, leave circle. Also a plain-language **terms of use page at `/terms`** (reachable signed out, like `/privacy`), with "terms of use" and "privacy policy" linked wherever they're mentioned: the terms checkbox in setup (04) and join (08), the sign-in screen and settings | 4.1, 4.2, 4.5 | Every item on the screen works or is hidden; the terms and privacy links open their pages |
 | 4.4 | **Design-application pass**: apply the final colours, type, spacing and icons through `tokens.css`; match layouts to final screens; check WCAG 2.2 AA contrast for every state badge | Nothing: it touches every screen, so run it alone once the other Phase 4 screens are merged | Screens match the designs |
 | 4.5 | **Tier 2, as time allows** (§2), built in this order: Google connect + free/busy → reminders and overdue alerts → recurrence → withdraw/reassign/reschedule UI → notification preferences → account export/delete → in-app notification list → weekly summary → map preview. When time runs short, cut from the end of this list first. Each item is its own task | 4.1, 4.2, 4.3, and each other | Whatever isn't done by the freeze is cut |
 | 4.6 | **Production check**: work through the deployment checklist (§8.4) | — | Checklist complete |
@@ -399,7 +399,7 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 | --- | --- |
 | Vercel env vars | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY` (same values for preview and production) |
 | Supabase function secrets | `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEOAPIFY_API_KEY`, `APP_URL` |
-| Supabase Auth | Site URL = production URL; redirect URLs = production URL and the Vercel preview pattern; Google provider on; email OTP on (6-digit code); anonymous sign-ins on |
+| Supabase Auth | Site URL = production URL; redirect URL = production URL only (no preview wildcard: anyone can create a matching `.vercel.app` site, so Google sign-in on a preview returns to production); Google provider on; email OTP on (6-digit code); anonymous sign-ins on; custom SMTP through Brevo (free tier) with the Confirm signup and Magic Link templates showing the code (`supabase/templates/sign-in-code.html`) |
 | Google Cloud | Authorised redirect URIs for Supabase Auth and the `google-oauth` function; consent screen **In production** |
 | Database | pg_cron jobs (outbox catch-up every minute, recurrence extension and sample-circle reset nightly, weekly summary notification Sundays 08:00); DB webhook on `outbox` insert → `outbox-worker` |
 
