@@ -2,7 +2,7 @@ import { ChevronLeft } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link, Navigate, useSearchParams } from 'react-router'
-import { CODE_LENGTH, CodeInput } from '@/components/code-input'
+import { CodeInput } from '@/components/code-input'
 import { Button } from '@/components/ui/button'
 import {
   authErrorKind,
@@ -13,6 +13,7 @@ import {
   verifyEmailCode,
   type AuthErrorKind,
 } from '@/lib/auth'
+import { CODE_LENGTH } from '@/lib/sign-in-code'
 
 // Wireframes 01 (welcome), 02 (sign in with email) and 03 (enter code).
 type Step = 'start' | 'email' | 'code'
