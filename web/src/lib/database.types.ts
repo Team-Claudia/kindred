@@ -647,7 +647,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "create_circle":
-{ Args: { "care_recipient_name": string,"relationship": string,"time_zone": string }; Returns: string
+{ Args: { "care_recipient_name": string,"display_name"?: string,"relationship": string,"time_zone": string }; Returns: string
                            },
 "create_invite":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -683,8 +683,13 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"invite_preview":
+{ Args: { "code": string }; Returns: {
+              "care_recipient_name": string,"expires_at": string,"in_other_circle": boolean,"inviter_name": string,"is_member": boolean,"member_count": number,"member_names": string[]
+            }[]
+                           },
 "join_circle":
-{ Args: { "code": string,"relationship"?: string }; Returns: string
+{ Args: { "code": string,"display_name"?: string,"relationship"?: string }; Returns: string
                            },
 "join_demo_circle":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -732,6 +737,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"set_admin":
+{ Args: { "member_id": string }; Returns: undefined
+                           },
 "reset_demo_circle":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },

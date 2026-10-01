@@ -23,7 +23,7 @@ select is_empty(
 
 select is_empty(
   $$ select policyname from pg_policies where schemaname = 'public' and cmd <> 'SELECT' $$,
-  'no write policies: the app changes data only through RPCs'
+  'no write policies, so the app changes data only through RPCs'
 );
 
 select col_default_is(

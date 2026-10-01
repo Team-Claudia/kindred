@@ -4,6 +4,8 @@ import '@/i18n'
 import { platform } from '@/platform'
 import { routes } from './router'
 
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+
 function renderAt(path: string) {
   render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: [path] })} />)
 }
@@ -26,9 +28,7 @@ test.each([
   ['/circle', 'Care Circle'],
   ['/notifications', 'Notifications'],
   ['/i/123', 'Task or appointment'],
-  ['/join/ABCD1234', 'Join a Care Circle'],
   ['/sign-in', 'Sign in'],
-  ['/welcome', 'Welcome'],
 ])('%s renders its placeholder', (path, title) => {
   renderAt(path)
   expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()

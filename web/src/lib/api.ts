@@ -1,5 +1,5 @@
 import type { Database } from './database.types'
-import { toRpcError } from './errors'
+import { RpcError, toRpcError } from './errors'
 import { supabase } from './supabase'
 
 // One typed wrapper per RPC (implementation plan §4.2). All writes go through
@@ -53,6 +53,15 @@ export const createInvite = () => call('create_invite')
 export const joinCircle = (args: Args<'join_circle'>) => call('join_circle', args)
 export const leaveCircle = () => call('leave_circle')
 export const removeMember = (memberId: string) => call('remove_member', { member_id: memberId })
+export const setAdmin = (memberId: string) => call('set_admin', { member_id: memberId })
+
+// What /join/:code shows before the visitor joins; signed-out visitors can call it.
+export type InvitePreview = Returns<'invite_preview'>[number]
+export async function invitePreview(code: string): Promise<InvitePreview> {
+  const [preview] = await call('invite_preview', { code })
+  if (!preview) throw new RpcError('invite_not_found')
+  return preview
+}
 
 // Tasks and appointments
 export const createItem = (args: CreateItemArgs) => call('create_item', args)

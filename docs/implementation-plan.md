@@ -104,6 +104,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 
 - **States** are stored in snake_case: `needs_someone`, `awaiting_acceptance`, `assigned`, `needs_coverage`, `completed`, `cancelled`. Their labels are in `en-CA.json` under `state`.
 - **RLS** is on for every table. Task 0.3 adds no policies, so nothing is readable from the app until a task adds the policies it needs.
+- **Circle policies** (task 1.2): `select` only, where `circle_id = current_circle_id()` on every circle-owned table, and on `profiles` for your own and your circle's members. `current_circle_id()` returns the caller's one circle. `outbox` has no policy.
 - **Constraints:** one circle per user (`circle_members.user_id` unique, BR-12); at most one `pending` assignment request and one `open` coverage request per item.
 - `notification_prefs` has one push switch per US 11.4 category: `requests`, `reminders`, `changes`, `updates`, `weekly_summary`, `comments` (all on) and `everything_else` (off).
 - `calendar_settings.feed_token` is a random 48-character hex string generated on insert.
@@ -114,10 +115,12 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 
 | RPC | Arguments | Typed errors |
 | --- | --- | --- |
-| `create_circle` | `care_recipient_name`, `relationship`, `time_zone` | `already_in_circle` |
+| `create_circle` | `care_recipient_name`, `relationship`, `time_zone`, `display_name?` | `already_in_circle`, `invalid_input` (no name, unknown time zone) |
 | `create_invite` | — → `code` | `not_member` |
-| `join_circle` | `code`, `relationship?` | `invite_expired`, `invite_not_found`, `already_in_other_circle` |
-| `leave_circle`, `remove_member` | `member_id` (remove only) | `not_admin` |
+| `join_circle` | `code`, `relationship?`, `display_name?` | `invite_expired`, `invite_not_found`, `already_in_other_circle`; returns the circle for existing members, even on an expired link |
+| `invite_preview` | `code` → `care_recipient_name`, `inviter_name`, `member_names` (first names, up to 5), `member_count`, `expires_at`, `is_member`, `in_other_circle` | `invite_expired`, `invite_not_found`. Read-only; the only RPC signed-out visitors (`anon`) can call, for `/join/:code` |
+| `leave_circle`, `remove_member` | `member_id` (remove only; a user ID) | `not_member`, `not_admin` (remove). If no admin is left, the longest-standing member becomes admin; if nobody is left, the circle is deleted |
+| `set_admin` | `member_id` | `not_admin`, `not_member` |
 | `create_item` | `kind`, `title`, `starts_at`, `ends_at?`, `location?`, `private_notes?`, `assignee_id?`, `repeat?` (`daily`/`weekly`/`monthly`), `until?`, `follow_up_of?` | `invalid_input` |
 | `update_item` | `item_id`, `version`, `patch` (title, times, location, notes) | `stale_version`; a date/time change by a non-owner moves Assigned → Awaiting acceptance (BR-11) |
 | `assign` | `item_id`, `version`, `assignee_id` | `stale_version`, `invalid_state` |
