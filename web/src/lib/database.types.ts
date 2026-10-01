@@ -503,6 +503,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"after_member_left":
+{ Args: { "circle_id": string }; Returns: undefined
+                           },
 "assign":
 { Args: { "assignee_id": string,"item_id": string,"version": number }; Returns: {
               "circle_id": string,
@@ -615,6 +618,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"clean_relationship":
+{ Args: { "relationship": string }; Returns: string
+                           },
 "complete_item":
 { Args: { "item_id": string,"version": number }; Returns: {
               "circle_id": string,
@@ -655,6 +661,9 @@ isOneToOne: false
 "create_item":
 { Args: { "assignee_id"?: string,"ends_at"?: string,"follow_up_of"?: string,"kind": string,"location"?: string,"private_notes"?: string,"repeat"?: string,"starts_at": string,"title": string,"until"?: string }; Returns: string
                            },
+"current_circle_id":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "decline_assignment":
 { Args: { "item_id": string,"version": number }; Returns: {
               "circle_id": string,
@@ -685,7 +694,7 @@ isOneToOne: false
       } },
 "invite_preview":
 { Args: { "code": string }; Returns: {
-              "care_recipient_name": string,"expires_at": string,"in_other_circle": boolean,"inviter_name": string,"is_member": boolean,"member_count": number,"member_names": string[]
+              "care_recipient_name": string,"expires_at": string,"in_other_circle": boolean,"inviter_name": string,"is_member": boolean,"member_count": number,"member_names": (string)[]
             }[]
                            },
 "join_circle":
@@ -737,11 +746,14 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
-"set_admin":
-{ Args: { "member_id": string }; Returns: undefined
-                           },
 "reset_demo_circle":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"save_profile":
+{ Args: { "display_name": string,"user_id": string }; Returns: undefined
+                           },
+"set_admin":
+{ Args: { "member_id": string }; Returns: undefined
                            },
 "update_item":
 { Args: { "item_id": string,"patch": Json,"version": number }; Returns: {
