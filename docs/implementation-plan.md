@@ -112,7 +112,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 
 ### 4.2 RPCs (all writes)
 
-Clients never write tables directly (ADR-005). Every RPC checks membership, locks the row, checks `version`, writes `activity_events` and `outbox` in the same transaction, and returns the updated item (or the new ID).
+Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`.
 
 | RPC | Arguments | Typed errors |
 | --- | --- | --- |
@@ -122,13 +122,13 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 | `invite_preview` | `code` → `care_recipient_name`, `inviter_name`, `member_names` (first names, up to 5), `member_count`, `expires_at`, `is_member`, `in_other_circle` | `invite_expired`, `invite_not_found`. Read-only; the only RPC signed-out visitors (`anon`) can call, for `/join/:code` |
 | `leave_circle`, `remove_member` | `member_id` (remove only; a user ID) | `not_member`, `not_admin` (remove). If no admin is left, the longest-standing member becomes admin; if nobody is left, the circle is deleted |
 | `set_admin` | `member_id` | `not_admin`, `not_member` |
-| `create_item` | `kind`, `title`, `starts_at`, `ends_at?`, `location?`, `private_notes?`, `assignee_id?`, `repeat?` (`daily`/`weekly`/`monthly`), `until?`, `follow_up_of?` | `invalid_input` |
-| `update_item` | `item_id`, `version`, `patch` (title, times, location, notes) | `stale_version`; a date/time change by a non-owner moves Assigned → Awaiting acceptance (BR-11) |
-| `assign` | `item_id`, `version`, `assignee_id` | `stale_version`, `invalid_state` |
-| `accept_assignment`, `decline_assignment` | `item_id`, `version` | `assignment_no_longer_available` |
-| `withdraw_assignment` | `item_id`, `version` | `assignment_no_longer_available` |
-| `claim` | `item_id`, `version` | `already_claimed` |
-| `complete_item`, `cancel_item` | `item_id`, `version` | `not_owner` (complete), `invalid_state` |
+| `create_item` | `kind`, `title`, `starts_at`, `ends_at?`, `location?`, `private_notes?`, `assignee_id?`, `repeat?` (`daily`/`weekly`/`monthly`), `until?`, `follow_up_of?` | `not_member`, `invalid_input` (bad kind, blank or over-long title, end before start, assignee or `follow_up_of` not in the circle), `not_implemented` (`repeat`/`until` until task 4.5). Assigning yourself claims it (BR-03) |
+| `update_item` | `item_id`, `version`, `patch` (`title`, `starts_at`, `ends_at`, `location`, `private_notes`; a key set to null clears it) | `invalid_state` (Completed/Cancelled), `stale_version`, `invalid_input`; a date/time change by a non-owner moves Assigned → Awaiting acceptance for the same person (BR-11). A patch that changes nothing returns the item unchanged |
+| `assign` | `item_id`, `version`, `assignee_id` | `invalid_input` (not a member), `invalid_state` (Needs coverage/Completed/Cancelled, or already theirs), `stale_version`. Assigning yourself claims it (BR-03) |
+| `accept_assignment`, `decline_assignment` | `item_id`, `version` | `assignment_no_longer_available` (not your pending request), `stale_version` |
+| `withdraw_assignment` | `item_id`, `version` | `assignment_no_longer_available`, `stale_version` |
+| `claim` | `item_id`, `version` | `already_claimed` (owner's `name` in `DETAIL`), `invalid_state`, `stale_version`. Claiming your own item again returns it unchanged |
+| `complete_item`, `cancel_item` | `item_id`, `version` | `invalid_state` (complete: only from Assigned; cancel: not from Completed/Cancelled), `not_owner` (complete), `stale_version`. Cancel withdraws a pending request and cancels open coverage |
 | `coverage_remaining` | — → `int` | — |
 | `request_coverage` | `item_id`, `version` | `not_owner`, `coverage_limit_reached` |
 | `cancel_coverage` | `item_id`, `version` | `coverage_resolved` |
@@ -170,6 +170,24 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 | `account` | App (Care Circle and settings) | `export` → JSON; `delete` → ADR-015 order |
 | `push-test` | App (temporary "Send test notification" on `/notifications`) | Verifies the caller's JWT, sends a push with only `{url}` to each of their `push_subscriptions` using VAPID, deletes ones the push service reports gone (404/410); returns `{sent, removed, failed}`. `outbox-worker` reuses its `sendPush` |
 | `static-map` | App (appointment create and detail) | `?item=<id>` → map image for members only, cached; nothing if the location wasn't found (ADR-017) |
+
+**`push` job payload** (written by the item RPCs, task 2.1). One `outbox` row per recipient, `kind = 'push'`, `status = 'pending'`, `run_at = now()`:
+
+```json
+{ "event": "assignment_requested", "item_id": "<uuid>", "recipient_id": "<uuid>", "actor_id": "<uuid>" }
+```
+
+IDs and an event name only; never titles, notes or locations (ADR-010). The actor is never a recipient, and nor is anyone who has left the circle. Events and who gets them:
+
+| `event` | Written by | Recipient |
+| --- | --- | --- |
+| `assignment_requested` | `create_item`, `assign` | The proposed assignee |
+| `assignment_accepted`, `assignment_declined` | `accept_assignment`, `decline_assignment` | Whoever made the request |
+| `assignment_withdrawn` | `withdraw_assignment` | The proposed assignee |
+| `reassigned_away` | `assign` | The previous owner or proposed assignee |
+| `reconfirm_requested` | `update_item` (BR-11) | The owner, who must accept again |
+| `item_changed` | `update_item` (any other edit) | The owner and the proposed assignee |
+| `item_cancelled` | `cancel_item` | The owner and the proposed assignee |
 
 ### 4.5 App routes and platform adapter
 
