@@ -161,5 +161,71 @@
     "notFoundHeading": "This invite link doesn't work",
     "expiredHeading": "This invite link has expired",
     "errorHeading": "Something went wrong"
+  },
+  "auth": {
+    "appName": "Kindred",
+    "loading": "Loading…",
+    "back": "Back",
+    "tryAgain": "Try again",
+    "start": {
+      "title": "Everything your family is coordinating, in one place.",
+      "body": "Tasks, appointments and updates for the person you care for, shared with everyone who helps.",
+      "google": "Continue with Google",
+      "email": "Email me a code",
+      "demoPrompt": "Just looking?",
+      "demo": "Try the demo",
+      "demoSoon": "Coming soon.",
+      "disclaimer": "Kindred coordinates care. It does not store medical records or give medical advice.",
+      "privacy": "Privacy"
+    },
+    "email": {
+      "header": "Sign in with email",
+      "title": "What's your email?",
+      "body": "We'll send you a 6-digit code. There's no password to remember.",
+      "label": "Email",
+      "submit": "Email me a code",
+      "sameStep": "New or returning, it's the same step."
+    },
+    "code": {
+      "title": "Check your email",
+      "sentTo": "We sent a 6-digit code to <strong>{{email}}</strong>. Enter it here.",
+      "label": "6-digit code",
+      "resend": "Send a new code",
+      "resent": "We sent a new code. Use the newest one.",
+      "differentEmail": "Use a different email",
+      "anyDevice": "The code works on any device, so you can read the email on your laptop and type it on your phone.",
+      "submit": "Continue"
+    },
+    "errors": {
+      "rate_limited": "Too many codes have been sent. Wait a few minutes, then try again.",
+      "code_invalid": "That code didn't work. Check it, or send a new code.",
+      "unknown": "Something went wrong. Try again.",
+      "circleCheck": "We couldn't load your Care Circle. Check your connection and try again."
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Kindred is a prototype that helps families coordinate care for someone they love. This page explains, in plain language, what it keeps and why.",
+    "stores": {
+      "title": "What Kindred stores",
+      "body": "Your name and email address, so your Care Circle knows who you are. The tasks, appointments and updates your circle adds, and who did what, so everyone sees the same plan."
+    },
+    "google": {
+      "title": "Signing in with Google",
+      "body": "If you continue with Google, Kindred receives only your name, email address and profile picture. It cannot see your Gmail, contacts or calendar. Connecting a calendar is a separate step you choose later."
+    },
+    "who": {
+      "title": "Who can see it",
+      "body": "Only the members of your Care Circle see your circle's tasks, appointments and updates. Kindred does not sell your information or show ads."
+    },
+    "notStored": {
+      "title": "What Kindred doesn't store",
+      "body": "Kindred is not a medical record. Please don't add medical details you wouldn't share with your whole circle. There are no passwords to store, because you sign in with Google or a one-time code."
+    },
+    "delete": {
+      "title": "Leaving and deleting",
+      "body": "You can leave your Care Circle at any time, or delete your account. Deleting it removes your name and email. Things you added to a shared circle stay, shown as from a former member."
+    },
+    "back": "Back to Kindred"
   }
 }
