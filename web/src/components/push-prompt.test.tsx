@@ -18,6 +18,7 @@ beforeEach(() => {
   mocked.isStandalone.mockReturnValue(true)
   mocked.notificationPermission.mockReturnValue('default')
   mocked.deviceSetting.get.mockReturnValue(null)
+  mocked.enablePush.mockResolvedValue('enabled')
 })
 
 afterEach(() => vi.clearAllMocks())
@@ -25,6 +26,15 @@ afterEach(() => vi.clearAllMocks())
 test('shows in the Home Screen app before the phone has asked', () => {
   render(<PushPrompt />)
   expect(screen.getByRole('heading', { name: 'Turn on notifications?' })).toBeInTheDocument()
+})
+
+// Runs first: the re-save happens once per app launch.
+test('re-saves the subscription once permission is granted', () => {
+  mocked.notificationPermission.mockReturnValue('granted')
+  render(<PushPrompt />)
+  expect(mocked.enablePush).toHaveBeenCalledOnce()
+  render(<PushPrompt />)
+  expect(mocked.enablePush).toHaveBeenCalledOnce()
 })
 
 test.each([
@@ -45,7 +55,6 @@ test('Not now hides it and remembers', () => {
 })
 
 test('Turn on notifications enables push and closes', async () => {
-  mocked.enablePush.mockResolvedValue('enabled')
   render(<PushPrompt />)
   fireEvent.click(screen.getByRole('button', { name: 'Turn on notifications' }))
   await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())

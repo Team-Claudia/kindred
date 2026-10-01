@@ -39,7 +39,7 @@ begin
       'auth', save_push_subscription.keys ->> 'auth'
     )
   )
-  on conflict (endpoint) do update
+  on conflict on constraint push_subscriptions_endpoint_key do update
     set user_id = excluded.user_id, keys = excluded.keys;
 end $$;
 
