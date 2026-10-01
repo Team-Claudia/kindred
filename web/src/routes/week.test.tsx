@@ -175,6 +175,18 @@ test('filters to one member: what they own or have been asked to do', () => {
   expect(screen.getAllByRole('link')).toHaveLength(4)
 })
 
+test('a filter can always be cleared, even when only one member is left', () => {
+  vi.mocked(circles.useCircleMembers).mockReturnValue({
+    isPending: false,
+    data: [
+      { user_id: 'maya', role: 'admin', relationship: 'child', joined_at: '', profiles: { display_name: 'Maya' } },
+    ],
+  } as unknown as Query<typeof circles.useCircleMembers>)
+  renderWeek('/week?member=maya')
+  fireEvent.click(screen.getByRole('button', { name: 'Everyone' }))
+  expect(screen.getAllByRole('link')).toHaveLength(4)
+})
+
 test('a member with nothing this week sees an empty state', () => {
   mockItems(thisWeek.filter((row) => row.owner_id !== 'jonah'))
   renderWeek('/week?member=jonah')

@@ -139,7 +139,7 @@ function WeekAgenda({ careRecipient, timeZone }: { careRecipient: string; timeZo
           )}
         </div>
 
-        {names.size > 1 && (
+        {(names.size > 1 || memberId !== null) && (
           <div role="group" aria-labelledby="week-show" className="flex flex-wrap items-center gap-2">
             <span id="week-show" className="text-sm font-semibold tracking-wider uppercase">
               {t('week.show')}
