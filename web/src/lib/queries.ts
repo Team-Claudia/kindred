@@ -10,6 +10,8 @@ import { supabase } from './supabase'
 export const queryKeys = {
   items: ['items'] as const,
   item: (itemId: string) => ['items', itemId] as const,
+  // Under 'items', so anything that refreshes items refreshes ranges too.
+  itemsInRange: (from: string, to: string) => ['items', 'range', from, to] as const,
   updates: ['updates'] as const,
   members: ['members'] as const,
   notifications: ['notifications'] as const,
@@ -27,6 +29,26 @@ export function useItems() {
   return useQuery({
     queryKey: queryKeys.items,
     queryFn: () => rows(supabase.from('items').select('*').order('starts_at')),
+  })
+}
+
+/**
+ * Items starting from `from` (inclusive) up to `to` (exclusive), both ISO
+ * instants, in time order. This week passes the week's start and end in the
+ * circle's time zone (lib/dates.ts weekOf).
+ */
+export function useItemsInRange(from: string, to: string) {
+  return useQuery({
+    queryKey: queryKeys.itemsInRange(from, to),
+    queryFn: () =>
+      rows(
+        supabase
+          .from('items')
+          .select('*')
+          .gte('starts_at', from)
+          .lt('starts_at', to)
+          .order('starts_at'),
+      ),
   })
 }
 

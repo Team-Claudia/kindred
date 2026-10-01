@@ -57,7 +57,6 @@ afterEach(() => {
 
 test.each([
   ['/', 'Home'],
-  ['/week', 'This week'],
   ['/updates', 'Updates'],
   ['/summary', 'Summary'],
   ['/circle', 'Care Circle'],

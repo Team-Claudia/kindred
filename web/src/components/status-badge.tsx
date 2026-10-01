@@ -15,10 +15,26 @@ const styles: Record<BadgeStatus, string> = {
     'border-2 border-state-overdue-foreground bg-state-overdue font-semibold text-state-overdue-foreground',
 }
 
-/** A state, or Overdue, as its name in text plus its colour. Never colour alone. */
-export function StatusBadge({ status, className }: { status: BadgeStatus; className?: string }) {
+/**
+ * A state, or Overdue, as its name in text plus its colour. Never colour alone.
+ * With `name`, Awaiting acceptance says who it's waiting for ("Awaiting Maya").
+ */
+export function StatusBadge({
+  status,
+  name,
+  className,
+}: {
+  status: BadgeStatus
+  name?: string
+  className?: string
+}) {
   const { t } = useTranslation()
-  const label = status === 'overdue' ? t('status.overdue') : t(`state.${status}`)
+  const label =
+    status === 'overdue'
+      ? t('status.overdue')
+      : status === 'awaiting_acceptance' && name
+        ? t('status.awaitingNamed', { name })
+        : t(`state.${status}`)
 
   return (
     <span

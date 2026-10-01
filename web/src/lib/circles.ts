@@ -63,7 +63,7 @@ export function useMyMembership(userId: string | undefined) {
       rows(
         supabase
           .from('circle_members')
-          .select('role, relationship, circles(id, care_recipient_name)')
+          .select('role, relationship, circles(id, care_recipient_name, time_zone)')
           .eq('user_id', userId!)
           .maybeSingle(),
       ),

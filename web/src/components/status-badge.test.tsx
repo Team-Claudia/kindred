@@ -21,3 +21,8 @@ test.each([...ASSIGNMENT_STATES, 'overdue' as const])('%s shows its name as text
   expect(badge.className).toContain(`bg-state-${status.replace('_', '-')}`)
   expect(badge.className).toContain(`text-state-${status.replace('_', '-')}-foreground`)
 })
+
+test('Awaiting acceptance can say who it is waiting for', () => {
+  render(<StatusBadge status="awaiting_acceptance" name="Maya" />)
+  expect(screen.getByText('Awaiting Maya')).toHaveAttribute('data-status', 'awaiting_acceptance')
+})
