@@ -38,7 +38,7 @@ export type ItemPatch = Partial<
 async function call<F extends FunctionName>(fn: F, args?: Args<F>): Promise<Returns<F>> {
   // supabase-js can't infer through a generic function name, so loosen the
   // call and restore the types from database.types.ts on the way out.
-  const rpc = supabase.rpc as unknown as (
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     fn: string,
     args?: object,
   ) => PromiseLike<{ data: unknown; error: { message: string; details: string } | null }>
