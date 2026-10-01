@@ -41,5 +41,41 @@
     "coverage_resolved_named": "{{name}} is already covering this.",
     "not_implemented": "This isn't ready yet.",
     "unknown": "Something went wrong. Try again."
+  },
+  "shell": {
+    "tabs": "Main",
+    "notifications": "Notifications",
+    "circle": "Care Circle and settings",
+    "back": "Back",
+    "testShare": "Test the share sheet",
+    "testShareText": "Try Kindred, an app for coordinating family care."
+  },
+  "install": {
+    "title": "Add Kindred to your Home Screen",
+    "intro": "On iPhone, Kindred can only send you notifications once it's on your Home Screen. It takes three taps.",
+    "step1Title": "Tap the Share button",
+    "step1Detail": "At the bottom of Safari",
+    "step2Title": "Choose \"Add to Home Screen\"",
+    "step2Detail": "Scroll down the list if you don't see it",
+    "step3Title": "Open Kindred from the new icon",
+    "step3Detail": "You'll stay signed in",
+    "notNow": "Not now — remind me later"
+  },
+  "status": {
+    "overdue": "Overdue"
+  },
+  "common": {
+    "appName": "Kindred",
+    "loading": "Loading…",
+    "empty": "Nothing here yet.",
+    "error": "Something went wrong.",
+    "tryAgain": "Try again",
+    "share": "Share",
+    "shareFallbackTitle": "Share this link",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "copyFailed": "Couldn't copy. Press and hold the link to copy it instead.",
+    "sendOnWhatsApp": "Send on WhatsApp",
+    "close": "Close"
   }
 }

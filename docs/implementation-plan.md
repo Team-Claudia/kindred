@@ -168,7 +168,7 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 
 Routes: `/` (Home), `/week`, `/updates`, `/summary`, `/circle` (Care Circle and settings), `/notifications`, `/i/:itemId`, `/join/:code`, `/sign-in`, `/welcome` (create circle + Home Screen guide). The bottom tabs are Home, This week, Updates and Summary; `/circle` opens from the member's initial and `/notifications` from the bell, both at the top of Home.
 
-`web/src/platform/` exposes: `share({text, url})`, `canShare()`, `isStandalone()`, `enablePush()`, `addCalendarFeed(url)`. Screens call these, never browser APIs directly (ADR-002).
+`web/src/platform/` exposes: `share({text, url})`, `canShare()`, `copyText(text)`, `whatsAppUrl({text, url})`, `appUrl(path)`, `isStandalone()`, `enablePush()`, `addCalendarFeed(url)` and `deviceSetting` (per-device conveniences such as "remind me later"; never relied on). Screens call these, never browser APIs directly (ADR-002). `ShareButton` falls back to Copy link and WhatsApp when `share` returns `'unsupported'`.
 
 ### 4.6 Design tokens
 

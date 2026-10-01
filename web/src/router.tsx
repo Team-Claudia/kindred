@@ -1,4 +1,5 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
+import { AppShell } from '@/components/app-shell'
 import Circle from '@/routes/circle'
 import Home from '@/routes/home'
 import Item from '@/routes/item'
@@ -14,13 +15,23 @@ import Welcome from '@/routes/welcome'
 // Updates, Summary. /circle opens from the member's initial and
 // /notifications from the bell, both at the top of Home.
 export const routes: RouteObject[] = [
-  { path: '/', element: <Home /> },
-  { path: '/week', element: <Week /> },
-  { path: '/updates', element: <Updates /> },
-  { path: '/summary', element: <Summary /> },
-  { path: '/circle', element: <Circle /> },
-  { path: '/notifications', element: <Notifications /> },
-  { path: '/i/:itemId', element: <Item /> },
+  {
+    element: <AppShell tabs />,
+    children: [
+      { path: '/', element: <Home /> },
+      { path: '/week', element: <Week /> },
+      { path: '/updates', element: <Updates /> },
+      { path: '/summary', element: <Summary /> },
+    ],
+  },
+  {
+    element: <AppShell />,
+    children: [
+      { path: '/circle', element: <Circle /> },
+      { path: '/notifications', element: <Notifications /> },
+      { path: '/i/:itemId', element: <Item /> },
+    ],
+  },
   { path: '/join/:code', element: <Join /> },
   { path: '/sign-in', element: <SignIn /> },
   { path: '/welcome', element: <Welcome /> },
