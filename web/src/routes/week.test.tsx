@@ -208,9 +208,9 @@ test('moves to the previous and next week, and back to this week', () => {
   expect(lastRange()).toEqual({ from: '2026-09-14T07:00:00.000Z', to: '2026-09-21T07:00:00.000Z' })
 })
 
-test('a week across the clocks going back ends at the later local midnight', () => {
-  renderWeek('/week?week=2026-10-26')
-  expect(lastRange()).toEqual({ from: '2026-10-26T07:00:00.000Z', to: '2026-11-02T08:00:00.000Z' })
+test('a week across the clocks going forward ends at the earlier local midnight', () => {
+  renderWeek('/week?week=2026-03-02')
+  expect(lastRange()).toEqual({ from: '2026-03-02T08:00:00.000Z', to: '2026-03-09T07:00:00.000Z' })
 })
 
 test('shows a loading state', () => {

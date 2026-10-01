@@ -12,6 +12,10 @@ import {
 } from './dates'
 
 const VANCOUVER = 'America/Vancouver'
+// The clocks-go-back tests use Toronto: British Columbia's move to permanent
+// daylight time means newer time-zone data has no autumn change in Vancouver
+// from 2026, so its result depends on the machine's tz data.
+const TORONTO = 'America/Toronto'
 
 describe('day keys', () => {
   test('a day is the calendar day in the circle time zone, not UTC', () => {
@@ -64,10 +68,10 @@ describe('weeks run Monday to Sunday', () => {
   })
 
   test('a week where the clocks go back is an hour longer', () => {
-    // Daylight saving ends in Vancouver at 2 am on Sunday 1 November 2026.
-    const week = weekOf('2026-10-26', VANCOUVER)
-    expect(week.start.toISOString()).toBe('2026-10-26T07:00:00.000Z') // PDT, UTC-7
-    expect(week.end.toISOString()).toBe('2026-11-02T08:00:00.000Z') // PST, UTC-8
+    // Daylight saving ends in Toronto at 2 am on Sunday 1 November 2026.
+    const week = weekOf('2026-10-26', TORONTO)
+    expect(week.start.toISOString()).toBe('2026-10-26T04:00:00.000Z') // EDT, UTC-4
+    expect(week.end.toISOString()).toBe('2026-11-02T05:00:00.000Z') // EST, UTC-5
     expect(week.end.getTime() - week.start.getTime()).toBe((7 * 24 + 1) * 3_600_000)
   })
 
@@ -81,8 +85,8 @@ describe('weeks run Monday to Sunday', () => {
 
   test('stepping week by week across a daylight-saving change keeps Mondays', () => {
     expect(addDays('2026-10-26', 7)).toBe('2026-11-02')
-    expect(weekStart(startOfDay('2026-11-02', VANCOUVER), VANCOUVER)).toBe('2026-11-02')
-    expect(weekStart(new Date('2026-11-02T07:59:59Z'), VANCOUVER)).toBe('2026-10-26')
+    expect(weekStart(startOfDay('2026-11-02', TORONTO), TORONTO)).toBe('2026-11-02')
+    expect(weekStart(new Date('2026-11-02T04:59:59Z'), TORONTO)).toBe('2026-10-26')
   })
 
   test('works for a time zone ahead of UTC', () => {
@@ -108,13 +112,13 @@ describe('groupByDay', () => {
 
   test('days stay right across the clocks going back', () => {
     const items = [
-      { id: 'sun-late', starts_at: '2026-11-02T07:30:00Z' }, // Sun 1 Nov, 11:30 pm PST
-      { id: 'sat-late', starts_at: '2026-11-01T06:30:00Z' }, // Sat 31 Oct, 11:30 pm PDT
-      { id: 'mon', starts_at: '2026-11-02T08:00:00Z' }, // Mon 2 Nov, midnight PST
+      { id: 'sun-late', starts_at: '2026-11-02T04:30:00Z' }, // Sun 1 Nov, 11:30 pm EST
+      { id: 'sat-late', starts_at: '2026-11-01T03:30:00Z' }, // Sat 31 Oct, 11:30 pm EDT
+      { id: 'mon', starts_at: '2026-11-02T05:00:00Z' }, // Mon 2 Nov, midnight EST
     ]
-    const groups = groupByDay(items, VANCOUVER)
+    const groups = groupByDay(items, TORONTO)
     expect([...groups.keys()]).toEqual(['2026-10-31', '2026-11-01', '2026-11-02'])
-    const week = weekOf('2026-10-26', VANCOUVER)
+    const week = weekOf('2026-10-26', TORONTO)
     const inWeek = items.filter(
       (item) => new Date(item.starts_at) >= week.start && new Date(item.starts_at) < week.end,
     )
