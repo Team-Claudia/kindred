@@ -21,6 +21,8 @@
     --color-state-completed-foreground: var(--state-completed-foreground);
     --color-state-cancelled: var(--state-cancelled);
     --color-state-cancelled-foreground: var(--state-cancelled-foreground);
+    --color-state-overdue: var(--state-overdue);
+    --color-state-overdue-foreground: var(--state-overdue-foreground);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -64,6 +66,17 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  /*
+    On iPhone, follow the Settings text size: this sets the root font size, and
+    everything is in rem, so the whole layout scales with it.
+  */
+  @supports (font: -apple-system-body) {
+    html {
+      font: -apple-system-body;
+      font-family: var(--font-body);
+      line-height: 1.5;
+    }
   }
   body {
     @apply bg-background text-foreground;
