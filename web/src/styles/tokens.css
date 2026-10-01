@@ -4,6 +4,28 @@
 */
 
 :root {
+    /* Fonts and spacing. 1 Tailwind spacing unit = --space-unit. */
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --space-unit: 0.25rem;
+    --tap-target: 2.75rem; /* 44px minimum tap target */
+
+    /*
+      Assignment states: a background + text pair each. Always shown with the
+      state's text label (en-CA.json "state"), never colour alone.
+    */
+    --state-needs-someone: oklch(0.95 0.07 85);
+    --state-needs-someone-foreground: oklch(0.42 0.09 70);
+    --state-awaiting-acceptance: oklch(0.94 0.04 250);
+    --state-awaiting-acceptance-foreground: oklch(0.42 0.14 255);
+    --state-assigned: oklch(0.94 0.05 150);
+    --state-assigned-foreground: oklch(0.4 0.1 150);
+    --state-needs-coverage: oklch(0.94 0.05 30);
+    --state-needs-coverage-foreground: oklch(0.47 0.17 30);
+    --state-completed: oklch(0.95 0 0);
+    --state-completed-foreground: oklch(0.38 0 0);
+    --state-cancelled: oklch(0.97 0 0);
+    --state-cancelled-foreground: oklch(0.5 0 0);
+
     --radius: 0.625rem;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
@@ -39,6 +61,19 @@
 }
 
 .dark {
+    --state-needs-someone: oklch(0.32 0.06 80);
+    --state-needs-someone-foreground: oklch(0.9 0.08 85);
+    --state-awaiting-acceptance: oklch(0.3 0.06 255);
+    --state-awaiting-acceptance-foreground: oklch(0.88 0.06 250);
+    --state-assigned: oklch(0.3 0.06 150);
+    --state-assigned-foreground: oklch(0.88 0.08 150);
+    --state-needs-coverage: oklch(0.32 0.08 30);
+    --state-needs-coverage-foreground: oklch(0.88 0.07 30);
+    --state-completed: oklch(0.27 0 0);
+    --state-completed-foreground: oklch(0.85 0 0);
+    --state-cancelled: oklch(0.24 0 0);
+    --state-cancelled-foreground: oklch(0.7 0 0);
+
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);

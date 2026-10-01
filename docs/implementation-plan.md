@@ -102,6 +102,12 @@ The contracts every phase builds against, set up in task 0.3. When one changes, 
 
 As in ADR-012, with these tables in the first migration: `profiles`, `circles`, `circle_members` (with `relationship`), `invites`, `series`, `items` (with `location_lat` / `location_lng`), `assignment_requests`, `coverage_requests`, `updates`, `comments` (table only; no UI), `calendar_settings`, `push_subscriptions`, `notification_prefs`, `notifications`, `activity_events`, `outbox`. Circle time zone defaults to `America/Vancouver`.
 
+- **States** are stored in snake_case: `needs_someone`, `awaiting_acceptance`, `assigned`, `needs_coverage`, `completed`, `cancelled`. Their labels are in `en-CA.json` under `state`.
+- **RLS** is on for every table. Task 0.3 adds no policies, so nothing is readable from the app until a task adds the policies it needs.
+- **Constraints:** one circle per user (`circle_members.user_id` unique, BR-12); at most one `pending` assignment request and one `open` coverage request per item.
+- `notification_prefs` has one push switch per US 11.4 category: `requests`, `reminders`, `changes`, `updates`, `weekly_summary`, `comments` (all on) and `everything_else` (off).
+- `calendar_settings.feed_token` is a random 48-character hex string generated on insert.
+
 ### 4.2 RPCs (all writes)
 
 Clients never write tables directly (ADR-005). Every RPC checks membership, locks the row, checks `version`, writes `activity_events` and `outbox` in the same transaction, and returns the updated item (or the new ID).
@@ -130,6 +136,15 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 | `reset_demo_circle` | — | Service role only |
 
 `web/src/lib/errors.ts` maps each error code to the PRD's user-facing message (e.g. `coverage_resolved` → "Daniel is already covering this").
+
+**Conventions** (set in task 0.3):
+
+- **Arguments** use the names above, so the app calls `supabase.rpc('claim', { item_id, version })`. `web/src/lib/api.ts` has one typed wrapper per RPC; screens use those.
+- **Returns:** RPCs that act on an item return the updated `items` row. `create_circle`, `join_circle` and `join_demo_circle` return the circle ID; `create_item` and `post_update` return the new ID; `create_invite` returns the code; the rest return nothing.
+- **Errors:** raise the code as the message, with any values the message needs as a JSON object in `DETAIL`: `raise exception 'coverage_resolved' using detail = json_build_object('name', owner_name)::text`. A message with a `_named` variant in `en-CA.json` uses it when `name` is sent. Unfinished RPCs raise `not_implemented`.
+- **Names:** many arguments share a column's name (`item_id`, `version`, `kind`), which plpgsql rejects as ambiguous. In bodies, qualify columns with a table alias and arguments with the function name: `update public.items i set version = i.version + 1 where i.id = claim.item_id and i.version = claim.version`.
+- **Security:** RPCs are `security definer` with `set search_path = ''`. Supabase grants `EXECUTE` to `anon` by default, so every new function needs `revoke execute ... from public, anon, authenticated`, then `grant execute ... to authenticated` if the app calls it. Demo guests are anonymous sign-ins, which use the `authenticated` role. `reset_demo_circle` is granted to `service_role` only.
+- **`weekly_summary(week_start date)`** runs as the caller (RLS applies) and returns rows of `kind`, `item_id`, `item_title`, `person_id`, `at`, `count`.
 
 ### 4.3 Reads and live updates
 

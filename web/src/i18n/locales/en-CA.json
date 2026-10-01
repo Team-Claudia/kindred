@@ -1,6 +1,45 @@
 {
-  "home": {
-    "title": "Hello Kindred",
-    "subtitle": "Care, coordinated with your family."
+  "screens": {
+    "home": "Home",
+    "week": "This week",
+    "updates": "Updates",
+    "summary": "Summary",
+    "circle": "Care Circle",
+    "notifications": "Notifications",
+    "item": "Task or appointment",
+    "join": "Join a Care Circle",
+    "signIn": "Sign in",
+    "welcome": "Welcome"
+  },
+  "placeholder": {
+    "comingSoon": "This screen is on its way."
+  },
+  "state": {
+    "needs_someone": "Needs someone",
+    "awaiting_acceptance": "Awaiting acceptance",
+    "assigned": "Assigned",
+    "needs_coverage": "Needs coverage",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "errors": {
+    "already_in_circle": "You're already in a Care Circle. Leave it before starting a new one.",
+    "not_member": "You're not a member of this Care Circle.",
+    "invite_expired": "This invite link has expired. Ask for a new one.",
+    "invite_not_found": "This invite link doesn't work. Check it or ask for a new one.",
+    "already_in_other_circle": "You're already in another Care Circle. Leave it before joining this one.",
+    "not_admin": "Only a Care Circle admin can do that.",
+    "invalid_input": "Some details are missing or not quite right. Check them and try again.",
+    "stale_version": "Someone changed this while you were looking. Here's the latest.",
+    "invalid_state": "This can't be done right now. Here's where it stands.",
+    "assignment_no_longer_available": "This assignment is no longer available.",
+    "already_claimed": "Someone has already taken this.",
+    "already_claimed_named": "{{name}} has already taken this.",
+    "not_owner": "Only the person who took this on can do that.",
+    "coverage_limit_reached": "You've reached your limit of 2 coverage requests this month.",
+    "coverage_resolved": "Someone is already covering this.",
+    "coverage_resolved_named": "{{name}} is already covering this.",
+    "not_implemented": "This isn't ready yet.",
+    "unknown": "Something went wrong. Try again."
   }
 }

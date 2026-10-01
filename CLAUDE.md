@@ -18,7 +18,7 @@ A prototype PWA that helps families coordinate care. `web/` is the React + Vite 
 
 - All state changes go through Postgres RPC functions. The app never inserts, updates or deletes circle data directly.
 - Migrations use the Supabase CLI's timestamped names (`supabase migration new <name>`). Never edit a merged migration; add a new one.
-- Regenerate `web/src/lib/database.types.ts` after schema changes (`supabase gen types typescript --local`).
+- Regenerate `web/src/lib/database.types.ts` after schema changes (`supabase gen types typescript --local`). CI fails if it doesn't match the migrations, and prints the generated file so you can copy it if you can't run Supabase locally.
 
 ## App
 
