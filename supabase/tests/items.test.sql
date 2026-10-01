@@ -523,7 +523,7 @@ select ok(
     and not has_function_privilege('authenticated', 'public.log_item_event(public.items, uuid, text, jsonb)', 'execute')
     and not has_function_privilege('authenticated', 'public.queue_push(public.items, uuid, text, uuid[])', 'execute')
     and not has_function_privilege('authenticated', 'public.check_item_fields(text, timestamptz, timestamptz, text, text)', 'execute')
-    and not has_function_privilege('authenticated', 'public.lock_own_pending_request(public.items)', 'execute'),
+    and not has_function_privilege('authenticated', 'public.lock_own_pending_request(uuid)', 'execute'),
   'internal helpers can''t be called from the app'
 );
 select ok(

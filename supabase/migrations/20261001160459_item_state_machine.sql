@@ -310,9 +310,10 @@ begin
     return v_item;
   end if;
 
+  -- Only for an owner still in the circle, who can actually re-confirm.
   v_reconfirm := v_item.state = 'assigned'
-    and v_item.owner_id is not null
     and v_item.owner_id is distinct from v_user
+    and public.is_circle_member(v_item.circle_id, v_item.owner_id)
     and v_fields && array['starts_at', 'ends_at'];
 
   update public.items i
@@ -435,8 +436,10 @@ end $$;
 -- ---------------------------------------------------------------------------
 
 -- Locks and returns the caller's pending request for an item that is
--- Awaiting acceptance, or raises assignment_no_longer_available.
-create function public.lock_own_pending_request(item public.items)
+-- Awaiting acceptance, or raises assignment_no_longer_available. The caller
+-- has already locked the item. (Takes an ID rather than an items row, since a
+-- function of one items row would show up as a column of items in the API.)
+create function public.lock_own_pending_request(item uuid)
 returns public.assignment_requests
 language plpgsql security definer set search_path = ''
 as $$
@@ -445,13 +448,15 @@ declare
 begin
   select r.* into v_request
   from public.assignment_requests r
-  where r.item_id = (lock_own_pending_request.item).id and r.status = 'pending'
-  for update;
+  join public.items i on i.id = r.item_id
+  where r.item_id = lock_own_pending_request.item
+    and r.status = 'pending'
+    and r.assignee_id = auth.uid()
+    and i.state = 'awaiting_acceptance'
+    and i.proposed_assignee_id = auth.uid()
+  for update of r;
 
-  if not found
-     or (lock_own_pending_request.item).state <> 'awaiting_acceptance'
-     or (lock_own_pending_request.item).proposed_assignee_id is distinct from auth.uid()
-     or v_request.assignee_id is distinct from auth.uid() then
+  if not found then
     raise exception 'assignment_no_longer_available';
   end if;
   return v_request;
@@ -467,7 +472,7 @@ declare
   v_request public.assignment_requests;
 begin
   v_item := public.lock_item(accept_assignment.item_id);
-  v_request := public.lock_own_pending_request(v_item);
+  v_request := public.lock_own_pending_request(v_item.id);
   if v_item.version is distinct from accept_assignment.version then
     raise exception 'stale_version';
   end if;
@@ -502,7 +507,7 @@ declare
   v_request public.assignment_requests;
 begin
   v_item := public.lock_item(decline_assignment.item_id);
-  v_request := public.lock_own_pending_request(v_item);
+  v_request := public.lock_own_pending_request(v_item.id);
   if v_item.version is distinct from decline_assignment.version then
     raise exception 'stale_version';
   end if;
@@ -710,5 +715,5 @@ revoke execute on function
   public.log_item_event(public.items, uuid, text, jsonb),
   public.queue_push(public.items, uuid, text, uuid[]),
   public.check_item_fields(text, timestamptz, timestamptz, text, text),
-  public.lock_own_pending_request(public.items)
+  public.lock_own_pending_request(uuid)
 from public, anon, authenticated;
