@@ -17,13 +17,8 @@ import {
 } from '@/components/circle-setup'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
-import {
-  nameFromAccount,
-  signInPath,
-  useAuthUser,
-  useInvitePreview,
-  useProfile,
-} from '@/lib/circles'
+import { googleName, signInPath, useAuth } from '@/lib/auth'
+import { useInvitePreview, useProfile } from '@/lib/circles'
 import { errorMessage, RpcError } from '@/lib/errors'
 
 // /join/:code: an invite link (wireframes 07 and 08). Shows who invited you
@@ -31,7 +26,9 @@ import { errorMessage, RpcError } from '@/lib/errors'
 export default function Join() {
   const { t } = useTranslation()
   const { code = '' } = useParams()
-  const { user, loading } = useAuthUser()
+  const auth = useAuth()
+  const loading = auth.status === 'loading'
+  const user = auth.status === 'signed_in' ? auth.session.user : null
   const preview = useInvitePreview(code, user?.id ?? null, !loading)
 
   if (loading || preview.isPending) return <LoadingScreen />
@@ -154,7 +151,7 @@ function JoinForm({
   if (profile.isPending) return <LoadingScreen />
 
   // Filled in from the profile, or from Google, until the member edits it.
-  const displayName = name ?? (profile.data?.display_name || nameFromAccount(user))
+  const displayName = name ?? (profile.data?.display_name || googleName(user) || '')
   const nameError = showErrors && !displayName.trim() ? t('circleSetup.nameRequired') : undefined
   const termsError = showErrors && !agreed ? t('circleSetup.termsRequired') : undefined
 

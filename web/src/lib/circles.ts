@@ -1,7 +1,5 @@
-import type { User } from '@supabase/supabase-js'
 import { useQuery } from '@tanstack/react-query'
 import type { TFunction } from 'i18next'
-import { useEffect, useState } from 'react'
 import * as api from './api'
 import { supabase } from './supabase'
 
@@ -29,45 +27,8 @@ export function relationshipLabel(t: TFunction, value: string | null): string | 
     : value
 }
 
-// Where to send a signed-out visitor so they come back to the invite after
-// signing in.
-export function signInPath(next: string): string {
-  return `/sign-in?${new URLSearchParams({ next }).toString()}`
-}
-
 export function firstName(name: string | null | undefined): string {
   return name?.trim().split(/\s+/)[0] ?? ''
-}
-
-// The name Google gave us, if the member signed in with Google.
-export function nameFromAccount(user: User | null): string {
-  const metadata = user?.user_metadata as { full_name?: unknown; name?: unknown } | undefined
-  const name = metadata?.full_name ?? metadata?.name
-  return typeof name === 'string' ? name : ''
-}
-
-// The signed-in user, or null. loading is true until the session is known.
-export function useAuthUser() {
-  const [state, setState] = useState<{ user: User | null; loading: boolean }>({
-    user: null,
-    loading: true,
-  })
-
-  useEffect(() => {
-    let active = true
-    void supabase.auth.getSession().then(({ data }) => {
-      if (active) setState({ user: data.session?.user ?? null, loading: false })
-    })
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active) setState({ user: session?.user ?? null, loading: false })
-    })
-    return () => {
-      active = false
-      data.subscription.unsubscribe()
-    }
-  }, [])
-
-  return state
 }
 
 export const circleKeys = {

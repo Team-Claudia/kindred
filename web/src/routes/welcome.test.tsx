@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import * as api from '@/lib/api'
+import { useAuth, type AuthState } from '@/lib/auth'
 import * as circles from '@/lib/circles'
 import { platform } from '@/platform'
 import Welcome from './welcome'
@@ -13,9 +14,12 @@ vi.mock('@/lib/api', () => ({
   createInvite: vi.fn(),
   setAdmin: vi.fn(),
 }))
+vi.mock('@/lib/auth', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/auth')>()),
+  useAuth: vi.fn(),
+}))
 vi.mock('@/lib/circles', async (importOriginal) => ({
   ...(await importOriginal<typeof circles>()),
-  useAuthUser: vi.fn(),
   useProfile: vi.fn(),
   useMyMembership: vi.fn(),
   useCircleMembers: vi.fn(),
@@ -52,14 +56,16 @@ function inCircle(inCircle: boolean) {
 }
 
 beforeEach(() => {
-  vi.mocked(circles.useAuthUser).mockReturnValue({
-    user: {
-      id: 'user-1',
-      email: 'maya@example.test',
-      user_metadata: { full_name: 'Maya Reyes' },
+  vi.mocked(useAuth).mockReturnValue({
+    status: 'signed_in',
+    session: {
+      user: {
+        id: 'user-1',
+        email: 'maya@example.test',
+        user_metadata: { full_name: 'Maya Reyes' },
+      },
     },
-    loading: false,
-  } as unknown as Query<typeof circles.useAuthUser>)
+  } as unknown as AuthState)
   vi.mocked(circles.useProfile).mockReturnValue({
     isPending: false,
     data: null,

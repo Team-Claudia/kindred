@@ -105,6 +105,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 - **States** are stored in snake_case: `needs_someone`, `awaiting_acceptance`, `assigned`, `needs_coverage`, `completed`, `cancelled`. Their labels are in `en-CA.json` under `state`.
 - **RLS** is on for every table. Task 0.3 adds no policies, so nothing is readable from the app until a task adds the policies it needs.
 - **Circle policies** (task 1.2): `select` only, where `circle_id = current_circle_id()` on every circle-owned table, and on `profiles` for your own and your circle's members. `current_circle_id()` returns the caller's one circle. `outbox` has no policy.
+- **Profiles:** a trigger on `auth.users` (`handle_new_user`, task 1.1) creates each account's `profiles` row, with `display_name` from the Google profile when there is one. Signing in again reuses the same account, so there is never a second profile. Each member can read their own `circle_members` row, which the sign-in guard uses to send people with no circle to `/welcome`.
 - **Constraints:** one circle per user (`circle_members.user_id` unique, BR-12); at most one `pending` assignment request and one `open` coverage request per item.
 - `notification_prefs` has one push switch per US 11.4 category: `requests`, `reminders`, `changes`, `updates`, `weekly_summary`, `comments` (all on) and `everything_else` (off).
 - `calendar_settings.feed_token` is a random 48-character hex string generated on insert.
@@ -170,6 +171,8 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 ### 4.5 App routes and platform adapter
 
 Routes: `/` (Home), `/week`, `/updates`, `/summary`, `/circle` (Care Circle and settings), `/notifications`, `/i/:itemId`, `/join/:code`, `/sign-in`, `/welcome` (create circle + Home Screen guide). The bottom tabs are Home, This week, Updates and Summary; `/circle` opens from the member's initial and `/notifications` from the bell, both at the top of Home.
+
+Sign-in guard (task 1.1): `/sign-in`, `/privacy` and `/join/:code` work signed out. Everything else sends signed-out people to `/sign-in?next=<path>` and back there afterwards (Google sign-in returns straight to that path). Signed-in people with no circle can open `/welcome` and `/join/:code`; other routes send them to `/welcome`. Screens use `web/src/lib/auth.ts` (`useAuth`, `useMyCircleId`, `googleName`) rather than `supabase.auth`.
 
 `web/src/platform/` exposes: `share({text, url})`, `canShare()`, `copyText(text)`, `whatsAppUrl({text, url})`, `appUrl(path)`, `isStandalone()`, `enablePush()`, `addCalendarFeed(url)` and `deviceSetting` (per-device conveniences such as "remind me later"; never relied on). Screens call these, never browser APIs directly (ADR-002). `ShareButton` falls back to Copy link and WhatsApp when `share` returns `'unsupported'`.
 
