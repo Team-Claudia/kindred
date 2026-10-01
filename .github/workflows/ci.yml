@@ -38,3 +38,13 @@ jobs:
       # Only Postgres is needed for pgTAP, so skip the rest of the stack.
       - run: supabase db start
       - run: supabase test db
+      - name: Generated types match the schema
+        run: |
+          supabase gen types typescript --local > "$RUNNER_TEMP/database.types.ts"
+          if ! diff -u web/src/lib/database.types.ts "$RUNNER_TEMP/database.types.ts"; then
+            echo "::error::web/src/lib/database.types.ts is out of date. Run: supabase gen types typescript --local > web/src/lib/database.types.ts"
+            echo "::group::Generated types (copy this if you can't run Supabase locally)"
+            cat "$RUNNER_TEMP/database.types.ts"
+            echo "::endgroup::"
+            exit 1
+          fi

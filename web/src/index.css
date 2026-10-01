@@ -6,6 +6,21 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    --font-sans: var(--font-body);
+    --spacing: var(--space-unit);
+    --spacing-tap: var(--tap-target);
+    --color-state-needs-someone: var(--state-needs-someone);
+    --color-state-needs-someone-foreground: var(--state-needs-someone-foreground);
+    --color-state-awaiting-acceptance: var(--state-awaiting-acceptance);
+    --color-state-awaiting-acceptance-foreground: var(--state-awaiting-acceptance-foreground);
+    --color-state-assigned: var(--state-assigned);
+    --color-state-assigned-foreground: var(--state-assigned-foreground);
+    --color-state-needs-coverage: var(--state-needs-coverage);
+    --color-state-needs-coverage-foreground: var(--state-needs-coverage-foreground);
+    --color-state-completed: var(--state-completed);
+    --color-state-completed-foreground: var(--state-completed-foreground);
+    --color-state-cancelled: var(--state-cancelled);
+    --color-state-cancelled-foreground: var(--state-cancelled-foreground);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
