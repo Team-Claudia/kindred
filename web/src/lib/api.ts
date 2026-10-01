@@ -89,6 +89,23 @@ export const markNotificationsRead = (notificationId?: number) =>
 export const logShare = (itemId: string, shareKind: string) =>
   call('log_share', { item_id: itemId, share_kind: shareKind })
 
+// Push subscriptions (task 1.4). keys holds the browser's p256dh and auth keys.
+export type PushKeys = { p256dh: string; auth: string }
+export const savePushSubscription = (endpoint: string, keys: PushKeys) =>
+  call('save_push_subscription', { endpoint, keys })
+export const deletePushSubscription = (endpoint: string) =>
+  call('delete_push_subscription', { endpoint })
+
+// Sends a test push to the caller's own devices (temporary, task 1.4).
+// Resolves with how many devices it was sent to.
+export async function sendTestPush(): Promise<{ sent: number }> {
+  const { data, error } = await supabase.functions.invoke<{ sent: number }>('push-test', {
+    method: 'POST',
+  })
+  if (error || !data) throw new RpcError('unknown', {}, error)
+  return data
+}
+
 // Demo circle ("Try the demo")
 export const joinDemoCircle = () => call('join_demo_circle')
 

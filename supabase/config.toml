@@ -422,6 +422,13 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Temporary test push (task 1.4). The function verifies the caller's JWT itself
+# with Supabase Auth, so the gateway check is off (it doesn't support the newer
+# asymmetric JWT signing keys). Secrets: VAPID_PRIVATE_KEY, VAPID_SUBJECT.
+[functions.push-test]
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

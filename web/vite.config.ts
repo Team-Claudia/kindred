@@ -39,6 +39,8 @@ export default defineConfig({
       workbox: {
         // The calendar feed is served by Supabase, not the app shell.
         navigateFallbackDenylist: [/^\/cal\//],
+        // Push and notification-tap handlers (task 1.4), served from public/.
+        importScripts: ['push-sw.js'],
       },
     }),
   ],

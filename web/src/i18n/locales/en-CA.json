@@ -227,5 +227,41 @@
       "body": "You can leave your Care Circle at any time, or delete your account. Deleting it removes your name and email. Things you added to a shared circle stay, shown as from a former member."
     },
     "back": "Back to Kindred"
+  },
+  "push": {
+    "prompt": {
+      "title": "Turn on notifications?",
+      "intro": "Kindred tells you when:",
+      "reasons": {
+        "requests": "Someone asks you to do something",
+        "reminders": "Something you agreed to is coming up",
+        "coverage": "Someone needs cover",
+        "overdue": "Something you own goes overdue (admins hear about everything overdue)",
+        "updates": "Someone posts an update"
+      },
+      "privacy": "Your lock screen never shows care details, just \"Dad's Care Circle: you have a new request\".",
+      "turnOn": "Turn on notifications",
+      "notNow": "Not now",
+      "close": "Close",
+      "changeLater": "Change this any time in Care Circle and settings."
+    },
+    "result": {
+      "enabled": "Notifications are on for this phone.",
+      "denied": "Notifications are off. To turn them on, open your phone's Settings, then Notifications, then Kindred.",
+      "needs_install": "Add Kindred to your Home Screen first, then open it from there to turn on notifications.",
+      "unsupported": "This browser can't show notifications from Kindred.",
+      "error": "Something went wrong turning on notifications. Try again."
+    },
+    "test": {
+      "heading": "Test notifications",
+      "explainer": "Temporary: checks that notifications reach this phone.",
+      "send": "Send test notification",
+      "sending": "Sending…",
+      "sent_one": "Sent to {{count}} device. It should arrive in a few seconds.",
+      "sent_other": "Sent to {{count}} devices. They should arrive in a few seconds.",
+      "noDevices": "No devices have notifications turned on yet. Turn them on first, then send a test.",
+      "error": "The test notification couldn't be sent. Try again.",
+      "needsInstall": "Notifications only work when Kindred is on your Home Screen. In Safari, tap Share, then Add to Home Screen, and open Kindred from there."
+    }
   }
 }

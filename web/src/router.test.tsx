@@ -46,6 +46,8 @@ function renderAt(path: string) {
 // about the screens behind it. Most run as a signed-in member of a circle.
 beforeEach(() => {
   vi.spyOn(platform, 'isStandalone').mockReturnValue(true)
+  // Keep the notification permission screen (task 1.4) out of the way too.
+  vi.spyOn(platform, 'notificationPermission').mockReturnValue('unsupported')
   given(signedIn)
 })
 

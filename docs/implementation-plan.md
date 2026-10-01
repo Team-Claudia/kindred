@@ -137,6 +137,8 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 | `mark_notifications_read` | `notification_id?` (all if omitted) | — |
 | `log_share` | `item_id`, `share_kind` | — |
 | `join_demo_circle` | — | For anonymous users only |
+| `save_push_subscription` | `endpoint`, `keys` (`{p256dh, auth}`) | `invalid_input`; upserts on `endpoint` for the caller, so a phone that changes account moves to the new one |
+| `delete_push_subscription` | `endpoint` | — (only removes the caller's own) |
 | `reset_demo_circle` | — | Service role only |
 
 `web/src/lib/errors.ts` maps each error code to the PRD's user-facing message (e.g. `coverage_resolved` → "Daniel is already covering this").
@@ -166,6 +168,7 @@ Clients never write tables directly (ADR-005). Every RPC checks membership, lock
 | `google-oauth` | App ("Connect Google Calendar") | Redirect flow; stores refresh token in Vault |
 | `availability` | App (create sheet) | `{circle_id, start, end}` → `{member_id: "free" \| "busy" \| "unknown"}` |
 | `account` | App (Care Circle and settings) | `export` → JSON; `delete` → ADR-015 order |
+| `push-test` | App (temporary "Send test notification" on `/notifications`) | Verifies the caller's JWT, sends a push with only `{url}` to each of their `push_subscriptions` using VAPID, deletes ones the push service reports gone (404/410); returns `{sent, removed, failed}`. `outbox-worker` reuses its `sendPush` |
 | `static-map` | App (appointment create and detail) | `?item=<id>` → map image for members only, cached; nothing if the location wasn't found (ADR-017) |
 
 ### 4.5 App routes and platform adapter
@@ -174,7 +177,7 @@ Routes: `/` (Home), `/week`, `/updates`, `/summary`, `/circle` (Care Circle and 
 
 Sign-in guard (task 1.1): `/sign-in`, `/privacy` and `/join/:code` work signed out. Everything else sends signed-out people to `/sign-in?next=<path>` and back there afterwards (Google sign-in returns straight to that path). Signed-in people with no circle can open `/welcome` and `/join/:code`; other routes send them to `/welcome`. Screens use `web/src/lib/auth.ts` (`useAuth`, `useMyCircleId`, `googleName`) rather than `supabase.auth`.
 
-`web/src/platform/` exposes: `share({text, url})`, `canShare()`, `copyText(text)`, `whatsAppUrl({text, url})`, `appUrl(path)`, `isStandalone()`, `enablePush()`, `addCalendarFeed(url)` and `deviceSetting` (per-device conveniences such as "remind me later"; never relied on). Screens call these, never browser APIs directly (ADR-002). `ShareButton` falls back to Copy link and WhatsApp when `share` returns `'unsupported'`.
+`web/src/platform/` exposes: `share({text, url})`, `canShare()`, `copyText(text)`, `whatsAppUrl({text, url})`, `appUrl(path)`, `isStandalone()`, `enablePush()` (→ `enabled`, `denied`, `needs_install` or `unsupported`), `notificationPermission()`, `addCalendarFeed(url)` and `deviceSetting` (per-device conveniences such as "remind me later"; never relied on). Screens call these, never browser APIs directly (ADR-002). `ShareButton` falls back to Copy link and WhatsApp when `share` returns `'unsupported'`.
 
 ### 4.6 Design tokens
 
