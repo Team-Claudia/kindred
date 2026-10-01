@@ -17,7 +17,7 @@ const mocked = vi.mocked(platform)
 beforeEach(() => {
   mocked.isStandalone.mockReturnValue(true)
   mocked.notificationPermission.mockReturnValue('default')
-  mocked.deviceSetting.get.mockReturnValue(null)
+  vi.mocked(mocked.deviceSetting.get).mockReturnValue(null)
   mocked.enablePush.mockResolvedValue('enabled')
 })
 
@@ -40,7 +40,7 @@ test('re-saves the subscription once permission is granted', () => {
 test.each([
   ['in a browser tab', () => mocked.isStandalone.mockReturnValue(false)],
   ['once the phone has asked', () => mocked.notificationPermission.mockReturnValue('granted')],
-  ['after Not now', () => mocked.deviceSetting.get.mockReturnValue('1')],
+  ['after Not now', () => vi.mocked(mocked.deviceSetting.get).mockReturnValue('1')],
 ])('stays hidden %s', (_, arrange) => {
   arrange()
   render(<PushPrompt />)
@@ -50,7 +50,7 @@ test.each([
 test('Not now hides it and remembers', () => {
   render(<PushPrompt />)
   fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
-  expect(mocked.deviceSetting.set).toHaveBeenCalledWith('pushPromptDismissed', '1')
+  expect(vi.mocked(mocked.deviceSetting.set)).toHaveBeenCalledWith('pushPromptDismissed', '1')
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
