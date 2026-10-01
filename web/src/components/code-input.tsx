@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next'
+import { CODE_LENGTH, codeFromText } from '@/lib/sign-in-code'
 import { cn } from '@/lib/utils'
-
-export const CODE_LENGTH = 6
 
 /**
  * A 6-digit code entry that looks like six boxes but is one input, so the
  * phone can fill the code from the email (autocomplete="one-time-code") and
- * pasting works.
+ * pasting works. The input's text is transparent rather than the input being
+ * opacity-0: iPhone Safari won't offer Paste on an invisible input.
  */
 export function CodeInput({
   id,
@@ -27,7 +27,7 @@ export function CodeInput({
     <div className="group relative">
       <input
         id={id}
-        className="absolute inset-0 z-10 h-full w-full cursor-text text-base opacity-0"
+        className="absolute inset-0 z-10 h-full w-full cursor-text bg-transparent text-base text-transparent caret-transparent outline-none selection:bg-transparent"
         type="text"
         inputMode="numeric"
         autoComplete="one-time-code"
@@ -36,7 +36,13 @@ export function CodeInput({
         aria-invalid={invalid || undefined}
         value={value}
         autoFocus
-        onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+        onChange={(event) => onChange(codeFromText(event.target.value))}
+        onPaste={(event) => {
+          event.preventDefault()
+          const code = codeFromText(event.clipboardData.getData('text'))
+          // Pasting something with no digits keeps what's already typed.
+          if (code) onChange(code)
+        }}
       />
       <div className="grid grid-cols-6 gap-2" aria-hidden="true">
         {digits.map((digit, index) => (
