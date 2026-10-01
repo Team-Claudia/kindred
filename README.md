@@ -11,3 +11,9 @@ Kindred helps families coordinate care without forcing them to abandon the tools
 - [Implementation plan](docs/implementation-plan.md)
 - [Demo Day](docs/demo-day.md)
 - [Wireframes](docs/wireframes/README.md)
+
+## Local development
+
+1. Copy `.env.example` to `.env.local` and fill it in from the shared password manager.
+2. In `web/`: `npm install`, then `npm run dev`.
+3. For the database (needs Docker and the Supabase CLI): `supabase start` at the repo root.
