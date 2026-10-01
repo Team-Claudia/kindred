@@ -37,6 +37,39 @@ jobs:
           version: latest
       # Only Postgres is needed for pgTAP, so skip the rest of the stack.
       - run: supabase db start
+      # Rebuild from the migrations plus supabase/seed.sql, so a broken seed
+      # fails here. pgTAP below then runs with the seed loaded.
+      - run: supabase db reset
+      - name: Seed has a circle with items in every state
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          declare
+            v_missing text;
+          begin
+            select string_agg(s, ', ') into v_missing
+            from unnest(array['needs_someone', 'awaiting_acceptance', 'assigned',
+                              'needs_coverage', 'completed', 'cancelled']) as s
+            where not exists (select 1 from public.items i where i.state = s);
+            if v_missing is not null then
+              raise exception 'seed has no items in: %', v_missing;
+            end if;
+            if (select count(*) from public.circle_members) < 3 then
+              raise exception 'seed circle has fewer than 3 members';
+            end if;
+            if not exists (
+              select 1 from public.items
+              where starts_at < now()
+                and state in ('needs_someone', 'awaiting_acceptance', 'assigned', 'needs_coverage')
+            ) then
+              raise exception 'seed has no Overdue item';
+            end if;
+            if not exists (select 1 from public.coverage_requests where status = 'open') then
+              raise exception 'seed has no open coverage request';
+            end if;
+          end $$;
+          select state, count(*) from public.items group by state order by state;
+          SQL
       - run: supabase test db
       - name: Generated types match the schema
         run: |
