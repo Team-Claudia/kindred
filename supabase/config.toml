@@ -163,12 +163,16 @@ site_url = "http://127.0.0.1:5173"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 # Google sign-in returns to the page the person was trying to open, so allow every path.
 # The hosted project is set in the dashboard instead (task 1.1): Site URL is the production
-# URL, and the redirect URLs are the last two entries here (production and Vercel previews).
+# URL and the only hosted redirect URL is the production entry below. There is deliberately
+# no wildcard for Vercel previews: anyone can create a *.vercel.app site that would match one
+# and receive sign-in tokens. On a preview, Google sign-in returns to production; email codes
+# work anywhere.
+# The hosted email templates (Confirm signup and Magic Link) must also be set to
+# supabase/templates/sign-in-code.html in the dashboard; the sections below are local only.
 additional_redirect_urls = [
   "http://127.0.0.1:5173/**",
   "http://localhost:5173/**",
   "https://kindred-care-circle.vercel.app/**",
-  "https://kindred-care-circle-*.vercel.app/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
