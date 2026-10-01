@@ -22,8 +22,8 @@ select is_empty(
 );
 
 select is_empty(
-  $$ select policyname from pg_policies where schemaname = 'public' $$,
-  'no policies yet, so nothing is readable from the app'
+  $$ select policyname from pg_policies where schemaname = 'public' and cmd <> 'SELECT' $$,
+  'no write policies: the app changes data only through RPCs'
 );
 
 select col_default_is(
@@ -35,6 +35,7 @@ select col_default_is(
 create temporary table rpcs (name text) on commit drop;
 insert into rpcs values
   ('create_circle'), ('create_invite'), ('join_circle'), ('leave_circle'), ('remove_member'),
+  ('set_admin'),
   ('create_item'), ('update_item'), ('assign'), ('accept_assignment'), ('decline_assignment'),
   ('withdraw_assignment'), ('claim'), ('complete_item'), ('cancel_item'), ('coverage_remaining'),
   ('request_coverage'), ('cancel_coverage'), ('accept_coverage'), ('post_update'),
@@ -59,8 +60,9 @@ select throws_ok(
 select is_empty(
   $$ select p.proname from pg_proc p
      join pg_namespace n on n.oid = p.pronamespace
-     where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute') $$,
-  'anon cannot call any function'
+     where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
+       and p.proname <> 'invite_preview' $$,
+  'anon cannot call any function except invite_preview (the /join/:code screen)'
 );
 
 select is_empty(
