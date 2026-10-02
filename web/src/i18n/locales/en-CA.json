@@ -62,7 +62,8 @@
     "notNow": "Not now — remind me later"
   },
   "status": {
-    "overdue": "Overdue"
+    "overdue": "Overdue",
+    "awaitingNamed": "Awaiting {{name}}"
   },
   "common": {
     "appName": "Kindred",
@@ -263,5 +264,35 @@
       "error": "The test notification couldn't be sent. Try again.",
       "needsInstall": "Notifications only work when Kindred is on your Home Screen. In Safari, tap Share, then Add to Home Screen, and open Kindred from there."
     }
+  },
+  "week": {
+    "careOf": "{{name}}'s care",
+    "range": "{{start}} – {{end}}",
+    "dayMonth": "{{day}} {{month}}",
+    "tasks_one": "{{count}} task",
+    "tasks_other": "{{count}} tasks",
+    "appointments_one": "{{count}} appointment",
+    "appointments_other": "{{count}} appointments",
+    "counts": "{{tasks}}, {{appointments}}",
+    "previous": "Previous week",
+    "next": "Next week",
+    "backToThisWeek": "Back to this week",
+    "show": "Show",
+    "everyone": "Everyone",
+    "today": "{{day}} · Today",
+    "empty": "Nothing is planned this week.",
+    "emptyMember": "Nothing for {{name}} this week.",
+    "error": "This week couldn't load. Check your connection and try again."
+  },
+  "item": {
+    "kind": {
+      "task": "Task",
+      "appointment": "Appointment"
+    },
+    "due": "Due {{time}}",
+    "asked": "Asked {{name}}",
+    "nobody": "Nobody has claimed this",
+    "done": "Done {{time}}",
+    "formerMember": "Former member"
   }
 }
