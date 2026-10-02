@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { AssignSheet } from '@/components/assign-sheet'
 import { ItemFormSheet } from '@/components/item-form-sheet'
+import { ShareButton } from '@/components/share-button'
 import { ErrorState, LoadingState } from '@/components/states'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
@@ -24,8 +25,10 @@ import {
   useItemMutation,
   usePendingRequest,
 } from '@/lib/queries'
+import { itemShare } from '@/lib/share-text'
 import { ASSIGNMENT_STATES, type AssignmentState } from '@/lib/status'
 import { useNow } from '@/lib/use-now'
+import { platform } from '@/platform'
 
 // Item detail, /i/:itemId (wireframes 21–23): what needs doing, when, who has
 // confirmed it or been asked, and one tap for each action this member can
@@ -180,6 +183,16 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
     cancel: () => setConfirmingCancel(true),
   }
 
+  // Share (task 3.2): text for the item's state, with a link back to it. Only
+  // open items can be shared; a failed log_share is never shown to the member.
+  const shareNameOf = (userId: string | null) =>
+    userId ? (names.get(userId) ?? t('item.formerMember')) : null
+  const share = itemShare(
+    item,
+    { owner: shareNameOf(item.owner_id), asked: shareNameOf(item.proposed_assignee_id) },
+    { t, locale, timeZone, url: platform.appUrl(`/i/${item.id}`) },
+  )
+
   const primary = new Set<ItemAction>(['claim', 'accept', 'complete'])
   const busy = running !== null
 
@@ -234,7 +247,7 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         </section>
       )}
 
-      {/* Later: linked updates and follow-ups (task 4.1), Share (3.2). */}
+      {/* Later: linked updates and follow-ups (task 4.1). */}
 
       <section aria-label={t('itemDetail.actionsLabel')} className="flex flex-col gap-3">
         {error !== null && (
@@ -286,6 +299,15 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
           ))
         )}
       </section>
+
+      {/* Wait for names, so the message never says "Former member" by mistake. */}
+      {share && members.isSuccess && (
+        <ShareButton
+          size="lg"
+          content={share.content}
+          onShared={() => void api.logShare(item.id, share.kind).catch(() => {})}
+        />
+      )}
 
       <AssignSheet
         open={assigning !== null}

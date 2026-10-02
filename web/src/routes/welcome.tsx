@@ -29,6 +29,7 @@ import {
   type CircleMember,
 } from '@/lib/circles'
 import { errorMessage } from '@/lib/errors'
+import { inviteShare } from '@/lib/share-text'
 import { platform } from '@/platform'
 
 // /welcome: set up a Care Circle in three steps (wireframes 04–06). Someone
@@ -235,10 +236,7 @@ function InviteStep({
           <ShareButton
             size="lg"
             label={t('welcome.shareInvite')}
-            content={{
-              text: t('welcome.shareText', { name: recipientName }),
-              url: platform.appUrl(`/join/${invite.data}`),
-            }}
+            content={inviteShare(recipientName, platform.appUrl(`/join/${invite.data}`), t)}
           />
         ) : invite.isError ? (
           <>

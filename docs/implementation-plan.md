@@ -112,7 +112,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 
 ### 4.2 RPCs (all writes)
 
-Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`.
+Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`; and `shared` (`data.share_kind`, task 3.2).
 
 | RPC | Arguments | Typed errors |
 | --- | --- | --- |
@@ -135,7 +135,7 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 | `accept_coverage` | `item_id`, `version` | `coverage_resolved` (returns new owner name) |
 | `post_update` | `body`, `item_id?` | `not_member`, `invalid_input` |
 | `mark_notifications_read` | `notification_id?` (all if omitted) | — |
-| `log_share` | `item_id`, `share_kind` | — |
+| `log_share` | `item_id`, `share_kind` (`task`, `appointment`, `assignment_request`, `coverage_request`; the item share builders in `web/src/lib/share-text.ts`) | `not_member`, `invalid_input` (unknown `share_kind`). Writes one `activity_events` row of type `shared` with `data.share_kind`; no state change, version check or `outbox` row. Called after the share sheet reports `shared`; a failure is never shown to the member |
 | `join_demo_circle` | — | For anonymous users only |
 | `save_push_subscription` | `endpoint`, `keys` (`{p256dh, auth}`) | `invalid_input`; upserts on `endpoint` for the caller, so a phone that changes account moves to the new one |
 | `delete_push_subscription` | `endpoint` | — (only removes the caller's own) |

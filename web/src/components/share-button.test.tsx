@@ -11,9 +11,11 @@ afterEach(() => {
 
 test('opens the share sheet and shows no fallback', async () => {
   const shareSpy = vi.spyOn(platform, 'share').mockResolvedValue('shared')
-  render(<ShareButton content={content} />)
+  const onShared = vi.fn()
+  render(<ShareButton content={content} onShared={onShared} />)
   fireEvent.click(screen.getByRole('button', { name: 'Share' }))
   await vi.waitFor(() => expect(shareSpy).toHaveBeenCalledWith(content))
+  await vi.waitFor(() => expect(onShared).toHaveBeenCalledTimes(1))
   expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument()
 })
 
@@ -46,8 +48,10 @@ test('says so when copying fails', async () => {
 
 test('shows nothing extra when the member cancels the sheet', async () => {
   const shareSpy = vi.spyOn(platform, 'share').mockResolvedValue('cancelled')
-  render(<ShareButton content={content} />)
+  const onShared = vi.fn()
+  render(<ShareButton content={content} onShared={onShared} />)
   fireEvent.click(screen.getByRole('button', { name: 'Share' }))
   await vi.waitFor(() => expect(shareSpy).toHaveBeenCalled())
+  expect(onShared).not.toHaveBeenCalled()
   expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument()
 })
