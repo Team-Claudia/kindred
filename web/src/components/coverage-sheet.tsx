@@ -21,6 +21,7 @@ export function CoverageSheet({
   remaining,
   resetsOn,
   share,
+  onShared,
   busy,
   onConfirm,
   onAskOnePerson,
@@ -33,7 +34,10 @@ export function CoverageSheet({
   remaining: number | undefined
   /** When the allowance resets, e.g. "November 1". */
   resetsOn: string
+  /** The coverage request share (lib/share-text.ts coverageRequestShare). */
   share: ShareContent
+  /** Runs once the share sheet reports it was shared, to log it. */
+  onShared: () => void
   busy: boolean
   onConfirm: () => void
   onAskOnePerson: () => void
@@ -76,9 +80,12 @@ export function CoverageSheet({
       {step === 'asked' && (
         <>
           <p>{t('coverage.askedBody')}</p>
-          {/* Slot for task 3.2: item detail passes `share`; once 3.2 is merged it
-              should come from coverageRequestShare and log with logShare. */}
-          <ShareButton size="lg" content={share} label={t('coverage.shareWithFamily')} />
+          <ShareButton
+            size="lg"
+            content={share}
+            label={t('coverage.shareWithFamily')}
+            onShared={onShared}
+          />
           <SheetClose asChild>
             <Button variant="ghost" size="lg">
               {t('coverage.done')}
@@ -91,7 +98,12 @@ export function CoverageSheet({
         <>
           <p>{t('coverage.limitBody', { date: resetsOn })}</p>
           <div className="flex flex-col gap-1">
-            <ShareButton size="lg" content={share} label={t('coverage.messageFamily')} />
+            <ShareButton
+              size="lg"
+              content={share}
+              label={t('coverage.messageFamily')}
+              onShared={onShared}
+            />
             <p className="text-sm text-muted-foreground">{t('coverage.messageFamilyHint')}</p>
           </div>
           <div className="flex flex-col gap-1">

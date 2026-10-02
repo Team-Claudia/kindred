@@ -346,7 +346,13 @@ test('the owner asks for cover in 2 taps, sees what is left, then can share', as
     expect(api.requestCoverage).toHaveBeenCalledWith({ item_id: 'pharmacy', version: 4 }),
   )
   const asked = await screen.findByRole('dialog', { name: "You've asked the family" })
-  expect(within(asked).getByRole('button', { name: 'Share with the family' })).toBeInTheDocument()
+  const shareSpy = vi.spyOn(platform, 'share').mockResolvedValue('shared')
+  vi.mocked(api.logShare).mockResolvedValue(undefined)
+  fireEvent.click(within(asked).getByRole('button', { name: 'Share with the family' }))
+  await waitFor(() => expect(shareSpy).toHaveBeenCalled())
+  expect(shareSpy.mock.calls[0]![0].text).toContain('Maya needs cover for Call the pharmacy')
+  expect(shareSpy.mock.calls[0]![0].text).not.toContain('Ask about the new dose')
+  await waitFor(() => expect(api.logShare).toHaveBeenCalledWith('pharmacy', 'coverage_request'))
 })
 
 test('with none left, no request is made and the other ways are offered', async () => {

@@ -27,7 +27,7 @@ import {
   useItemMutation,
   usePendingRequest,
 } from '@/lib/queries'
-import { itemShare } from '@/lib/share-text'
+import { coverageRequestShare, itemShare } from '@/lib/share-text'
 import { ASSIGNMENT_STATES, type AssignmentState } from '@/lib/status'
 import { useNow } from '@/lib/use-now'
 import { platform } from '@/platform'
@@ -391,7 +391,13 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         subtitle={`${item.title} · ${when}`}
         remaining={coverageLeft.data}
         resetsOn={formatMonthDay(firstOfNextMonth(now, timeZone), locale)}
-        share={{ text: t('coverage.shareText'), url: platform.appUrl(`/i/${item.id}`) }}
+        share={coverageRequestShare(item, names.get(viewerId) ?? null, {
+          t,
+          locale,
+          timeZone,
+          url: platform.appUrl(`/i/${item.id}`),
+        })}
+        onShared={() => void api.logShare(item.id, 'coverage_request').catch(() => {})}
         busy={busy}
         onConfirm={askForCover}
         onAskOnePerson={() => {
