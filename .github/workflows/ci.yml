@@ -27,6 +27,18 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  functions:
+    name: Edge Functions (Deno tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno lint supabase/functions/calendar-feed
+      - run: deno check supabase/functions/calendar-feed/index.ts
+      - run: deno test supabase/functions/
+
   database:
     name: Database (pgTAP)
     runs-on: ubuntu-latest

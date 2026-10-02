@@ -446,5 +446,16 @@
     "at_tomorrow": "Tomorrow, {{time}}",
     "at_yesterday": "Yesterday, {{time}}",
     "error": "Home couldn't load. Check your connection and try again."
+  },
+  "calendarFeed": {
+    "heading": "Add Kindred to your calendar",
+    "explainer": "Appointments you've agreed to do show up in your own calendar app, with their time and a link back to Kindred. Notes and updates stay in Kindred.",
+    "private": "Keep this link to yourself: anyone who has it can see the titles and times.",
+    "add": "Add Kindred to my calendar",
+    "google": "For Google Calendar on a computer: copy the link, then in Google Calendar choose Other calendars, then From URL, and paste it.",
+    "tasks": "Include tasks as well as appointments",
+    "tasksError": "Couldn't change that. Check your connection and try again.",
+    "error": "We couldn't load your calendar link. Check your connection and try again.",
+    "delay": "Changes can take a while to show up, because your calendar app checks for them on its own schedule. Kindred itself is always up to date."
   }
 }

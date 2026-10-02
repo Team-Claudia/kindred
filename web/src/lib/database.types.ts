@@ -534,6 +534,14 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"calendar_feed":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "feed_tasks": boolean,"token": string
+            }[]
+                           },
+"calendar_feed_for_token":
+{ Args: { "token": string }; Returns: Json
+                           },
 "cancel_coverage":
 { Args: { "item_id": string,"version": number }; Returns: {
               "circle_id": string,
@@ -821,6 +829,11 @@ isOneToOne: false
                            },
 "set_admin":
 { Args: { "member_id": string }; Returns: undefined
+                           },
+"set_calendar_feed_tasks":
+{ Args: { "enabled": boolean }; Returns: {
+              "feed_tasks": boolean,"token": string
+            }[]
                            },
 "update_item":
 { Args: { "item_id": string,"patch": Json,"version": number }; Returns: {
