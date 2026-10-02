@@ -28,15 +28,6 @@ test('shows in the Home Screen app before the phone has asked', () => {
   expect(screen.getByRole('heading', { name: 'Turn on notifications?' })).toBeInTheDocument()
 })
 
-// Runs first: the re-save happens once per app launch.
-test('re-saves the subscription once permission is granted', () => {
-  mocked.notificationPermission.mockReturnValue('granted')
-  render(<PushPrompt />)
-  expect(mocked.enablePush).toHaveBeenCalledOnce()
-  render(<PushPrompt />)
-  expect(mocked.enablePush).toHaveBeenCalledOnce()
-})
-
 test.each([
   ['in a browser tab', () => mocked.isStandalone.mockReturnValue(false)],
   ['once the phone has asked', () => mocked.notificationPermission.mockReturnValue('granted')],

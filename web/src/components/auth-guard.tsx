@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { signInPath, useAuth, useMyCircleId } from '@/lib/auth'
 import { useLiveUpdates } from '@/lib/live'
+import { useKeepPushSubscription } from '@/lib/push-resync'
 
 function Loading() {
   const { t } = useTranslation()
@@ -28,6 +29,8 @@ export function AuthGuard({ requireCircle = false }: { requireCircle?: boolean }
   // One live channel for the whole signed-in app (Home, This week, item
   // detail…), closed on sign-out or leaving the circle (task 2.3).
   useLiveUpdates(requireCircle && userId ? circle.data : undefined)
+  // Keep this phone subscribed to push for whoever is signed in.
+  useKeepPushSubscription(userId)
 
   if (auth.status === 'loading') return <Loading />
   if (auth.status === 'signed_out') {

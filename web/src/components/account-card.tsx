@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { signOut } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
+import { forgetPushResync } from '@/lib/push-resync'
 import { platform } from '@/platform'
 
 // Leave the Care Circle and sign out (part of task 4.3, brought forward so a
@@ -40,6 +41,7 @@ export function AccountCard() {
     // So the next person on this phone doesn't get this member's notifications.
     // Best effort: signing out matters more.
     await platform.disablePush().catch(() => undefined)
+    forgetPushResync()
     try {
       await signOut()
       queryClient.clear()
