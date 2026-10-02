@@ -6,6 +6,7 @@ import { HomeTopBar } from '@/components/home-top-bar'
 import { InstallGuide } from '@/components/install-guide'
 import { ItemRow } from '@/components/item-row'
 import { PushPrompt } from '@/components/push-prompt'
+import { QuickAdd } from '@/components/quick-add'
 import { ErrorState, LoadingState } from '@/components/states'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
@@ -294,7 +295,7 @@ function HomeSections({
         )}
       </HomeSection>
 
-      {/* Quick add (task 2.2) mounts here. */}
+      <QuickAdd />
     </main>
   )
 }

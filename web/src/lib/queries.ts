@@ -10,6 +10,9 @@ import { supabase } from './supabase'
 export const queryKeys = {
   items: ['items'] as const,
   item: (itemId: string) => ['items', itemId] as const,
+  // Item detail (task 2.2). Under the item, so refreshing items refreshes these.
+  itemHistory: (itemId: string) => ['items', itemId, 'history'] as const,
+  itemRequest: (itemId: string) => ['items', itemId, 'request'] as const,
   // Under 'items', so anything that refreshes items refreshes ranges too.
   itemsInRange: (from: string, to: string) => ['items', 'range', from, to] as const,
   updates: ['updates'] as const,
@@ -60,6 +63,51 @@ export function useItem(itemId: string) {
   return useQuery({
     queryKey: queryKeys.item(itemId),
     queryFn: () => rows(supabase.from('items').select('*').eq('id', itemId).single()),
+    // Retrying won't make a missing item appear.
+    retry: (failures, error) => !isItemNotFound(error) && failures < 3,
+  })
+}
+
+/**
+ * Whether useItem failed because there's no such item for this member. RLS
+ * returns no row for other circles' items, so "not found" and "no access"
+ * look the same: .single() found no row, or the ID isn't a UUID at all.
+ */
+export function isItemNotFound(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code
+  return code === 'PGRST116' || code === '22P02'
+}
+
+/** An item's history, oldest first (activity_events: created, claimed, completed, …). */
+export function useItemHistory(itemId: string) {
+  return useQuery({
+    queryKey: queryKeys.itemHistory(itemId),
+    queryFn: () =>
+      rows(
+        supabase
+          .from('activity_events')
+          .select('id, type, actor_id, at')
+          .eq('item_id', itemId)
+          .order('at')
+          .order('id'),
+      ),
+  })
+}
+
+/** The item's pending assignment request, if any: who asked whom. */
+export function usePendingRequest(itemId: string) {
+  return useQuery({
+    queryKey: queryKeys.itemRequest(itemId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assignment_requests')
+        .select('assigner_id, assignee_id')
+        .eq('item_id', itemId)
+        .eq('status', 'pending')
+        .maybeSingle()
+      if (error) throw error
+      return data
+    },
   })
 }
 

@@ -4,8 +4,11 @@ import {
   formatDayLong,
   formatDayShort,
   groupByDay,
+  instantAt,
   isDayKey,
+  isTimeOfDay,
   startOfDay,
+  timeOfDay,
   weekOf,
   weekStart,
   weekStartOf,
@@ -129,4 +132,30 @@ describe('groupByDay', () => {
 test('formats days for headings', () => {
   expect(formatDayShort('2026-09-22', 'en-CA')).toBe('Tue 22')
   expect(formatDayLong('2026-09-24', 'en-CA')).toBe('Thursday 24')
+})
+
+describe('times of day', () => {
+  test("reads a date and time in the circle time zone, not the phone's", () => {
+    expect(instantAt('2026-09-24', '14:00', VANCOUVER).toISOString()).toBe('2026-09-24T21:00:00.000Z')
+    expect(timeOfDay('2026-09-24T21:00:00Z', VANCOUVER)).toBe('14:00')
+  })
+
+  test('uses the offset on that day either side of a clock change', () => {
+    expect(instantAt('2026-10-31', '12:00', TORONTO).toISOString()).toBe('2026-10-31T16:00:00.000Z')
+    expect(instantAt('2026-11-01', '12:00', TORONTO).toISOString()).toBe('2026-11-01T17:00:00.000Z')
+  })
+
+  test('round-trips through timeOfDay', () => {
+    const instant = instantAt('2026-03-08', '09:30', TORONTO)
+    expect(timeOfDay(instant, TORONTO)).toBe('09:30')
+    expect(dayKey(instant, TORONTO)).toBe('2026-03-08')
+  })
+
+  test('checks a time input value', () => {
+    expect(isTimeOfDay('09:30')).toBe(true)
+    expect(isTimeOfDay('23:59')).toBe(true)
+    expect(isTimeOfDay('24:00')).toBe(false)
+    expect(isTimeOfDay('')).toBe(false)
+    expect(() => instantAt('2026-09-24', '9am', VANCOUVER)).toThrow(RangeError)
+  })
 })
