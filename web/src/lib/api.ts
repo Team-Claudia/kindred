@@ -113,3 +113,17 @@ export const joinDemoCircle = () => call('join_demo_circle')
 // Weekly summary (read-only; ADR-016). weekStart is a yyyy-mm-dd date.
 export const weeklySummary = (weekStart: string) =>
   call('weekly_summary', { week_start: weekStart })
+
+// Calendar feed (task 3.4). The caller's secret feed token, created on first
+// use, and whether tasks are in the feed as well as appointments.
+export type CalendarFeed = Returns<'calendar_feed'>[number]
+export async function calendarFeed(): Promise<CalendarFeed> {
+  const [feed] = await call('calendar_feed')
+  if (!feed) throw new RpcError('unknown')
+  return feed
+}
+export async function setCalendarFeedTasks(enabled: boolean): Promise<CalendarFeed> {
+  const [feed] = await call('set_calendar_feed_tasks', { enabled })
+  if (!feed) throw new RpcError('unknown')
+  return feed
+}

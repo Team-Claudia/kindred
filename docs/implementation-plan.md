@@ -140,13 +140,16 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 | `save_push_subscription` | `endpoint`, `keys` (`{p256dh, auth}`) | `invalid_input`; upserts on `endpoint` for the caller, so a phone that changes account moves to the new one |
 | `delete_push_subscription` | `endpoint` | — (only removes the caller's own) |
 | `reset_demo_circle` | — | Service role only |
+| `calendar_feed` | — → `{token, feed_tasks}` (one row) | `not_member` (signed out). Creates the caller's `calendar_settings` row on first use; a member only ever gets their own token (task 3.4) |
+| `set_calendar_feed_tasks` | `enabled` → `{token, feed_tasks}` (one row) | `invalid_input` (null). Turns tasks in the caller's feed on or off (US 5.2); creates the row if needed |
+| `calendar_feed_for_token` | `token` → `{care_recipient_name, time_zone, items}`, or null for an unknown token | Service role only, for the `calendar-feed` function. `items` are the token owner's Assigned and Needs coverage items in their circle (appointments if `feed_appointments`, tasks if `feed_tasks`), from 30 days ago to a year ahead, with `id`, `kind`, `state`, `title`, `starts_at`, `ends_at`, `updated_at`, `version` only |
 
 `web/src/lib/errors.ts` maps each error code to the PRD's user-facing message (e.g. `coverage_resolved` → "Daniel is already covering this").
 
 **Conventions** (set in task 0.3):
 
 - **Arguments** use the names above, so the app calls `supabase.rpc('claim', { item_id, version })`. `web/src/lib/api.ts` has one typed wrapper per RPC; screens use those.
-- **Returns:** RPCs that act on an item return the updated `items` row. `create_circle`, `join_circle` and `join_demo_circle` return the circle ID; `create_item` and `post_update` return the new ID; `create_invite` returns the code; the rest return nothing.
+- **Returns:** RPCs that act on an item return the updated `items` row. `create_circle`, `join_circle` and `join_demo_circle` return the circle ID; `create_item` and `post_update` return the new ID; `create_invite` returns the code; `calendar_feed` and `set_calendar_feed_tasks` return one `{token, feed_tasks}` row; the rest return nothing.
 - **Errors:** raise the code as the message, with any values the message needs as a JSON object in `DETAIL`: `raise exception 'coverage_resolved' using detail = json_build_object('name', owner_name)::text`. A message with a `_named` variant in `en-CA.json` uses it when `name` is sent. Unfinished RPCs raise `not_implemented`.
 - **Names:** many arguments share a column's name (`item_id`, `version`, `kind`), which plpgsql rejects as ambiguous. In bodies, qualify columns with a table alias and arguments with the function name: `update public.items i set version = i.version + 1 where i.id = claim.item_id and i.version = claim.version`.
 - **Security:** RPCs are `security definer` with `set search_path = ''`. Supabase grants `EXECUTE` to `anon` by default, so every new function needs `revoke execute ... from public, anon, authenticated`, then `grant execute ... to authenticated` if the app calls it. Demo guests are anonymous sign-ins, which use the `authenticated` role. `reset_demo_circle` is granted to `service_role` only.
@@ -166,7 +169,7 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 | Function | Called by | Contract |
 | --- | --- | --- |
 | `outbox-worker` | DB webhook on `outbox` insert + pg_cron every minute | Runs `push`, `reminder`, `overdue`, `weekly_summary` and `geocode` jobs; re-checks item state at send time; writes a `notifications` row per recipient, then pushes if their preference allows |
-| `calendar-feed` | Calendar apps, via Vercel rewrite `/cal/:token.ics` | Returns `text/calendar` for the member's accepted items |
+| `calendar-feed` | Calendar apps, via Vercel rewrite `/cal/:token.ics` (`verify_jwt = false`; the secret token is the check) | Reads `calendar_feed_for_token` with the service role. Unknown or malformed token → bare `404`. Otherwise `text/calendar; charset=utf-8` (RFC 5545), `Cache-Control: private, max-age=300`, `X-WR-CALNAME` "Kindred: <name>'s care", one `VEVENT` per item: `UID` `<item_id>@kindred`, `SUMMARY` = title, UTC `DTSTART`/`DTEND`, `URL` and a one-line `DESCRIPTION` linking to `APP_URL/i/<id>`. No notes, location or updates. An appointment with no end lasts an hour; a task with no time (23:59 in the circle's zone) is all-day on its date; a task with a time lasts 15 minutes. The builder (`ics.ts`) has Deno tests, run in CI |
 | `google-oauth` | App ("Connect Google Calendar") | Redirect flow; stores refresh token in Vault |
 | `availability` | App (create sheet) | `{circle_id, start, end}` → `{member_id: "free" \| "busy" \| "unknown"}` |
 | `account` | App (Care Circle and settings) | `export` → JSON; `delete` → ADR-015 order |
@@ -411,7 +414,7 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 
 ### 8.2 Deployment pipeline (set up in task 0.2)
 
-- **On every PR** (GitHub Actions): typecheck, lint, Vitest, build, and `supabase start` + `supabase db test` for pgTAP. Vercel builds a preview.
+- **On every PR** (GitHub Actions): typecheck, lint, Vitest, build, `deno test supabase/functions/` for the Edge Functions, and `supabase start` + `supabase db test` for pgTAP. Vercel builds a preview.
 - **On merge to `main`** (GitHub Actions): `supabase db push` applies new migrations to the hosted project, then `supabase functions deploy` deploys the Edge Functions. Vercel deploys the web app to production.
 - GitHub secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`.
 - **Rollback:** revert the PR on `main`. For a bad migration, add a new migration that undoes it; never edit or delete a merged one.
@@ -421,7 +424,7 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 | Where | Setting |
 | --- | --- |
 | Vercel env vars | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY` (same values for preview and production) |
-| Supabase function secrets | `VAPID_PRIVATE_KEY` (pair of `VITE_VAPID_PUBLIC_KEY`), `VAPID_SUBJECT` (exactly `mailto:` + address, no spaces or brackets; Apple rejects anything else with `403 BadJwtToken`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEOAPIFY_API_KEY`, `APP_URL` |
+| Supabase function secrets | `VAPID_PRIVATE_KEY` (pair of `VITE_VAPID_PUBLIC_KEY`), `VAPID_SUBJECT` (exactly `mailto:` + address, no spaces or brackets; Apple rejects anything else with `403 BadJwtToken`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEOAPIFY_API_KEY`, `APP_URL` (the production app's origin, no trailing slash; `calendar-feed` uses it for event links and falls back to the production `*.vercel.app` URL if unset) |
 | Supabase Auth | Site URL = production URL; redirect URL = production URL only (no preview wildcard: anyone can create a matching `.vercel.app` site, so Google sign-in on a preview returns to production); Google provider on; email OTP on (6-digit code); anonymous sign-ins on; custom SMTP through the team Gmail account (`smtp.gmail.com:587`, an app password) with the Confirm signup and Magic Link templates showing the code (`supabase/templates/sign-in-code.html`) |
 | Google Cloud | Authorised redirect URIs for Supabase Auth and the `google-oauth` function; consent screen **In production** |
 | Database | pg_cron jobs (outbox catch-up every minute, recurrence extension and sample-circle reset nightly, weekly summary notification Sundays 08:00); DB webhook on `outbox` insert → `outbox-worker` |

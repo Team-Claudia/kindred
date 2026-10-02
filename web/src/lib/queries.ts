@@ -217,3 +217,25 @@ export function useItemMutation<Args, Result>(mutationFn: (args: Args) => Promis
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.items }),
   })
 }
+
+// Calendar feed (task 3.4). calendar_feed creates the member's settings on
+// first use, so reading it is safe to repeat. Keyed by user, so a different
+// account on the same phone never sees someone else's secret link.
+export const calendarFeedKey = (userId: string | undefined) => ['calendar-feed', userId] as const
+
+export function useCalendarFeed(userId: string | undefined) {
+  return useQuery({
+    queryKey: calendarFeedKey(userId),
+    queryFn: api.calendarFeed,
+    enabled: userId !== undefined,
+    staleTime: Infinity,
+  })
+}
+
+export function useSetCalendarFeedTasks(userId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: api.setCalendarFeedTasks,
+    onSuccess: (feed) => queryClient.setQueryData(calendarFeedKey(userId), feed),
+  })
+}

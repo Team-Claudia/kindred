@@ -429,6 +429,13 @@ deno_version = 2
 enabled = true
 verify_jwt = false
 
+# Personal calendar feed (task 3.4). Calendar apps call it with no sign-in, via
+# the Vercel rewrite /cal/:token.ics; the secret token in the URL is the check.
+# Secret: APP_URL (the app's origin, for the links in each event).
+[functions.calendar-feed]
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
