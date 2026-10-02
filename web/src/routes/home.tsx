@@ -35,6 +35,7 @@ import {
   todayItems,
 } from '@/lib/home'
 import { useInstallGuide } from '@/lib/install-guide'
+import { hasNoTime } from '@/lib/item-form'
 import { isOverdue, memberNames } from '@/lib/items'
 import {
   useItemCount,
@@ -136,7 +137,10 @@ function HomeSections({
   const coverage = coverageRequests(open)
   const counts = homeCounts(weekItems.data ?? [], todayList, now)
 
-  const when = (iso: string, prefix: 'due' | 'at') => formatWhen(t, locale, iso, timeZone, today, prefix)
+  const when = (item: { kind: string; starts_at: string }) => {
+    const prefix = item.kind !== 'task' ? 'at' : hasNoTime(item, timeZone) ? 'dueDay' : 'due'
+    return formatWhen(t, locale, item.starts_at, timeZone, today, prefix)
+  }
   const memberCount = members.data?.length
   const update = latest.data
   const author = update?.author_id ? names.get(update.author_id) : undefined
@@ -201,7 +205,7 @@ function HomeSections({
                     <AnswerCard
                       item={item}
                       askedBy={askedBy(item, names)}
-                      when={when(item.starts_at, item.kind === 'task' ? 'due' : 'at')}
+                      when={when(item)}
                       overdue={isOverdue(item, now)}
                       onStart={() => setNotice(null)}
                       onError={report('answer')}
@@ -239,7 +243,7 @@ function HomeSections({
                   <li key={item.id}>
                     <ClaimCard
                       item={item}
-                      when={when(item.starts_at, item.kind === 'task' ? 'due' : 'at')}
+                      when={when(item)}
                       overdue={isOverdue(item, now)}
                       onStart={() => setNotice(null)}
                       onError={report('someone')}
@@ -284,7 +288,7 @@ function HomeSections({
                   {author ?? t('item.formerMember')}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {when(update.created_at, 'at')}
+                  {formatWhen(t, locale, update.created_at, timeZone, today, 'at')}
                 </span>
               </span>
               <span className="break-words whitespace-pre-line">{update.body}</span>
@@ -300,14 +304,17 @@ function HomeSections({
   )
 }
 
-/** "Due Fri 26, 5:00 p.m.", "Today, 2:00 p.m.", in the circle's time zone. */
+/**
+ * "Due Fri 26, 5:00 p.m.", "Today, 2:00 p.m.", or "Due tomorrow" for a task
+ * with no time, in the circle's time zone.
+ */
 function formatWhen(
   t: TFunction,
   locale: string,
   iso: string,
   timeZone: string,
   today: DayKey,
-  prefix: 'due' | 'at',
+  prefix: 'due' | 'dueDay' | 'at',
 ) {
   const day = dayKey(iso, timeZone)
   const relative = relativeDay(day, today)

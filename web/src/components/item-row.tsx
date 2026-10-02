@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { StatusBadge } from '@/components/status-badge'
 import { formatTime } from '@/lib/dates'
+import { hasNoTime } from '@/lib/item-form'
 import { isOverdue, type Item } from '@/lib/items'
 import { ASSIGNMENT_STATES, type AssignmentState } from '@/lib/status'
 import { cn } from '@/lib/utils'
@@ -58,7 +59,9 @@ export function ItemRow({ item, names, timeZone, now, className }: ItemRowProps)
     meta.push(t('item.done', { time: formatTime(item.updated_at, timeZone, i18n.language) }))
     if (owner) meta.push(owner)
   } else {
-    meta.push(item.kind === 'task' ? t('item.due', { time }) : time)
+    meta.push(
+      item.kind !== 'task' ? time : hasNoTime(item, timeZone) ? t('item.dueEndOfDay') : t('item.due', { time }),
+    )
     if (state === 'awaiting_acceptance' && asked) meta.push(t('item.asked', { name: asked }))
     else if (state === 'needs_someone') meta.push(t('item.nobody'))
     else if (owner) meta.push(owner)

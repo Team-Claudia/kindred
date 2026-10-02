@@ -16,6 +16,11 @@ export const limits = { title: 200, location: 200, notes: 4000 } as const
  */
 export const END_OF_DAY = '23:59'
 
+/** Whether `item` is a task saved with no time (see END_OF_DAY). */
+export function hasNoTime(item: Pick<Item, 'kind' | 'starts_at'>, timeZone: string): boolean {
+  return item.kind === 'task' && timeOfDay(item.starts_at, timeZone) === END_OF_DAY
+}
+
 export interface ItemForm {
   kind: ItemKind
   title: string
@@ -58,7 +63,7 @@ export function itemToForm(item: Item, timeZone: string): ItemForm {
     kind,
     title: item.title,
     date: dayKey(item.starts_at, timeZone),
-    time: kind === 'task' && time === END_OF_DAY ? '' : time,
+    time: hasNoTime(item, timeZone) ? '' : time,
     endTime: kind === 'appointment' && item.ends_at ? timeOfDay(item.ends_at, timeZone) : '',
     location: kind === 'appointment' ? (item.location ?? '') : '',
     notes: item.private_notes ?? '',
