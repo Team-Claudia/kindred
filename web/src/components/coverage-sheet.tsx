@@ -76,7 +76,8 @@ export function CoverageSheet({
       {step === 'asked' && (
         <>
           <p>{t('coverage.askedBody')}</p>
-          {/* Task 3.2 replaces the share text with its coverage message. */}
+          {/* Slot for task 3.2: item detail passes `share`; once 3.2 is merged it
+              should come from coverageRequestShare and log with logShare. */}
           <ShareButton size="lg" content={share} label={t('coverage.shareWithFamily')} />
           <SheetClose asChild>
             <Button variant="ghost" size="lg">
