@@ -123,12 +123,12 @@ begin
     id, circle_id, kind, title, starts_at, ends_at, location, private_notes,
     state, owner_id, proposed_assignee_id, follow_up_of, created_by, created_at, updated_at, version
   ) values
-    -- Ada asked Maya; waiting for Maya. Due today.
+    -- Ada added it asking Maya; waiting for Maya. Due today.
     (i_pharmacy, v_circle, 'task', 'Call the pharmacy about the new dose schedule',
      v_due_today, null, null, null,
      'awaiting_acceptance', null, v_maya, null, v_ada,
      now() - interval '2 days', now() - interval '2 days', 1),
-    -- Jonah asked Maya to drive; she accepted.
+    -- Jonah added it asking Maya to drive; she accepted.
     (i_cardiology, v_circle, 'appointment', 'Cardiology appointment',
      v_cardiology, v_cardiology + interval '1 hour', 'Riverside Clinic, 4th floor', 'Bring the list of current medications.',
      'assigned', v_maya, null, null, v_jonah,
@@ -137,18 +137,18 @@ begin
     (i_refill, v_circle, 'task', 'Refill blood pressure meds',
      v_overdue, null, null, 'Pharmacy on Fraser St. The repeat is already on file, just needs collecting.',
      'assigned', v_jonah, null, null, v_maya,
-     now() - interval '4 days', now() - interval '4 days', 1),
+     now() - interval '4 days', now() - interval '4 days', 2),
     -- Maya asked Jonah, who declined, so it needs someone again.
     (i_physio, v_circle, 'appointment', 'Physio ride',
      v_physio, v_physio + interval '1 hour', 'Westside Physiotherapy', null,
      'needs_someone', null, null, null, v_maya,
-     now() - interval '3 days', now() - interval '2 days', 2),
-    -- Ada claimed and did it earlier today.
+     now() - interval '3 days', now() - interval '2 days', 3),
+    -- Ada added it for herself and did it earlier today.
     (i_groceries, v_circle, 'task', 'Groceries drop-off',
      v_groceries_done - interval '1 hour', null, null, null,
      'completed', v_ada, null, null, v_ada,
      now() - interval '3 days', v_groceries_done, 2),
-    -- Maya asked Ada; waiting for Ada.
+    -- Maya added it asking Ada; waiting for Ada.
     (i_flu_shot, v_circle, 'task', 'Book Dad''s flu shot',
      v_flu_shot, null, null, null,
      'awaiting_acceptance', null, v_ada, null, v_maya,
@@ -157,7 +157,7 @@ begin
     (i_hearing, v_circle, 'appointment', 'Hearing test',
      v_hearing, v_hearing + interval '45 minutes', 'Eastside Hearing Centre', null,
      'needs_coverage', v_jonah, null, null, v_ada,
-     now() - interval '7 days', now() - interval '1 day', 2),
+     now() - interval '7 days', now() - interval '1 day', 3),
     -- Ada added it, then cancelled it once the clinic moved the check-up.
     (i_dentist, v_circle, 'appointment', 'Dentist check-up',
      v_dentist, v_dentist + interval '30 minutes', 'Main Street Dental', null,
@@ -189,42 +189,58 @@ begin
   values (v_circle, i_hearing, v_jonah, 'open', now() - interval '1 day');
 
   -- -------------------------------------------------------------------------
-  -- History, so item detail can show "Added by" and "Completed by"
+  -- History, so item detail can show "Added by" and "Completed by". Types and
+  -- data match what the task 2.1 RPCs write (log_item_event strips nulls):
+  -- created {kind, state, assignee_id?, follow_up_of?}, assigned {assignee_id},
+  -- claimed (assigning yourself), accepted/declined {assigner_id}, completed,
+  -- cancelled {previous_state}. coverage_requested is a placeholder until
+  -- task 3.1 defines it.
   -- -------------------------------------------------------------------------
   insert into public.activity_events (circle_id, actor_id, type, item_id, data, at) values
-    (v_circle, v_ada, 'created', i_pharmacy, '{}', now() - interval '2 days'),
-    (v_circle, v_ada, 'assigned', i_pharmacy, jsonb_build_object('assignee_id', v_maya), now() - interval '2 days'),
+    (v_circle, v_ada, 'created', i_pharmacy,
+     jsonb_build_object('kind', 'task', 'state', 'awaiting_acceptance', 'assignee_id', v_maya),
+     now() - interval '2 days'),
 
-    (v_circle, v_jonah, 'created', i_cardiology, '{}', now() - interval '6 days'),
-    (v_circle, v_jonah, 'assigned', i_cardiology, jsonb_build_object('assignee_id', v_maya), now() - interval '6 days'),
-    (v_circle, v_maya, 'accepted', i_cardiology, '{}', now() - interval '5 days'),
+    (v_circle, v_jonah, 'created', i_cardiology,
+     jsonb_build_object('kind', 'appointment', 'state', 'awaiting_acceptance', 'assignee_id', v_maya),
+     now() - interval '6 days'),
+    (v_circle, v_maya, 'accepted', i_cardiology, jsonb_build_object('assigner_id', v_jonah), now() - interval '5 days'),
 
-    (v_circle, v_maya, 'created', i_refill, '{}', now() - interval '4 days'),
+    (v_circle, v_maya, 'created', i_refill,
+     jsonb_build_object('kind', 'task', 'state', 'needs_someone'), now() - interval '4 days'),
     (v_circle, v_jonah, 'claimed', i_refill, '{}', now() - interval '4 days'),
 
-    (v_circle, v_maya, 'created', i_physio, '{}', now() - interval '3 days'),
+    (v_circle, v_maya, 'created', i_physio,
+     jsonb_build_object('kind', 'appointment', 'state', 'needs_someone'), now() - interval '3 days'),
     (v_circle, v_maya, 'assigned', i_physio, jsonb_build_object('assignee_id', v_jonah), now() - interval '3 days'),
-    (v_circle, v_jonah, 'declined', i_physio, '{}', now() - interval '2 days'),
+    (v_circle, v_jonah, 'declined', i_physio, jsonb_build_object('assigner_id', v_maya), now() - interval '2 days'),
 
-    (v_circle, v_ada, 'created', i_groceries, '{}', now() - interval '3 days'),
-    (v_circle, v_ada, 'claimed', i_groceries, '{}', now() - interval '3 days'),
+    (v_circle, v_ada, 'created', i_groceries,
+     jsonb_build_object('kind', 'task', 'state', 'assigned', 'assignee_id', v_ada), now() - interval '3 days'),
     (v_circle, v_ada, 'completed', i_groceries, '{}', v_groceries_done),
 
-    (v_circle, v_maya, 'created', i_flu_shot, '{}', now() - interval '1 day'),
-    (v_circle, v_maya, 'assigned', i_flu_shot, jsonb_build_object('assignee_id', v_ada), now() - interval '1 day'),
+    (v_circle, v_maya, 'created', i_flu_shot,
+     jsonb_build_object('kind', 'task', 'state', 'awaiting_acceptance', 'assignee_id', v_ada),
+     now() - interval '1 day'),
 
-    (v_circle, v_ada, 'created', i_hearing, '{}', now() - interval '7 days'),
+    (v_circle, v_ada, 'created', i_hearing,
+     jsonb_build_object('kind', 'appointment', 'state', 'needs_someone'), now() - interval '7 days'),
     (v_circle, v_jonah, 'claimed', i_hearing, '{}', now() - interval '7 days'),
     (v_circle, v_jonah, 'coverage_requested', i_hearing, '{}', now() - interval '1 day'),
 
-    (v_circle, v_ada, 'created', i_dentist, '{}', now() - interval '10 days'),
-    (v_circle, v_ada, 'cancelled', i_dentist, '{}', now() - interval '2 days'),
+    (v_circle, v_ada, 'created', i_dentist,
+     jsonb_build_object('kind', 'appointment', 'state', 'needs_someone'), now() - interval '10 days'),
+    (v_circle, v_ada, 'cancelled', i_dentist, jsonb_build_object('previous_state', 'needs_someone'),
+     now() - interval '2 days'),
 
-    (v_circle, v_maya, 'created', i_gp, '{}', now() - interval '9 days'),
+    (v_circle, v_maya, 'created', i_gp,
+     jsonb_build_object('kind', 'appointment', 'state', 'needs_someone'), now() - interval '9 days'),
     (v_circle, v_maya, 'claimed', i_gp, '{}', now() - interval '9 days'),
     (v_circle, v_maya, 'completed', i_gp, '{}', v_gp + interval '1 hour'),
 
-    (v_circle, v_maya, 'created', i_blood_test, jsonb_build_object('follow_up_of', i_gp), v_gp + interval '2 hours'),
+    (v_circle, v_maya, 'created', i_blood_test,
+     jsonb_build_object('kind', 'task', 'state', 'needs_someone', 'follow_up_of', i_gp),
+     v_gp + interval '2 hours'),
     (v_circle, v_ada, 'claimed', i_blood_test, '{}', now() - interval '2 days');
 
   -- -------------------------------------------------------------------------
