@@ -300,7 +300,8 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         )}
       </section>
 
-      {share && (
+      {/* Wait for names, so the message never says "Former member" by mistake. */}
+      {share && members.isSuccess && (
         <ShareButton
           size="lg"
           content={share.content}
