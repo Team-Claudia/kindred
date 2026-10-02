@@ -590,6 +590,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"check_item_fields":
+{ Args: { "ends_at": string,"location": string,"private_notes": string,"starts_at": string,"title": string }; Returns: undefined
+                           },
 "claim":
 { Args: { "item_id": string,"version": number }; Returns: {
               "circle_id": string,
@@ -700,6 +703,9 @@ isOneToOne: false
               "care_recipient_name": string,"expires_at": string,"in_other_circle": boolean,"inviter_name": string,"is_member": boolean,"member_count": number,"member_names": (string)[]
             }[]
                            },
+"is_circle_member":
+{ Args: { "circle": string,"person": string }; Returns: boolean
+                           },
 "join_circle":
 { Args: { "code": string,"display_name"?: string,"relationship"?: string }; Returns: string
                            },
@@ -709,14 +715,69 @@ isOneToOne: false
 "leave_circle":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"lock_item":
+{ Args: { "id": string }; Returns: {
+              "circle_id": string,
+"created_at": string,
+"created_by": string | null,
+"ends_at": string | null,
+"follow_up_of": string | null,
+"id": string,
+"kind": string,
+"location": string | null,
+"location_lat": number | null,
+"location_lng": number | null,
+"owner_id": string | null,
+"private_notes": string | null,
+"proposed_assignee_id": string | null,
+"series_id": string | null,
+"starts_at": string,
+"state": string,
+"title": string,
+"updated_at": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "items"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"lock_own_pending_request":
+{ Args: { "item": string }; Returns: {
+              "assignee_id": string | null,
+"assigner_id": string | null,
+"circle_id": string,
+"created_at": string,
+"id": string,
+"item_id": string,
+"resolved_at": string | null,
+"scope": string,
+"status": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "assignment_requests"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"log_item_event":
+{ Args: { "actor": string,"data"?: Json,"event_type": string,"item": Database["public"]['Tables']["items"]['Row'] }; Returns: undefined
+                           },
 "log_share":
 { Args: { "item_id": string,"share_kind": string }; Returns: undefined
                            },
 "mark_notifications_read":
 { Args: { "notification_id"?: number }; Returns: undefined
                            },
+"name_detail":
+{ Args: { "person": string }; Returns: string
+                           },
 "post_update":
 { Args: { "body": string,"item_id"?: string }; Returns: string
+                           },
+"queue_push":
+{ Args: { "actor": string,"event": string,"item": Database["public"]['Tables']["items"]['Row'],"recipients": (string)[] }; Returns: undefined
                            },
 "remove_member":
 { Args: { "member_id": string }; Returns: undefined
