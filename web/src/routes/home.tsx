@@ -93,7 +93,7 @@ function HomeContent({ userId, name }: { userId: string; name: string }) {
   )
 }
 
-type Section = 'answer' | 'someone'
+type Section = 'answer' | 'someone' | 'coverage'
 
 function HomeSections({
   userId,
@@ -254,15 +254,27 @@ function HomeSections({
             )}
           </HomeSection>
 
-          {/* "I can do it" comes with task 3.1; until then each row opens the item. */}
+          {/* Your own requests open the item, where you can cancel them. */}
           <HomeSection id="home-coverage" title={t('home.coverage')}>
+            {notice?.section === 'coverage' && <Notice>{notice.message}</Notice>}
             {coverage.length === 0 ? (
               <Empty>{t('home.coverageEmpty')}</Empty>
             ) : (
               <ul className="flex flex-col gap-3">
                 {coverage.map((item) => (
                   <li key={item.id}>
-                    <ItemRow item={item} names={names} timeZone={timeZone} now={now} />
+                    {item.owner_id === userId ? (
+                      <ItemRow item={item} names={names} timeZone={timeZone} now={now} />
+                    ) : (
+                      <CoverCard
+                        item={item}
+                        owner={item.owner_id ? names.get(item.owner_id) : undefined}
+                        when={when(item)}
+                        overdue={isOverdue(item, now)}
+                        onStart={() => setNotice(null)}
+                        onError={report('coverage')}
+                      />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -466,6 +478,43 @@ function ClaimCard({ item, when, overdue, onStart, onError }: ActionCardProps) {
         }}
       >
         {claim.isPending ? t('home.claiming') : t('home.claim')}
+      </Button>
+    </div>
+  )
+}
+
+/** Coverage requests: someone else's item that needs cover, with I can do it. */
+function CoverCard({ item, owner, when, overdue, onStart, onError }: ActionCardProps & { owner?: string }) {
+  const { t } = useTranslation()
+  const accept = useItemMutation(api.acceptCoverage)
+
+  return (
+    <div className="flex flex-wrap items-start gap-3 rounded-xl border-2 border-foreground bg-card p-4 text-card-foreground">
+      <Link to={`/i/${item.id}`} className="flex min-h-tap min-w-0 flex-1 basis-48 gap-3">
+        <Avatar name={owner} />
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-lg leading-snug font-semibold break-words">{item.title}</span>
+          <span className="break-words text-muted-foreground">
+            {when}
+            {' · '}
+            {owner ? t('coverage.needsCover', { name: owner }) : t('coverage.needsCoverUnknown')}
+          </span>
+          <span className="flex flex-wrap gap-2 pt-1">
+            {overdue && <StatusBadge status="overdue" />}
+            <StatusBadge status="needs_coverage" />
+          </span>
+        </span>
+      </Link>
+      <Button
+        variant="outline"
+        className="rounded-full"
+        disabled={accept.isPending}
+        onClick={() => {
+          onStart()
+          accept.mutate({ item_id: item.id, version: item.version }, { onError })
+        }}
+      >
+        {accept.isPending ? t('coverage.accepting') : t('coverage.accept')}
       </Button>
     </div>
   )

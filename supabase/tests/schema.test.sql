@@ -52,7 +52,7 @@ select is_empty(
 );
 
 select throws_ok(
-  $$ select public.request_coverage(gen_random_uuid(), 1) $$,
+  $$ select public.post_update('Dad slept well') $$,
   'P0001', 'not_implemented',
   'RPC stubs raise not_implemented'
 );

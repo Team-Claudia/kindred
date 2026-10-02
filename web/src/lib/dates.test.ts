@@ -1,8 +1,10 @@
 import {
   addDays,
   dayKey,
+  firstOfNextMonth,
   formatDayLong,
   formatDayShort,
+  formatMonthDay,
   groupByDay,
   instantAt,
   isDayKey,
@@ -157,5 +159,21 @@ describe('times of day', () => {
     expect(isTimeOfDay('24:00')).toBe(false)
     expect(isTimeOfDay('')).toBe(false)
     expect(() => instantAt('2026-09-24', '9am', VANCOUVER)).toThrow(RangeError)
+  })
+})
+
+describe('months', () => {
+  test("the allowance resets on the 1st of next month in the circle time zone, not UTC", () => {
+    // 6:30 am UTC on 1 November is still 31 October in Vancouver.
+    expect(firstOfNextMonth(new Date('2026-11-01T06:30:00Z'), VANCOUVER)).toBe('2026-11-01')
+    expect(firstOfNextMonth(new Date('2026-11-01T06:30:00Z'), 'UTC')).toBe('2026-12-01')
+  })
+
+  test('December rolls over to January', () => {
+    expect(firstOfNextMonth(new Date('2026-12-15T12:00:00Z'), VANCOUVER)).toBe('2027-01-01')
+  })
+
+  test('formats a month and day', () => {
+    expect(formatMonthDay('2026-11-01', 'en-CA')).toBe('November 1')
   })
 })

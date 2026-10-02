@@ -213,3 +213,19 @@ export function formatDate(date: Date | string, timeZone: string, locale: string
     timeZone,
   }).format(new Date(date))
 }
+
+/**
+ * The first day of the month after the one `date` falls in, in `timeZone`:
+ * when the monthly coverage allowance resets (BR-01).
+ */
+export function firstOfNextMonth(date: Date, timeZone: string): DayKey {
+  const { year, month } = wallClock(date, timeZone)
+  return month === 12 ? `${pad(year + 1, 4)}-01-01` : `${pad(year, 4)}-${pad(month + 1)}-01`
+}
+
+/** "November 1" */
+export function formatMonthDay(day: DayKey, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', timeZone: 'UTC' }).format(
+    dayKeyDate(day),
+  )
+}

@@ -663,6 +663,9 @@ isOneToOne: false
 "coverage_remaining":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"coverage_used":
+{ Args: { "as_of": string,"circle": string,"person": string }; Returns: number
+                           },
 "create_circle":
 { Args: { "care_recipient_name": string,"display_name"?: string,"relationship": string,"time_zone": string }; Returns: string
                            },

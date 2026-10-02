@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { AssignSheet } from '@/components/assign-sheet'
+import { CoverageSheet, type CoverageStep } from '@/components/coverage-sheet'
 import { ItemFormSheet } from '@/components/item-form-sheet'
 import { ShareButton } from '@/components/share-button'
 import { ErrorState, LoadingState } from '@/components/states'
@@ -12,20 +13,21 @@ import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { useCircleMembers, useMyMembership } from '@/lib/circles'
-import { formatDate, formatTime } from '@/lib/dates'
-import { errorMessage } from '@/lib/errors'
+import { firstOfNextMonth, formatDate, formatMonthDay, formatTime } from '@/lib/dates'
+import { errorMessage, RpcError } from '@/lib/errors'
 import { currentHolder, isAskedViewer, itemActions, type ItemAction } from '@/lib/item-actions'
 import { hasNoTime } from '@/lib/item-form'
 import { isOverdue, memberNames, type Item } from '@/lib/items'
 import {
   isItemNotFound,
   queryKeys,
+  useCoverageRemaining,
   useItem,
   useItemHistory,
   useItemMutation,
   usePendingRequest,
 } from '@/lib/queries'
-import { itemShare } from '@/lib/share-text'
+import { coverageRequestShare, itemShare } from '@/lib/share-text'
 import { ASSIGNMENT_STATES, type AssignmentState } from '@/lib/status'
 import { useNow } from '@/lib/use-now'
 import { platform } from '@/platform'
@@ -102,6 +104,8 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [running, setRunning] = useState<ItemAction | null>(null)
+  const [coverageStep, setCoverageStep] = useState<CoverageStep | null>(null)
+  const coverageLeft = useCoverageRemaining()
 
   // Runs one RPC. The returned row shows straight away; useItemMutation then
   // refetches the item (and its history) whether it worked or not.
@@ -147,6 +151,13 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         ? nameOf(item.owner_id)
         : t('item.nobody')
 
+  // Needs coverage: still the owner's until someone takes it (wireframe 26).
+  const ownerLabel =
+    state === 'needs_coverage' && item.owner_id
+      ? t('coverage.ownerUntilCovered', { name: nameOf(item.owner_id) })
+      : owner
+  const ownerName = item.owner_id ? names.get(item.owner_id) : undefined
+
   const date = formatDate(item.starts_at, timeZone, locale)
   const time = formatTime(item.starts_at, timeZone, locale)
   const when = isTask
@@ -181,6 +192,9 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
     reassign: () => setAssigning('reassign'),
     edit: () => setEditing(true),
     cancel: () => setConfirmingCancel(true),
+    requestCoverage: () => setCoverageStep(coverageLeft.data === 0 ? 'limit' : 'confirm'),
+    cancelCoverage: () => act('cancelCoverage', () => api.cancelCoverage(at), refreshCoverage),
+    acceptCoverage: () => act('acceptCoverage', () => api.acceptCoverage(at)),
   }
 
   // Share (task 3.2): text for the item's state, with a link back to it. Only
@@ -193,7 +207,43 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
     { t, locale, timeZone, url: platform.appUrl(`/i/${item.id}`) },
   )
 
-  const primary = new Set<ItemAction>(['claim', 'accept', 'complete'])
+
+  // Asking for cover is the confirm sheet's second tap. If the allowance ran
+  // out meanwhile (e.g. on another phone), the sheet shows the limit instead.
+  // If the member closed the sheet while it ran, it stays closed.
+  function refreshCoverage() {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.coverageRemaining })
+  }
+  const askForCover = () => {
+    setError(null)
+    setRunning('requestCoverage')
+    mutation.mutate(() => api.requestCoverage(at), {
+      onSuccess: (row) => {
+        queryClient.setQueryData(queryKeys.item(item.id), row)
+        setCoverageStep((step) => step && 'asked')
+      },
+      onError: (failure) => {
+        if (failure instanceof RpcError && failure.code === 'coverage_limit_reached') {
+          setCoverageStep((step) => step && 'limit')
+        } else {
+          setCoverageStep(null)
+          setError(failure)
+        }
+      },
+      onSettled: () => {
+        setRunning(null)
+        refreshCoverage()
+      },
+    })
+  }
+  const actionLabel = (action: ItemAction) =>
+    action === 'cancel'
+      ? t(`itemDetail.actions.cancel_${kind}`)
+      : action === 'requestCoverage' && coverageLeft.data !== undefined
+        ? t('coverage.needCoverageLeft', { count: coverageLeft.data })
+        : t(`itemDetail.actions.${action}`)
+
+  const primary = new Set<ItemAction>(['claim', 'accept', 'complete', 'acceptCoverage'])
   const busy = running !== null
 
   return (
@@ -209,6 +259,19 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         </section>
       )}
 
+      {state === 'needs_coverage' && (
+        <section className="flex flex-col gap-2 rounded-xl border-2 border-foreground p-4">
+          <h2 className="font-semibold tracking-wider uppercase">
+            {item.owner_id === viewerId
+              ? t('coverage.youAsked')
+              : ownerName
+                ? t('coverage.needsCover', { name: ownerName })
+                : t('coverage.needsCoverUnknown')}
+          </h2>
+          <p>{item.owner_id === viewerId ? t('coverage.youAskedBody') : t('coverage.needsCoverBody')}</p>
+        </section>
+      )}
+
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
           {overdue && <StatusBadge status="overdue" />}
@@ -221,7 +284,7 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
       </div>
 
       <dl className="flex flex-col">
-        <Row label={t('itemDetail.owner')}>{owner}</Row>
+        <Row label={t('itemDetail.owner')}>{ownerLabel}</Row>
         <Row label={t(isTask ? 'itemDetail.due' : 'itemDetail.when')}>{when}</Row>
         {!isTask && item.location && <Row label={t('itemDetail.where')}>{item.location}</Row>}
         <Row label={t('itemDetail.addedBy')}>
@@ -279,7 +342,6 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
             </Button>
           </div>
         ) : (
-          /* Coverage buttons (task 3.1) go with these. */
           actions.map((action) => (
             <Button
               key={action}
@@ -289,14 +351,15 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
               disabled={busy}
               onClick={handlers[action]}
             >
-              {(action === 'accept' || action === 'complete') && <Check aria-hidden className="size-5" />}
-              {running === action
-                ? t('itemDetail.working')
-                : action === 'cancel'
-                  ? t(`itemDetail.actions.cancel_${kind}`)
-                  : t(`itemDetail.actions.${action}`)}
+              {(action === 'accept' || action === 'complete' || action === 'acceptCoverage') && (
+                <Check aria-hidden className="size-5" />
+              )}
+              {running === action ? t('itemDetail.working') : actionLabel(action)}
             </Button>
           ))
+        )}
+        {!confirmingCancel && actions.includes('acceptCoverage') && (
+          <p className="text-center text-sm text-muted-foreground">{t('coverage.acceptHint')}</p>
         )}
       </section>
 
@@ -320,6 +383,27 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         onAssign={(memberId) =>
           act(assigning ?? 'ask', () => api.assign(at, memberId), () => setAssigning(null))
         }
+      />
+
+      <CoverageSheet
+        step={coverageStep}
+        onClose={() => setCoverageStep(null)}
+        subtitle={`${item.title} · ${when}`}
+        remaining={coverageLeft.data}
+        resetsOn={formatMonthDay(firstOfNextMonth(now, timeZone), locale)}
+        share={coverageRequestShare(item, names.get(viewerId) ?? null, {
+          t,
+          locale,
+          timeZone,
+          url: platform.appUrl(`/i/${item.id}`),
+        })}
+        onShared={() => void api.logShare(item.id, 'coverage_request').catch(() => {})}
+        busy={busy}
+        onConfirm={askForCover}
+        onAskOnePerson={() => {
+          setCoverageStep(null)
+          setAssigning('reassign')
+        }}
       />
 
       <ItemFormSheet
