@@ -112,7 +112,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 
 ### 4.2 RPCs (all writes)
 
-Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`; and `shared` (`data.share_kind`, task 3.2).
+Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`; and `shared` (`data.share_kind`, task 3.2). Coverage types (task 3.1): `coverage_requested`, `coverage_cancelled`, `coverage_taken` (`data.previous_owner_id`).
 
 | RPC | Arguments | Typed errors |
 | --- | --- | --- |
@@ -129,10 +129,10 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 | `withdraw_assignment` | `item_id`, `version` | `assignment_no_longer_available`, `stale_version` |
 | `claim` | `item_id`, `version` | `already_claimed` (owner's `name` in `DETAIL`), `invalid_state`, `stale_version`. Claiming your own item again returns it unchanged |
 | `complete_item`, `cancel_item` | `item_id`, `version` | `invalid_state` (complete: only from Assigned; cancel: not from Completed/Cancelled), `not_owner` (complete), `stale_version`. Cancel withdraws a pending request and cancels open coverage |
-| `coverage_remaining` | — → `int` | — |
-| `request_coverage` | `item_id`, `version` | `not_owner`, `coverage_limit_reached` |
-| `cancel_coverage` | `item_id`, `version` | `coverage_resolved` |
-| `accept_coverage` | `item_id`, `version` | `coverage_resolved` (returns new owner name) |
+| `coverage_remaining` | — → `int` | `not_member`. `2 −` the caller's coverage requests this calendar month (cancelled and taken ones included), never below 0. The month is the circle's (`circles.time_zone`, BR-09) |
+| `request_coverage` | `item_id`, `version` | `invalid_state` (not Assigned), `not_owner`, `coverage_limit_reached` (BR-01), `stale_version`. Assigned → Needs coverage; the owner keeps `owner_id` and an `open` request is added |
+| `cancel_coverage` | `item_id`, `version` | `coverage_resolved` (already taken; new owner's `name` in `DETAIL`), `not_owner`, `invalid_state` (no open request), `stale_version`. Back to Assigned for the same owner; the request is `cancelled` and still counts |
+| `accept_coverage` | `item_id`, `version` | `coverage_resolved` (no longer Needs coverage; the owner's `name` in `DETAIL`, checked before the version), `invalid_state` (your own request), `stale_version`. The caller becomes owner (BR-03) and the request is `taken`. Taking it again once it's yours returns it unchanged |
 | `post_update` | `body`, `item_id?` | `not_member`, `invalid_input` |
 | `mark_notifications_read` | `notification_id?` (all if omitted) | — |
 | `log_share` | `item_id`, `share_kind` (`task`, `appointment`, `assignment_request`, `coverage_request`; the item share builders in `web/src/lib/share-text.ts`) | `not_member`, `invalid_input` (unknown `share_kind`). Writes one `activity_events` row of type `shared` with `data.share_kind`; no state change, version check or `outbox` row. Called after the share sheet reports `shared`; a failure is never shown to the member |
@@ -193,6 +193,8 @@ IDs and an event name only; never titles, notes or locations (ADR-010). The acto
 | `reconfirm_requested` | `update_item` (BR-11) | The owner, who must accept again |
 | `item_changed` | `update_item` (any other edit) | The owner and the proposed assignee |
 | `item_cancelled` | `cancel_item` | The owner and the proposed assignee |
+| `coverage_requested` | `request_coverage` | Every other member of the circle |
+| `coverage_taken` | `accept_coverage` | The member who asked for cover (the previous owner) |
 
 ### 4.5 App routes and platform adapter
 

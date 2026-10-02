@@ -193,8 +193,7 @@ begin
   -- data match what the task 2.1 RPCs write (log_item_event strips nulls):
   -- created {kind, state, assignee_id?, follow_up_of?}, assigned {assignee_id},
   -- claimed (assigning yourself), accepted/declined {assigner_id}, completed,
-  -- cancelled {previous_state}. coverage_requested is a placeholder until
-  -- task 3.1 defines it.
+  -- cancelled {previous_state}, and coverage_requested (task 3.1, no data).
   -- -------------------------------------------------------------------------
   insert into public.activity_events (circle_id, actor_id, type, item_id, data, at) values
     (v_circle, v_ada, 'created', i_pharmacy,
