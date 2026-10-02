@@ -33,6 +33,7 @@ vi.mock('@/lib/queries', async (importOriginal) => ({
   useItemsInRange: vi.fn(),
   useItemsNeedingAttention: vi.fn(),
   useLatestUpdate: vi.fn(),
+  useItemCount: vi.fn(),
 }))
 
 type Query<T extends (...args: never[]) => unknown> = ReturnType<T>
@@ -104,7 +105,13 @@ function given({
     body: 'Stuck at work until seven.',
     created_at: '2026-09-24T01:40:00Z',
   } as Query<typeof queries.useLatestUpdate>['data'],
-}: { weekItems?: Attention[]; open?: Attention[]; update?: Query<typeof queries.useLatestUpdate>['data'] } = {}) {
+  count = 5,
+}: {
+  weekItems?: Attention[]
+  open?: Attention[]
+  update?: Query<typeof queries.useLatestUpdate>['data']
+  count?: number
+} = {}) {
   vi.mocked(queries.useItemsInRange).mockReturnValue(
     success(weekItems) as unknown as Query<typeof queries.useItemsInRange>,
   )
@@ -113,6 +120,9 @@ function given({
   )
   vi.mocked(queries.useLatestUpdate).mockReturnValue(
     success(update) as unknown as Query<typeof queries.useLatestUpdate>,
+  )
+  vi.mocked(queries.useItemCount).mockReturnValue(
+    success(count) as unknown as Query<typeof queries.useItemCount>,
   )
 }
 
@@ -198,7 +208,7 @@ test('greets the member and shows the counts and every section', () => {
 })
 
 test('a new circle shows a welcome and an empty state in every section', () => {
-  given({ weekItems: [], open: [], update: null })
+  given({ weekItems: [], open: [], update: null, count: 0 })
   renderHome()
 
   expect(screen.getByText(/Nothing is planned yet/)).toBeInTheDocument()
@@ -208,6 +218,14 @@ test('a new circle shows a welcome and an empty state in every section', () => {
   expect(screen.getByText('Nobody has asked for cover.')).toBeInTheDocument()
   expect(screen.getByText(/No updates yet/)).toBeInTheDocument()
   expect(screen.getByRole('list', { name: 'This week' })).toHaveTextContent('0 tasks0 appointments0 overdue')
+})
+
+test("a quiet week isn't mistaken for a new circle", () => {
+  given({ weekItems: [], open: [], update: null, count: 2 })
+  renderHome()
+
+  expect(screen.queryByText(/Nothing is planned yet/)).not.toBeInTheDocument()
+  expect(screen.getByText('Nothing is planned for today.')).toBeInTheDocument()
 })
 
 test('Accept answers the request in one tap, at the version shown', async () => {

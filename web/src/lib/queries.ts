@@ -20,6 +20,7 @@ export const queryKeys = {
   // Home (task 2.3). Under 'items' and 'updates', so the live channel refreshes them.
   itemsNeedingAttention: (before: string) => ['items', 'attention', before] as const,
   latestUpdate: ['updates', 'latest'] as const,
+  itemCount: ['items', 'count'] as const,
 }
 
 async function rows<T>(query: PromiseLike<{ data: T | null; error: Error | null }>) {
@@ -127,6 +128,20 @@ export function useItemsNeedingAttention(before: string) {
 export type ItemNeedingAttention = NonNullable<
   ReturnType<typeof useItemsNeedingAttention>['data']
 >[number]
+
+/** How many items the circle has ever had, so Home can tell a brand-new circle. */
+export function useItemCount() {
+  return useQuery({
+    queryKey: queryKeys.itemCount,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('items')
+        .select('id', { count: 'exact', head: true })
+      if (error) throw error
+      return count ?? 0
+    },
+  })
+}
 
 /** The circle's newest update, or null if nobody has posted one. */
 export function useLatestUpdate() {

@@ -36,6 +36,7 @@ import {
 import { useInstallGuide } from '@/lib/install-guide'
 import { isOverdue, memberNames } from '@/lib/items'
 import {
+  useItemCount,
   useItemMutation,
   useItemsInRange,
   useItemsNeedingAttention,
@@ -115,6 +116,7 @@ function HomeSections({
   const weekItems = useItemsInRange(week.start.toISOString(), week.end.toISOString())
   const attention = useItemsNeedingAttention(startOfDay(today, timeZone).toISOString())
   const latest = useLatestUpdate()
+  const itemCount = useItemCount()
 
   const members = useCircleMembers()
   const names = useMemo(
@@ -140,7 +142,7 @@ function HomeSections({
 
   const loaded = weekItems.isSuccess && attention.isSuccess
   const failed = weekItems.isError || attention.isError
-  const brandNew = loaded && weekItems.data.length === 0 && open.length === 0
+  const brandNew = itemCount.data === 0
 
   return (
     <main className="flex flex-col gap-8 px-4 py-6">
