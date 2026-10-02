@@ -11,10 +11,10 @@ import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { useCircleMembers, useMyMembership } from '@/lib/circles'
-import { formatDate, formatTime, timeOfDay } from '@/lib/dates'
+import { formatDate, formatTime } from '@/lib/dates'
 import { errorMessage } from '@/lib/errors'
 import { currentHolder, isAskedViewer, itemActions, type ItemAction } from '@/lib/item-actions'
-import { END_OF_DAY } from '@/lib/item-form'
+import { hasNoTime } from '@/lib/item-form'
 import { isOverdue, memberNames, type Item } from '@/lib/items'
 import {
   isItemNotFound,
@@ -147,7 +147,7 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
   const date = formatDate(item.starts_at, timeZone, locale)
   const time = formatTime(item.starts_at, timeZone, locale)
   const when = isTask
-    ? timeOfDay(item.starts_at, timeZone) === END_OF_DAY
+    ? hasNoTime(item, timeZone)
       ? date
       : t('itemDetail.dateTime', { date, time })
     : t('itemDetail.dateTime', {

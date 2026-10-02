@@ -86,3 +86,10 @@ test('an owner who has left the circle is shown as a former member', () => {
   const link = renderRow(item({ owner_id: 'gone' }))
   expect(link).toHaveTextContent('Due 5:00 p.m. · Former member')
 })
+
+test('a task with no time says it is due by end of day, not "Due 11:59 p.m."', () => {
+  // 23:59 in Vancouver on Thu 24 Sep stands for "no time" (lib/item-form.ts).
+  const link = renderRow(item({ starts_at: '2026-09-25T06:59:00Z' }))
+  expect(link).toHaveTextContent('Due by end of day · Jonah')
+  expect(link).not.toHaveTextContent('11:59')
+})
