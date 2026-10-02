@@ -27,7 +27,7 @@ const cases: [string, ItemActionItem, string, ReturnType<typeof itemActions>][] 
     'Assigned, the owner',
     { state: 'assigned', owner_id: me, proposed_assignee_id: null },
     me,
-    ['complete', 'reassign', 'edit', 'cancel'],
+    ['complete', 'requestCoverage', 'reassign', 'edit', 'cancel'],
   ],
   [
     'Assigned, anyone else',
@@ -39,13 +39,13 @@ const cases: [string, ItemActionItem, string, ReturnType<typeof itemActions>][] 
     'Needs coverage, the owner',
     { state: 'needs_coverage', owner_id: me, proposed_assignee_id: null },
     me,
-    ['edit', 'cancel'],
+    ['cancelCoverage', 'edit', 'cancel'],
   ],
   [
     'Needs coverage, anyone else',
     { state: 'needs_coverage', owner_id: other, proposed_assignee_id: null },
     me,
-    ['edit', 'cancel'],
+    ['acceptCoverage', 'edit', 'cancel'],
   ],
   [
     'Completed, the owner',
@@ -89,6 +89,29 @@ describe('itemActions', () => {
       if (itemActions(item, viewer).includes('complete')) {
         expect(item.owner_id).toBe(viewer)
         expect(item.state).toBe('assigned')
+      }
+    }
+  })
+
+  test('only the owner can ask for cover or cancel the request, and only from the right state', () => {
+    for (const [, item, viewer] of cases) {
+      const actions = itemActions(item, viewer)
+      if (actions.includes('requestCoverage')) {
+        expect(item.owner_id).toBe(viewer)
+        expect(item.state).toBe('assigned')
+      }
+      if (actions.includes('cancelCoverage')) {
+        expect(item.owner_id).toBe(viewer)
+        expect(item.state).toBe('needs_coverage')
+      }
+    }
+  })
+
+  test("the owner can't take their own coverage request", () => {
+    for (const [, item, viewer] of cases) {
+      if (itemActions(item, viewer).includes('acceptCoverage')) {
+        expect(item.owner_id).not.toBe(viewer)
+        expect(item.state).toBe('needs_coverage')
       }
     }
   })

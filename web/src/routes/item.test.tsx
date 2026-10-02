@@ -26,6 +26,7 @@ vi.mock('@/lib/queries', async (importOriginal) => ({
   useItem: vi.fn(),
   useItemHistory: vi.fn(),
   usePendingRequest: vi.fn(),
+  useCoverageRemaining: vi.fn(),
 }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof api>()),
@@ -34,6 +35,9 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   cancelItem: vi.fn(),
   assign: vi.fn(),
   logShare: vi.fn(),
+  requestCoverage: vi.fn(),
+  cancelCoverage: vi.fn(),
+  acceptCoverage: vi.fn(),
 }))
 
 type Query<T extends (...args: never[]) => unknown> = ReturnType<T>
@@ -126,7 +130,14 @@ beforeEach(() => {
   vi.mocked(queries.usePendingRequest).mockReturnValue({ data: null } as unknown as Query<
     typeof queries.usePendingRequest
   >)
+  mockCoverageLeft(2)
 })
+
+function mockCoverageLeft(count: number | undefined) {
+  vi.mocked(queries.useCoverageRemaining).mockReturnValue({ data: count } as unknown as Query<
+    typeof queries.useCoverageRemaining
+  >)
+}
 
 afterEach(() => {
   vi.useRealTimers()
@@ -186,11 +197,17 @@ test('anyone else sees who it is awaiting, and can withdraw or ask someone else'
   expect(buttons()).toEqual(['Withdraw', 'Ask someone else', 'Edit', 'Cancel task'])
 })
 
-test('Assigned: the owner can mark it done; everyone can reassign', () => {
+test('Assigned: the owner can mark it done or ask for cover; everyone can reassign', () => {
   mockItem(item({ state: 'assigned', owner_id: 'maya' }))
   renderItem()
   expect(screen.getByText('Maya (you)')).toBeInTheDocument()
-  expect(buttons()).toEqual(['Mark done', 'Reassign', 'Edit', 'Cancel task'])
+  expect(buttons()).toEqual([
+    'Mark done',
+    'Need coverage · 2 of 2 left this month',
+    'Reassign',
+    'Edit',
+    'Cancel task',
+  ])
 })
 
 test('a typed error shows the PRD wording', async () => {
@@ -309,4 +326,83 @@ describe('Share (task 3.2)', () => {
     renderItem()
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument()
   })
+})
+
+test('the owner asks for cover in 2 taps, sees what is left, then can share', async () => {
+  mockItem(item({ state: 'assigned', owner_id: 'maya' }))
+  mockCoverageLeft(1)
+  vi.mocked(api.requestCoverage).mockResolvedValue(
+    item({ state: 'needs_coverage', owner_id: 'maya', version: 5 }),
+  )
+  renderItem()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Need coverage · 1 of 2 left this month' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Ask the family to cover?' })
+  expect(sheet).toHaveTextContent('1 of 2 left this month. Resets on October 1.')
+  expect(api.requestCoverage).not.toHaveBeenCalled()
+
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Ask for cover' }))
+  await waitFor(() =>
+    expect(api.requestCoverage).toHaveBeenCalledWith({ item_id: 'pharmacy', version: 4 }),
+  )
+  const asked = await screen.findByRole('dialog', { name: "You've asked the family" })
+  expect(within(asked).getByRole('button', { name: 'Share with the family' })).toBeInTheDocument()
+})
+
+test('with none left, no request is made and the other ways are offered', async () => {
+  mockItem(item({ state: 'assigned', owner_id: 'maya' }))
+  mockCoverageLeft(0)
+  renderItem()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Need coverage · none left this month' }))
+  const sheet = await screen.findByRole('dialog', {
+    name: "You've used both coverage requests this month",
+  })
+  expect(within(sheet).getByRole('button', { name: 'Message the family' })).toBeInTheDocument()
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Ask one person directly' }))
+  expect(await screen.findByRole('dialog', { name: 'Reassign' })).toBeInTheDocument()
+  expect(api.requestCoverage).not.toHaveBeenCalled()
+})
+
+test('if the limit is reached meanwhile, the sheet says so', async () => {
+  mockItem(item({ state: 'assigned', owner_id: 'maya' }))
+  mockCoverageLeft(1)
+  vi.mocked(api.requestCoverage).mockRejectedValue(new RpcError('coverage_limit_reached'))
+  renderItem()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Need coverage · 1 of 2 left this month' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Ask for cover' }))
+  expect(
+    await screen.findByRole('dialog', { name: "You've used both coverage requests this month" }),
+  ).toBeInTheDocument()
+})
+
+test('Needs coverage, the owner: it is still theirs and they can cancel the request', async () => {
+  mockItem(item({ state: 'needs_coverage', owner_id: 'maya' }))
+  vi.mocked(api.cancelCoverage).mockResolvedValue(item({ state: 'assigned', owner_id: 'maya', version: 5 }))
+  renderItem()
+
+  expect(screen.getByRole('heading', { name: 'You asked the family to cover this' })).toBeInTheDocument()
+  expect(screen.getByText('Maya (you), until someone covers')).toBeInTheDocument()
+  expect(buttons()).toEqual(['Cancel request', 'Edit', 'Cancel task'])
+
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel request' }))
+  await waitFor(() =>
+    expect(api.cancelCoverage).toHaveBeenCalledWith({ item_id: 'pharmacy', version: 4 }),
+  )
+})
+
+test('Needs coverage, anyone else: I can do it in one tap, or who got there first', async () => {
+  mockItem(item({ state: 'needs_coverage', owner_id: 'jonah' }))
+  vi.mocked(api.acceptCoverage).mockRejectedValue(new RpcError('coverage_resolved', { name: 'Ada' }))
+  renderItem()
+
+  expect(screen.getByRole('heading', { name: 'Jonah needs cover' })).toBeInTheDocument()
+  expect(buttons()).toEqual(['I can do it', 'Edit', 'Cancel task'])
+
+  fireEvent.click(screen.getByRole('button', { name: 'I can do it' }))
+  await waitFor(() =>
+    expect(api.acceptCoverage).toHaveBeenCalledWith({ item_id: 'pharmacy', version: 4 }),
+  )
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ada is already covering this.')
 })

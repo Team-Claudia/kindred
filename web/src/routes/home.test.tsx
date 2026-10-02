@@ -17,6 +17,7 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   acceptAssignment: vi.fn(),
   declineAssignment: vi.fn(),
   claim: vi.fn(),
+  acceptCoverage: vi.fn(),
 }))
 vi.mock('@/lib/auth', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth')>()),
@@ -89,7 +90,13 @@ const attention = [
     state: 'needs_someone',
     owner_id: null,
   }),
-  item({ id: 'cover', title: 'Evening visit', starts_at: '2026-09-27T01:00:00Z', state: 'needs_coverage' }),
+  item({
+    id: 'cover',
+    title: 'Evening visit',
+    starts_at: '2026-09-27T01:00:00Z',
+    state: 'needs_coverage',
+    owner_id: 'jonah',
+  }),
 ]
 
 function success<T>(data: T) {
@@ -258,4 +265,30 @@ test("I'll do it claims the item, and says so in plain language if someone got t
   expect(vi.mocked(api.claim).mock.calls[0][0]).toEqual({ item_id: 'physio', version: 3 })
   const someone = screen.getByRole('region', { name: 'Needs someone' })
   expect(within(someone).getByRole('alert')).toHaveTextContent('Jonah has already taken this.')
+})
+
+test('I can do it takes a coverage request in one tap, and says who got there first', async () => {
+  vi.mocked(api.acceptCoverage).mockRejectedValue(new RpcError('coverage_resolved', { name: 'Ada' }))
+  renderHome()
+
+  const coverage = screen.getByRole('region', { name: 'Coverage requests' })
+  expect(within(coverage).getByText(/Jonah needs cover/)).toBeInTheDocument()
+  await act(async () => {
+    fireEvent.click(within(coverage).getByRole('button', { name: 'I can do it' }))
+  })
+  expect(vi.mocked(api.acceptCoverage).mock.calls[0][0]).toEqual({ item_id: 'cover', version: 3 })
+  expect(within(coverage).getByRole('alert')).toHaveTextContent('Ada is already covering this.')
+})
+
+test("your own coverage request has no I can do it; it opens the item", () => {
+  given({
+    open: [
+      item({ id: 'mine', title: 'Evening visit', starts_at: '2026-09-27T01:00:00Z', state: 'needs_coverage' }),
+    ],
+  })
+  renderHome()
+
+  const coverage = screen.getByRole('region', { name: 'Coverage requests' })
+  expect(within(coverage).queryByRole('button', { name: 'I can do it' })).not.toBeInTheDocument()
+  expect(within(coverage).getByRole('link')).toHaveAttribute('href', '/i/mine')
 })

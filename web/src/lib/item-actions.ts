@@ -5,8 +5,11 @@ import type { Item } from './items'
 // only the person asked can accept or decline, and only the confirmed owner
 // can mark it done. Completed and Cancelled items are read-only.
 //
-// Coverage ("Need coverage", "I can do it", task 3.1), Share (3.2) and
-// updates and follow-ups (4.1) add their own buttons later.
+// Coverage (task 3.1): only the owner of an Assigned item can ask the family
+// to cover it, and only they can cancel the request; anyone else can take a
+// Needs coverage item with "I can do it". Assign and claim don't act on Needs
+// coverage items. Share (3.2) and updates and follow-ups (4.1) add their own
+// buttons later.
 
 export type ItemAction =
   | 'claim' // "I'll do it"
@@ -19,6 +22,9 @@ export type ItemAction =
   | 'reassign'
   | 'edit'
   | 'cancel'
+  | 'requestCoverage' // "Need coverage"
+  | 'cancelCoverage' // "Cancel request"
+  | 'acceptCoverage' // "I can do it"
 
 export type ItemActionItem = Pick<Item, 'state' | 'owner_id' | 'proposed_assignee_id'>
 
@@ -39,11 +45,12 @@ export function itemActions(item: ItemActionItem, viewerId: string): ItemAction[
         : ['withdraw', 'askSomeoneElse', ...open]
     case 'assigned':
       return item.owner_id === viewerId
-        ? ['complete', 'reassign', ...open]
+        ? ['complete', 'requestCoverage', 'reassign', ...open]
         : ['reassign', ...open]
     case 'needs_coverage':
-      // Coverage actions are task 3.1; assign can't act on it until then.
-      return open
+      return item.owner_id === viewerId
+        ? ['cancelCoverage', ...open]
+        : ['acceptCoverage', ...open]
     default:
       // Completed, Cancelled, or a state this version doesn't know.
       return []
