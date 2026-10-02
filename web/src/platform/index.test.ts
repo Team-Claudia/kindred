@@ -1,4 +1,4 @@
-import { appUrl, copyText, deviceSetting, share, whatsAppUrl } from './index'
+import { appUrl, copyText, deviceSetting, onAppVisible, share, whatsAppUrl } from './index'
 
 const content = { text: 'Physio ride on Friday', url: 'https://kindred.example/i/123' }
 
@@ -84,5 +84,25 @@ describe('deviceSetting', () => {
     vi.stubGlobal('localStorage', { getItem: blocked, setItem: blocked })
     expect(() => deviceSetting.set('test-key', 'yes')).not.toThrow()
     expect(deviceSetting.get('test-key')).toBeNull()
+  })
+})
+
+describe('onAppVisible', () => {
+  function setVisibility(state: DocumentVisibilityState) {
+    Object.defineProperty(document, 'visibilityState', { value: state, configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  }
+
+  test('calls back when the app comes back on screen, until stopped', () => {
+    const callback = vi.fn()
+    const stop = onAppVisible(callback)
+    setVisibility('hidden')
+    expect(callback).not.toHaveBeenCalled()
+    setVisibility('visible')
+    expect(callback).toHaveBeenCalledTimes(1)
+    stop()
+    setVisibility('hidden')
+    setVisibility('visible')
+    expect(callback).toHaveBeenCalledTimes(1)
   })
 })

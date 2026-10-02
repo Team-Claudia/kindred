@@ -43,6 +43,11 @@ export interface Platform {
    * writes are dropped then.
    */
   deviceSetting: { get(key: string): string | null; set(key: string, value: string): void }
+  /**
+   * Calls `callback` each time Kindred comes back on screen (iPhone suspends
+   * background tabs and Home Screen apps). Returns a function that stops it.
+   */
+  onAppVisible(callback: () => void): () => void
 }
 
 export interface ShareContent {
@@ -119,6 +124,14 @@ export const deviceSetting: Platform['deviceSetting'] = {
   },
 }
 
+export function onAppVisible(callback: () => void): () => void {
+  const listener = () => {
+    if (document.visibilityState === 'visible') callback()
+  }
+  document.addEventListener('visibilitychange', listener)
+  return () => document.removeEventListener('visibilitychange', listener)
+}
+
 export const platform: Platform = {
   share,
   canShare,
@@ -130,4 +143,5 @@ export const platform: Platform = {
   notificationPermission,
   addCalendarFeed,
   deviceSetting,
+  onAppVisible,
 }
