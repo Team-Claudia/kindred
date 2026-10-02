@@ -4,6 +4,7 @@ import {
   itemPatch,
   itemToForm,
   needsReconfirm,
+  hasNoTime,
   newItemForm,
   validateItemForm,
   type ItemForm,
@@ -206,5 +207,16 @@ describe('needsReconfirm', () => {
 
   test('other edits keep the owner', () => {
     expect(needsReconfirm({ title: 'New name' }, assigned, 'maya')).toBe(false)
+  })
+})
+
+describe('hasNoTime', () => {
+  test('a task at 23:59 in the circle time zone has no time', () => {
+    expect(hasNoTime({ kind: 'task', starts_at: '2026-09-25T06:59:00Z' }, zone)).toBe(true)
+  })
+
+  test('a task with a time, or an appointment at 23:59, has one', () => {
+    expect(hasNoTime({ kind: 'task', starts_at: '2026-09-25T00:00:00Z' }, zone)).toBe(false)
+    expect(hasNoTime({ kind: 'appointment', starts_at: '2026-09-25T06:59:00Z' }, zone)).toBe(false)
   })
 })

@@ -395,6 +395,7 @@
       "appointment": "Appointment"
     },
     "due": "Due {{time}}",
+    "dueEndOfDay": "Due by end of day",
     "asked": "Asked {{name}}",
     "nobody": "Nobody has claimed this",
     "done": "Done {{time}}",
@@ -436,6 +437,10 @@
     "due_today": "Due today, {{time}}",
     "due_tomorrow": "Due tomorrow, {{time}}",
     "due_yesterday": "Due yesterday, {{time}}",
+    "dueDay": "Due {{day}}",
+    "dueDay_today": "Due today",
+    "dueDay_tomorrow": "Due tomorrow",
+    "dueDay_yesterday": "Due yesterday",
     "at": "{{day}}, {{time}}",
     "at_today": "Today, {{time}}",
     "at_tomorrow": "Tomorrow, {{time}}",

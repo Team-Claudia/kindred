@@ -75,7 +75,7 @@ const attention = [
   item({
     id: 'pharmacy',
     title: 'Call the pharmacy',
-    starts_at: '2026-09-26T00:00:00Z', // Fri 5 pm
+    starts_at: '2026-09-26T06:59:00Z', // Fri, no time (23:59)
     state: 'awaiting_acceptance',
     owner_id: null,
     proposed_assignee_id: 'maya',
@@ -183,7 +183,7 @@ test('greets the member and shows the counts and every section', () => {
 
   const answer = screen.getByRole('region', { name: 'Needs your answer · 1' })
   expect(within(answer).getByText('Call the pharmacy')).toBeInTheDocument()
-  expect(within(answer).getByText(/Ada asked you · Due tomorrow, 5:00/)).toBeInTheDocument()
+  expect(within(answer).getByText('Ada asked you · Due tomorrow')).toBeInTheDocument()
   expect(within(answer).getByRole('button', { name: 'Accept' })).toBeInTheDocument()
   expect(within(answer).getByRole('button', { name: 'Decline' })).toBeInTheDocument()
 
