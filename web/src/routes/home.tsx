@@ -69,7 +69,7 @@ export default function Home() {
       <HomeTopBar name={name} />
       {userId && <HomeContent userId={userId} name={firstName(name)} />}
       {/* From the Home Screen, explain notifications before the phone asks (task 1.4). */}
-      <PushPrompt userId={userId} />
+      <PushPrompt />
     </>
   )
 }

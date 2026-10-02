@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import '@/i18n'
 import { platform } from '@/platform'
-import { forgetPushResync } from '@/lib/push-resync'
 import { PushPrompt } from './push-prompt'
 
 vi.mock('@/platform', () => ({
@@ -25,32 +24,8 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks())
 
 test('shows in the Home Screen app before the phone has asked', () => {
-  render(<PushPrompt userId="maya" />)
+  render(<PushPrompt />)
   expect(screen.getByRole('heading', { name: 'Turn on notifications?' })).toBeInTheDocument()
-})
-
-// Runs first: the re-save happens once per app launch and member.
-test('re-saves the subscription once permission is granted', () => {
-  mocked.notificationPermission.mockReturnValue('granted')
-  render(<PushPrompt userId="maya" />)
-  expect(mocked.enablePush).toHaveBeenCalledOnce()
-  render(<PushPrompt userId="maya" />)
-  expect(mocked.enablePush).toHaveBeenCalledOnce()
-})
-
-// Signing out removes this phone's subscription, so whoever signs in next on
-// the same launch needs it saved again, under their account.
-test('re-saves the subscription when someone else signs in', () => {
-  mocked.notificationPermission.mockReturnValue('granted')
-  render(<PushPrompt userId="jonah" />)
-  expect(mocked.enablePush).toHaveBeenCalledOnce()
-})
-
-test('re-saves it when the same member signs out and back in', () => {
-  mocked.notificationPermission.mockReturnValue('granted')
-  forgetPushResync()
-  render(<PushPrompt userId="jonah" />)
-  expect(mocked.enablePush).toHaveBeenCalledOnce()
 })
 
 test.each([
@@ -59,19 +34,19 @@ test.each([
   ['after Not now', () => vi.mocked(mocked.deviceSetting.get).mockReturnValue('1')],
 ])('stays hidden %s', (_, arrange) => {
   arrange()
-  render(<PushPrompt userId="maya" />)
+  render(<PushPrompt />)
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
 test('Not now hides it and remembers', () => {
-  render(<PushPrompt userId="maya" />)
+  render(<PushPrompt />)
   fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
   expect(vi.mocked(mocked.deviceSetting.set)).toHaveBeenCalledWith('pushPromptDismissed', '1')
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
 test('Turn on notifications enables push and closes', async () => {
-  render(<PushPrompt userId="maya" />)
+  render(<PushPrompt />)
   fireEvent.click(screen.getByRole('button', { name: 'Turn on notifications' }))
   await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   expect(mocked.enablePush).toHaveBeenCalled()

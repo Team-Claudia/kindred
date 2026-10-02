@@ -1,8 +1,7 @@
 import { Bell } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import { resyncSubscription } from '@/lib/push-resync'
 import { platform, type PushResult } from '@/platform'
 
 const DISMISSED_KEY = 'pushPromptDismissed'
@@ -20,13 +19,11 @@ function shouldShowPushPrompt(): boolean {
 
 // "Turn on notifications" (wireframe 10). Shown once, before the phone's own
 // permission prompt, so members know what they're agreeing to.
-export function PushPrompt({ userId }: { userId: string | undefined }) {
+export function PushPrompt() {
   const { t } = useTranslation()
   const [visible, setVisible] = useState(shouldShowPushPrompt)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<PushResult | 'error' | null>(null)
-
-  useEffect(() => resyncSubscription(userId), [userId])
 
   if (!visible) return null
 

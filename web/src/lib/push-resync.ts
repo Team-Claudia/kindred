@@ -1,7 +1,8 @@
+import { useEffect } from 'react'
 import { platform } from '@/platform'
 
 // Keeps this phone's push subscription saved for whoever is signed in
-// (ADR-010). Used by the push prompt on Home and by sign-out.
+// (ADR-010), so nobody has to close and reopen the app to get notifications.
 
 let resyncedFor: string | undefined
 
@@ -13,13 +14,28 @@ export function forgetPushResync() {
   resyncedFor = undefined
 }
 
-// Once permission is granted, re-save this phone's subscription once per app
-// launch and signed-in member. That recovers from a save that failed after the
-// member said yes, picks up a subscription the phone has quietly replaced, and
-// subscribes again for whoever signs in after a sign-out (which removes it).
-export function resyncSubscription(userId: string | undefined) {
-  if (!userId || resyncedFor === userId) return
+/**
+ * Re-saves this phone's subscription for `userId`, once per member unless
+ * `always` is set. It recovers from a save that failed after the member said
+ * yes, from a subscription the phone quietly replaced or the push service
+ * expired, and from a sign-out (which removes it).
+ */
+export function resyncSubscription(userId: string | undefined, always = false) {
+  if (!userId || (!always && resyncedFor === userId)) return
   if (!platform.isStandalone() || platform.notificationPermission() !== 'granted') return
   resyncedFor = userId
   platform.enablePush().catch((error: unknown) => console.error(error))
+}
+
+/**
+ * For the whole signed-in app: saves the subscription when someone signs in,
+ * and again each time Kindred comes back on screen, so a stale one repairs
+ * itself without closing the app.
+ */
+export function useKeepPushSubscription(userId: string | undefined) {
+  useEffect(() => {
+    resyncSubscription(userId)
+    if (!userId) return
+    return platform.onAppVisible(() => resyncSubscription(userId, true))
+  }, [userId])
 }
