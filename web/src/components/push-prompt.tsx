@@ -2,6 +2,7 @@ import { Bell } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { resyncSubscription } from '@/lib/push-resync'
 import { platform, type PushResult } from '@/platform'
 
 const DISMISSED_KEY = 'pushPromptDismissed'
@@ -15,19 +16,6 @@ function shouldShowPushPrompt(): boolean {
     platform.notificationPermission() === 'default' &&
     platform.deviceSetting.get(DISMISSED_KEY) !== '1'
   )
-}
-
-let resyncedFor: string | undefined
-
-// Once permission is granted, re-save this phone's subscription once per app
-// launch and signed-in member. That recovers from a save that failed after the
-// member said yes, picks up a subscription the phone has quietly replaced, and
-// subscribes again for whoever signs in after a sign-out (which removes it).
-function resyncSubscription(userId: string | undefined) {
-  if (!userId || resyncedFor === userId) return
-  if (!platform.isStandalone() || platform.notificationPermission() !== 'granted') return
-  resyncedFor = userId
-  platform.enablePush().catch((error: unknown) => console.error(error))
 }
 
 // "Turn on notifications" (wireframe 10). Shown once, before the phone's own

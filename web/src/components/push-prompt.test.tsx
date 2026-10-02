@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import '@/i18n'
 import { platform } from '@/platform'
+import { forgetPushResync } from '@/lib/push-resync'
 import { PushPrompt } from './push-prompt'
 
 vi.mock('@/platform', () => ({
@@ -41,6 +42,13 @@ test('re-saves the subscription once permission is granted', () => {
 // the same launch needs it saved again, under their account.
 test('re-saves the subscription when someone else signs in', () => {
   mocked.notificationPermission.mockReturnValue('granted')
+  render(<PushPrompt userId="jonah" />)
+  expect(mocked.enablePush).toHaveBeenCalledOnce()
+})
+
+test('re-saves it when the same member signs out and back in', () => {
+  mocked.notificationPermission.mockReturnValue('granted')
+  forgetPushResync()
   render(<PushPrompt userId="jonah" />)
   expect(mocked.enablePush).toHaveBeenCalledOnce()
 })
