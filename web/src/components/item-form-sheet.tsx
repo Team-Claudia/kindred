@@ -91,7 +91,7 @@ export function ItemFormSheet(props: ItemFormSheetProps) {
 }
 
 function ItemFormBody({
-  item,
+  item: latest,
   kind,
   timeZone,
   formId,
@@ -106,6 +106,10 @@ function ItemFormBody({
   onConflict: ((error: RpcError) => void) | undefined
 }) {
   const { t } = useTranslation()
+  // The item as it was when the sheet opened. The form is compared with and
+  // saved at this version, so if someone else changes it meanwhile (and it's
+  // refetched), saving gets stale_version instead of undoing their change.
+  const [item] = useState(latest)
   const auth = useAuth()
   const viewerId = auth.status === 'signed_in' ? auth.session.user.id : ''
   const members = useCircleMembers()

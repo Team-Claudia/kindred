@@ -167,6 +167,25 @@ describe('itemPatch', () => {
     })
   })
 
+  test('a stored time with seconds is left alone unless the time is changed', () => {
+    const existing = item({ starts_at: '2026-09-25T00:00:42.123Z' })
+    const edited = { ...itemToForm(existing, zone), title: 'Refill all meds' }
+    expect(itemPatch(edited, existing, zone)).toEqual({ title: 'Refill all meds' })
+  })
+
+  test('moving an appointment to another day moves its end too', () => {
+    const existing = item({
+      kind: 'appointment',
+      starts_at: '2026-09-24T21:00:00Z',
+      ends_at: '2026-09-24T22:00:00Z',
+    })
+    const edited = { ...itemToForm(existing, zone), date: '2026-09-25' }
+    expect(itemPatch(edited, existing, zone)).toEqual({
+      starts_at: '2026-09-25T21:00:00.000Z',
+      ends_at: '2026-09-25T22:00:00.000Z',
+    })
+  })
+
   test('clearing notes or a location sends null', () => {
     const existing = item({ kind: 'appointment', location: 'Clinic', private_notes: 'Notes' })
     const edited = { ...itemToForm(existing, zone), location: ' ', notes: '' }

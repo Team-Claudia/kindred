@@ -119,20 +119,24 @@ export function createItemArgs(form: ItemForm, timeZone: string): CreateItemArgs
   }
 }
 
-function sameInstant(a: string | null, b: string | null): boolean {
-  if (a === null || b === null) return a === b
-  return new Date(a).getTime() === new Date(b).getTime()
-}
-
-/** The update_item patch for a valid form: only the fields that changed. */
+/**
+ * The update_item patch for a valid form: only the fields that changed.
+ * Times are compared as the form shows them (date and 'HH:MM'), so a stored
+ * time with seconds isn't moved, or sent back to its owner to confirm
+ * (BR-11), unless the member actually changed it.
+ */
 export function itemPatch(form: ItemForm, item: Item, timeZone: string): ItemPatch {
   const patch: ItemPatch = {}
   const title = form.title.trim()
   if (title !== item.title) patch.title = title
 
+  const before = itemToForm(item, timeZone)
   const { starts_at, ends_at } = formTimes(form, timeZone)
-  if (!sameInstant(starts_at, item.starts_at)) patch.starts_at = starts_at
-  if (!sameInstant(ends_at, item.ends_at)) patch.ends_at = ends_at
+  const dateChanged = form.date !== before.date
+  if (dateChanged || form.time !== before.time) patch.starts_at = starts_at
+  if (form.kind === 'appointment' && (dateChanged || form.endTime !== before.endTime)) {
+    patch.ends_at = ends_at
+  }
 
   if (form.kind === 'appointment') {
     const location = orNull(form.location)
