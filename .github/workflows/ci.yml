@@ -44,6 +44,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # The deploy's `supabase db push` refuses a migration older than the
+      # newest one already on the hosted database, so a PR's new migrations
+      # must sort after everything on main. Re-run this after main moves.
+      - name: New migrations come after the ones on main
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --quiet --depth=1 origin "$BASE_REF"
+          on_main=$(git ls-tree --name-only "origin/$BASE_REF" supabase/migrations/ | xargs -n1 basename | grep -E '^[0-9]{14}_.*\.sql$' | sort)
+          latest=$(echo "$on_main" | tail -1)
+          status=0
+          for f in $(ls supabase/migrations | grep -E '^[0-9]{14}_.*\.sql$' | sort); do
+            if ! grep -qxF "$f" <<<"$on_main" && [[ "$f" < "$latest" ]]; then
+              echo "::error file=supabase/migrations/$f::$f is older than $latest on $BASE_REF. Rename it with a later timestamp."
+              status=1
+            fi
+          done
+          exit $status
       - uses: supabase/setup-cli@v3
         with:
           version: latest
