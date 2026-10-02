@@ -91,8 +91,26 @@ export function weekStart(date: Date, timeZone: string): DayKey {
 
 /** The instant midnight starts `day` in `timeZone`. */
 export function startOfDay(day: DayKey, timeZone: string): Date {
+  return instantAt(day, '00:00', timeZone)
+}
+
+const TIME_OF_DAY = /^([01]\d|2[0-3]):([0-5]\d)$/
+
+/** Whether `value` is a 'HH:MM' time of day, as a time input gives it. */
+export function isTimeOfDay(value: string | null | undefined): value is string {
+  return Boolean(value && TIME_OF_DAY.test(value))
+}
+
+/**
+ * The instant it's `time` ('HH:MM') on `day` in `timeZone`, e.g. for the
+ * create sheet's date and time inputs. In the hour a daylight-saving change
+ * skips, it gives the time an hour on.
+ */
+export function instantAt(day: DayKey, time: string, timeZone: string): Date {
+  const match = TIME_OF_DAY.exec(time)
+  if (!match) throw new RangeError(`Not a time of day: ${time}`)
   const { year, month, day: date } = parseDayKey(day)
-  const wanted = Date.UTC(year, month - 1, date)
+  const wanted = Date.UTC(year, month - 1, date, Number(match[1]), Number(match[2]))
   // Guess the UTC offset, then correct it once: the offset at the answer can
   // differ from the offset at the guess when a daylight-saving change is near.
   let instant = wanted
@@ -102,6 +120,12 @@ export function startOfDay(day: DayKey, timeZone: string): Date {
     instant += wanted - shown
   }
   return new Date(instant)
+}
+
+/** The wall-clock time at `date` in `timeZone`, as 'HH:MM' (a time input's value). */
+export function timeOfDay(date: Date | string, timeZone: string): string {
+  const { hour, minute } = wallClock(new Date(date), timeZone)
+  return `${pad(hour)}:${pad(minute)}`
 }
 
 export interface Week {
@@ -178,4 +202,14 @@ export function formatTime(date: Date | string, timeZone: string, locale: string
   return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit', timeZone }).format(
     new Date(date),
   )
+}
+
+/** The date at `date` in `timeZone`, e.g. "Friday, September 26". */
+export function formatDate(date: Date | string, timeZone: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    timeZone,
+  }).format(new Date(date))
 }

@@ -1,0 +1,161 @@
+import type { CreateItemArgs, ItemPatch } from './api'
+import { instantAt, isDayKey, isTimeOfDay, timeOfDay, dayKey, type DayKey } from './dates'
+import type { Item, ItemKind } from './items'
+
+// The create/edit sheet's fields and the rules for turning them into
+// create_item arguments or an update_item patch (task 2.2). Dates and times
+// are read in the circle's time zone (BR-09), never the phone's.
+
+/** The same limits create_item and update_item check (plan §4.2). */
+export const limits = { title: 200, location: 200, notes: 4000 } as const
+
+/**
+ * A task with no time is due by the end of its day. There's no all-day flag
+ * on items, so 23:59 in the circle's time zone stands for "no time": Overdue
+ * starts the next morning, and the edit sheet shows the time as blank.
+ */
+export const END_OF_DAY = '23:59'
+
+export interface ItemForm {
+  kind: ItemKind
+  title: string
+  /** 'YYYY-MM-DD', or '' until chosen. */
+  date: string
+  /** 'HH:MM', or ''. Optional for a task; an appointment's start time. */
+  time: string
+  /** An appointment's optional end time, 'HH:MM' or ''. */
+  endTime: string
+  /** Appointments only. */
+  location: string
+  notes: string
+  /** Who is asked to do it: a member's user ID, or null for Nobody yet. */
+  assigneeId: string | null
+}
+
+export type ItemFormField = 'title' | 'date' | 'time' | 'endTime' | 'location' | 'notes'
+
+export type ItemFormProblem =
+  | 'titleRequired'
+  | 'titleTooLong'
+  | 'dateRequired'
+  | 'timeRequired'
+  | 'endBeforeStart'
+  | 'locationTooLong'
+  | 'notesTooLong'
+
+export type ItemFormProblems = Partial<Record<ItemFormField, ItemFormProblem>>
+
+/** A blank form for a new item, due `day`. */
+export function newItemForm(kind: ItemKind, day: DayKey): ItemForm {
+  return { kind, title: '', date: day, time: '', endTime: '', location: '', notes: '', assigneeId: null }
+}
+
+/** The form for editing `item`, with its times in `timeZone`. */
+export function itemToForm(item: Item, timeZone: string): ItemForm {
+  const kind: ItemKind = item.kind === 'appointment' ? 'appointment' : 'task'
+  const time = timeOfDay(item.starts_at, timeZone)
+  return {
+    kind,
+    title: item.title,
+    date: dayKey(item.starts_at, timeZone),
+    time: kind === 'task' && time === END_OF_DAY ? '' : time,
+    endTime: kind === 'appointment' && item.ends_at ? timeOfDay(item.ends_at, timeZone) : '',
+    location: kind === 'appointment' ? (item.location ?? '') : '',
+    notes: item.private_notes ?? '',
+    assigneeId: null,
+  }
+}
+
+/** Characters as Postgres counts them (code points, not UTF-16 units). */
+function length(value: string): number {
+  return [...value].length
+}
+
+/** What's wrong with the form, by field. Empty when it can be saved. */
+export function validateItemForm(form: ItemForm): ItemFormProblems {
+  const problems: ItemFormProblems = {}
+  const title = form.title.trim()
+  if (!title) problems.title = 'titleRequired'
+  else if (length(title) > limits.title) problems.title = 'titleTooLong'
+  if (!isDayKey(form.date)) problems.date = 'dateRequired'
+  if (form.kind === 'appointment') {
+    if (!isTimeOfDay(form.time)) problems.time = 'timeRequired'
+    else if (isTimeOfDay(form.endTime) && form.endTime < form.time) problems.endTime = 'endBeforeStart'
+    if (length(form.location.trim()) > limits.location) problems.location = 'locationTooLong'
+  }
+  if (length(form.notes.trim()) > limits.notes) problems.notes = 'notesTooLong'
+  return problems
+}
+
+/** When the item starts (a task's due time) and, for an appointment, ends. */
+export function formTimes(form: ItemForm, timeZone: string): { starts_at: string; ends_at: string | null } {
+  if (form.kind === 'task') {
+    const time = isTimeOfDay(form.time) ? form.time : END_OF_DAY
+    return { starts_at: instantAt(form.date, time, timeZone).toISOString(), ends_at: null }
+  }
+  return {
+    starts_at: instantAt(form.date, form.time, timeZone).toISOString(),
+    ends_at: isTimeOfDay(form.endTime)
+      ? instantAt(form.date, form.endTime, timeZone).toISOString()
+      : null,
+  }
+}
+
+const orNull = (value: string) => value.trim() || null
+
+/** create_item's arguments for a valid form. */
+export function createItemArgs(form: ItemForm, timeZone: string): CreateItemArgs {
+  const { starts_at, ends_at } = formTimes(form, timeZone)
+  const location = form.kind === 'appointment' ? orNull(form.location) : null
+  const notes = orNull(form.notes)
+  return {
+    kind: form.kind,
+    title: form.title.trim(),
+    starts_at,
+    ...(ends_at && { ends_at }),
+    ...(location && { location }),
+    ...(notes && { private_notes: notes }),
+    ...(form.assigneeId && { assignee_id: form.assigneeId }),
+  }
+}
+
+function sameInstant(a: string | null, b: string | null): boolean {
+  if (a === null || b === null) return a === b
+  return new Date(a).getTime() === new Date(b).getTime()
+}
+
+/** The update_item patch for a valid form: only the fields that changed. */
+export function itemPatch(form: ItemForm, item: Item, timeZone: string): ItemPatch {
+  const patch: ItemPatch = {}
+  const title = form.title.trim()
+  if (title !== item.title) patch.title = title
+
+  const { starts_at, ends_at } = formTimes(form, timeZone)
+  if (!sameInstant(starts_at, item.starts_at)) patch.starts_at = starts_at
+  if (!sameInstant(ends_at, item.ends_at)) patch.ends_at = ends_at
+
+  if (form.kind === 'appointment') {
+    const location = orNull(form.location)
+    if (location !== (item.location ?? null)) patch.location = location
+  }
+  const notes = orNull(form.notes)
+  if (notes !== (item.private_notes ?? null)) patch.private_notes = notes
+  return patch
+}
+
+/**
+ * Whether saving `patch` sends the item back to its owner to confirm (BR-11):
+ * someone else changed the date or time of an Assigned item.
+ */
+export function needsReconfirm(
+  patch: ItemPatch,
+  item: Pick<Item, 'state' | 'owner_id'>,
+  viewerId: string,
+): boolean {
+  return (
+    item.state === 'assigned' &&
+    item.owner_id !== null &&
+    item.owner_id !== viewerId &&
+    ('starts_at' in patch || 'ends_at' in patch)
+  )
+}

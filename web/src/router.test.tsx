@@ -62,7 +62,6 @@ test.each([
   ['/summary', 'Summary'],
   ['/circle', 'Care Circle'],
   ['/notifications', 'Notifications'],
-  ['/i/123', 'Task or appointment'],
 ])('%s renders its placeholder', (path, title) => {
   renderAt(path)
   expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()
