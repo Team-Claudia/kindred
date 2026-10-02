@@ -8,6 +8,7 @@ import * as circles from '@/lib/circles'
 import { RpcError } from '@/lib/errors'
 import type { Item } from '@/lib/items'
 import * as queries from '@/lib/queries'
+import { platform } from '@/platform'
 import ItemScreen from './item'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
@@ -32,6 +33,7 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   acceptAssignment: vi.fn(),
   cancelItem: vi.fn(),
   assign: vi.fn(),
+  logShare: vi.fn(),
 }))
 
 type Query<T extends (...args: never[]) => unknown> = ReturnType<T>
@@ -87,7 +89,11 @@ function renderItem() {
   return router
 }
 
-const buttons = () => screen.queryAllByRole('button').map((button) => button.textContent)
+// The action buttons only (Share sits outside them).
+const buttons = () =>
+  within(screen.getByRole('region', { name: 'What you can do' }))
+    .queryAllByRole('button')
+    .map((button) => button.textContent)
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -125,6 +131,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   vi.clearAllMocks()
+  vi.restoreAllMocks()
 })
 
 test('a non-member sees that they have no access, with a way Home', () => {
@@ -238,4 +245,68 @@ test('Completed is read-only and says who completed it', () => {
   expect(screen.getByText('Jonah · Thursday, September 24')).toBeInTheDocument()
   expect(screen.getByText("This is done, so it can't be changed.")).toBeInTheDocument()
   expect(buttons()).toEqual([])
+})
+
+describe('Share (task 3.2)', () => {
+  const url = 'http://localhost:3000/i/pharmacy'
+
+  test.each([
+    ['a task', item({ state: 'assigned', owner_id: 'jonah' }), 'task', 'Call the pharmacy\nDue Friday, September 25 at 5:00 p.m.\nJonah has it'],
+    [
+      'an appointment',
+      item({ kind: 'appointment', title: 'Physio', location: 'Riverside Clinic', ends_at: '2026-09-26T01:00:00Z' }),
+      'appointment',
+      'Physio\nFriday, September 25 at 5:00 p.m. – 6:00 p.m.\nRiverside Clinic\nNobody is taking them yet. Can you?',
+    ],
+    [
+      'an Awaiting acceptance item',
+      item({ state: 'awaiting_acceptance', proposed_assignee_id: 'jonah' }),
+      'assignment_request',
+      'Jonah, can you take this? Tap to accept or decline.\nCall the pharmacy\nFriday, September 25 at 5:00 p.m.',
+    ],
+    [
+      'a Needs coverage item',
+      item({ state: 'needs_coverage', owner_id: 'jonah' }),
+      'coverage_request',
+      'Jonah needs cover for Call the pharmacy\nFriday, September 25 at 5:00 p.m.\nCan you do it?',
+    ],
+  ])('shares %s with its text and link, and logs it', async (_, row, kind, text) => {
+    mockItem(row)
+    vi.spyOn(platform, 'appUrl').mockImplementation((path) => `http://localhost:3000${path}`)
+    const shareSpy = vi.spyOn(platform, 'share').mockResolvedValue('shared')
+    vi.mocked(api.logShare).mockResolvedValue(undefined)
+    renderItem()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share' }))
+    await waitFor(() => expect(shareSpy).toHaveBeenCalledWith({ text, url }))
+    expect(shareSpy.mock.calls[0]![0].text).not.toContain('Ask about the new dose')
+    await waitFor(() => expect(api.logShare).toHaveBeenCalledWith('pharmacy', kind))
+  })
+
+  test('cancelling the share sheet logs nothing', async () => {
+    mockItem(item({}))
+    const shareSpy = vi.spyOn(platform, 'share').mockResolvedValue('cancelled')
+    renderItem()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share' }))
+    await waitFor(() => expect(shareSpy).toHaveBeenCalled())
+    expect(api.logShare).not.toHaveBeenCalled()
+  })
+
+  test('a failed log is never shown to the member', async () => {
+    mockItem(item({}))
+    vi.spyOn(platform, 'share').mockResolvedValue('shared')
+    vi.mocked(api.logShare).mockRejectedValue(new RpcError('not_member'))
+    renderItem()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share' }))
+    await waitFor(() => expect(api.logShare).toHaveBeenCalled())
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  test.each(['completed', 'cancelled'] as const)('a %s item has no Share button', (state) => {
+    mockItem(item({ state, owner_id: 'jonah' }))
+    renderItem()
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument()
+  })
 })

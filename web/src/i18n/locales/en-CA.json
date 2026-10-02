@@ -46,9 +46,7 @@
     "tabs": "Main",
     "notifications": "Notifications",
     "circle": "Care Circle and settings",
-    "back": "Back",
-    "testShare": "Test the share sheet",
-    "testShareText": "Try Kindred, an app for coordinating family care."
+    "back": "Back"
   },
   "install": {
     "title": "Add Kindred to your Home Screen",
@@ -129,7 +127,6 @@
     "shareInvite": "Share invite link",
     "preparingInvite": "Getting your link ready…",
     "shareHint": "Opens WhatsApp, Messages or email on your phone. The link works for 14 days.",
-    "shareText": "Join {{name}}'s Care Circle on Kindred",
     "members_one": "Care Circle · {{count}} person",
     "members_other": "Care Circle · {{count}} people",
     "membersHint": "People show here once they've opened the link and joined.",
@@ -388,6 +385,21 @@
     "cancelConfirmBody": "Everyone in the Care Circle will see it as Cancelled. This can't be undone.",
     "cancelYes": "Yes, cancel it",
     "cancelNo": "Keep it"
+  },
+  "share": {
+    "dateTime": "{{date}} at {{time}}",
+    "timeRange": "{{start}} – {{end}}",
+    "due": "Due {{when}}",
+    "ownerHasIt": "{{name}} has it",
+    "needsSomeone": "Needs someone. Can you take it?",
+    "taking": "{{name}} is taking them",
+    "nobodyTaking": "Nobody is taking them yet. Can you?",
+    "assignmentRequest": "{{name}}, can you take this? Tap to accept or decline.",
+    "assignmentRequestUnnamed": "Can you take this? Tap to accept or decline.",
+    "coverageRequest": "{{name}} needs cover for {{title}}",
+    "coverageRequestUnnamed": "Cover needed for {{title}}",
+    "coverageAsk": "Can you do it?",
+    "invite": "Join {{name}}'s Care Circle on Kindred"
   },
   "item": {
     "kind": {

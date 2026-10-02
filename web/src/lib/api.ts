@@ -1,5 +1,6 @@
 import type { Database } from './database.types'
 import { RpcError, toRpcError } from './errors'
+import type { ItemShareKind } from './share-text'
 import { supabase } from './supabase'
 
 // One typed wrapper per RPC (implementation plan §4.2). All writes go through
@@ -86,7 +87,7 @@ export const acceptCoverage = (item: ItemVersion) => call('accept_coverage', ite
 export const postUpdate = (args: Args<'post_update'>) => call('post_update', args)
 export const markNotificationsRead = (notificationId?: number) =>
   call('mark_notifications_read', { notification_id: notificationId })
-export const logShare = (itemId: string, shareKind: string) =>
+export const logShare = (itemId: string, shareKind: ItemShareKind) =>
   call('log_share', { item_id: itemId, share_kind: shareKind })
 
 // Push subscriptions (task 1.4). keys holds the browser's p256dh and auth keys.

@@ -8,19 +8,25 @@ type CopyStatus = 'idle' | 'copied' | 'failed'
 
 /**
  * Opens the phone's share sheet. Where there isn't one (e.g. a laptop), shows
- * the link with Copy link and Send on WhatsApp instead (ADR-011).
+ * the link with Copy link and Send on WhatsApp instead (ADR-011). `onShared`
+ * runs once the share sheet reports it was shared, not on cancel.
  */
 export function ShareButton({
   content,
   label,
+  onShared,
   ...buttonProps
-}: { content: ShareContent; label?: string } & Omit<ComponentProps<typeof Button>, 'content'>) {
+}: { content: ShareContent; label?: string; onShared?: () => void } & Omit<
+  ComponentProps<typeof Button>,
+  'content'
+>) {
   const { t } = useTranslation()
   const [fallback, setFallback] = useState(false)
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle')
 
   const onShare = async () => {
     const result = await platform.share(content)
+    if (result === 'shared') onShared?.()
     if (result === 'unsupported') {
       setCopyStatus('idle')
       setFallback(true)
