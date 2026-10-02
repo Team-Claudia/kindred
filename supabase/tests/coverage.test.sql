@@ -4,7 +4,7 @@
 -- circle Y. Dave isn't in any circle. As in items.test.sql, each check of
 -- history and pushes reads only what was written since the previous check.
 begin;
-select plan(78);
+select plan(79);
 
 insert into auth.users (id) values
   ('a0000000-0000-0000-0000-00000000000a'), -- Alice
@@ -259,9 +259,9 @@ select throws_ok(format('select public.accept_coverage(%L, 2)', pg_temp.id('c2')
 select is(pg_temp.error_detail(format('select public.accept_coverage(%L, 2)', pg_temp.id('c2')))::jsonb ->> 'name',
   'Bob Jones', 'coverage_resolved names who''s covering it');
 select throws_ok(format('select public.accept_coverage(%L, 1)', pg_temp.id('n1')),
-  'P0001', 'coverage_resolved', 'an item nobody asked cover for can''t be taken this way');
-select is(pg_temp.error_detail(format('select public.accept_coverage(%L, 2)', pg_temp.id('d1'))),
-  '{}', 'a finished item names nobody');
+  'P0001', 'invalid_state', 'a Needs someone item can''t be taken this way (nobody is covering it)');
+select throws_ok(format('select public.accept_coverage(%L, 2)', pg_temp.id('d1')),
+  'P0001', 'invalid_state', 'nor can a Completed one');
 select throws_ok(format('select public.cancel_coverage(%L, 3)', pg_temp.id('c2')),
   'P0001', 'not_owner', 'someone else can''t cancel it either');
 
@@ -287,6 +287,8 @@ select pg_temp.events();
 select pg_temp.sign_in_as('e0000000-0000-0000-0000-00000000000e');
 select is((public.cancel_item(pg_temp.id('c2'), 4)).state, 'cancelled', 'Needs coverage → Cancelled');
 select is(pg_temp.covers('c2'), 'Alice taken by Bob, Bob cancelled', 'the open request is cancelled');
+select throws_ok(format('select public.accept_coverage(%L, 4)', pg_temp.id('c2')),
+  'P0001', 'invalid_state', 'a cancelled item can''t be taken, and nobody is said to be covering it');
 select pg_temp.events();
 select pg_temp.pushes();
 

@@ -210,6 +210,7 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
 
   // Asking for cover is the confirm sheet's second tap. If the allowance ran
   // out meanwhile (e.g. on another phone), the sheet shows the limit instead.
+  // If the member closed the sheet while it ran, it stays closed.
   function refreshCoverage() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.coverageRemaining })
   }
@@ -219,11 +220,11 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
     mutation.mutate(() => api.requestCoverage(at), {
       onSuccess: (row) => {
         queryClient.setQueryData(queryKeys.item(item.id), row)
-        setCoverageStep('asked')
+        setCoverageStep((step) => step && 'asked')
       },
       onError: (failure) => {
         if (failure instanceof RpcError && failure.code === 'coverage_limit_reached') {
-          setCoverageStep('limit')
+          setCoverageStep((step) => step && 'limit')
         } else {
           setCoverageStep(null)
           setError(failure)

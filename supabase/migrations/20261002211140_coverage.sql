@@ -173,10 +173,11 @@ end $$;
 
 -- ---------------------------------------------------------------------------
 -- accept_coverage (US 8.2, BR-03): "I can do it" makes the caller the
--- confirmed owner straight away. If the item no longer Needs coverage,
--- coverage_resolved names who has it, even when the caller's version is also
--- out of date, so the second person to tap learns who's covering. Tapping
--- again once it's yours changes nothing, so a double tap is harmless.
+-- confirmed owner straight away. If someone has taken it since (it's Assigned
+-- again), coverage_resolved names who has it, even when the caller's version
+-- is also out of date, so the second person to tap learns who's covering.
+-- Any other state (e.g. cancelled meanwhile) is invalid_state. Tapping again
+-- once it's yours changes nothing, so a double tap is harmless.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.accept_coverage(item_id uuid, version integer)
@@ -194,9 +195,11 @@ begin
     if v_item.state = 'assigned' and v_item.owner_id = v_user then
       return v_item;
     end if;
-    -- Completed or cancelled items aren't anyone's to cover, so no name.
-    raise exception 'coverage_resolved' using detail =
-      case when v_item.state = 'assigned' then public.name_detail(v_item.owner_id) else '{}' end;
+    if v_item.state = 'assigned' then
+      raise exception 'coverage_resolved' using detail = public.name_detail(v_item.owner_id);
+    end if;
+    -- Cancelled, completed or back to needing someone: nobody is covering it.
+    raise exception 'invalid_state';
   end if;
   if v_item.owner_id = v_user then
     -- Your own request: cancel it instead.

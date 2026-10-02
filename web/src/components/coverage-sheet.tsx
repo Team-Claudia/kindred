@@ -62,7 +62,7 @@ export function CoverageSheet({
           <p className="rounded-xl bg-muted p-4">{t('coverage.confirmBody')}</p>
           <div className="grid grid-cols-2 gap-3 pt-2">
             <SheetClose asChild>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" disabled={busy}>
                 {t('coverage.cancel')}
               </Button>
             </SheetClose>
