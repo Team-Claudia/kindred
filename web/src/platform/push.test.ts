@@ -1,8 +1,8 @@
-import { savePushSubscription } from '@/lib/api'
+import { deletePushSubscription, savePushSubscription } from '@/lib/api'
 import { base64UrlToBytes } from './push'
-import { enablePush, notificationPermission } from '.'
+import { disablePush, enablePush, notificationPermission } from '.'
 
-vi.mock('@/lib/api', () => ({ savePushSubscription: vi.fn() }))
+vi.mock('@/lib/api', () => ({ savePushSubscription: vi.fn(), deletePushSubscription: vi.fn() }))
 
 const save = vi.mocked(savePushSubscription)
 const subscription = {
@@ -83,4 +83,29 @@ test('reuses an existing subscription', async () => {
 
 test('decodes base64url keys', () => {
   expect(Array.from(base64UrlToBytes('-_8'))).toEqual([251, 255])
+})
+
+describe('disablePush', () => {
+  test('removes this device from the server, then unsubscribes it', async () => {
+    setPushSupport()
+    const unsubscribe = vi.fn().mockResolvedValue(true)
+    pushManager.getSubscription.mockResolvedValue({ endpoint: 'https://push.example.test/sub', unsubscribe })
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { getRegistration: () => Promise.resolve({ pushManager }) },
+    })
+    await disablePush()
+    expect(deletePushSubscription).toHaveBeenCalledWith('https://push.example.test/sub')
+    expect(unsubscribe).toHaveBeenCalledOnce()
+  })
+
+  test('does nothing when this device has no subscription', async () => {
+    setPushSupport()
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { getRegistration: () => Promise.resolve({ pushManager }) },
+    })
+    await disablePush()
+    expect(deletePushSubscription).not.toHaveBeenCalled()
+  })
 })

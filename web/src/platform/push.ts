@@ -1,7 +1,7 @@
 // Web push (task 1.4, ADR-010). On iPhone, push only works once Kindred is on
 // the Home Screen (iOS 16.4+), so enablePush asks for that first.
 
-import { savePushSubscription } from '@/lib/api'
+import { deletePushSubscription, savePushSubscription } from '@/lib/api'
 
 export type PushResult = 'enabled' | 'denied' | 'needs_install' | 'unsupported'
 export type NotificationPermissionState = NotificationPermission | 'unsupported'
@@ -51,4 +51,18 @@ export async function subscribeToPush(): Promise<Exclude<PushResult, 'needs_inst
   if (!endpoint || !keys?.p256dh || !keys.auth) throw new Error('Push subscription is incomplete')
   await savePushSubscription(endpoint, { p256dh: keys.p256dh, auth: keys.auth })
   return 'enabled'
+}
+
+/**
+ * Stops push to this device for the signed-in member, before signing out, so
+ * the next person to use the phone doesn't get their notifications. Best
+ * effort: the server copy is removed first, then the phone's own.
+ */
+export async function unsubscribeFromPush(): Promise<void> {
+  if (!pushSupported()) return
+  const registration = await navigator.serviceWorker.getRegistration()
+  const subscription = await registration?.pushManager.getSubscription()
+  if (!subscription) return
+  await deletePushSubscription(subscription.endpoint)
+  await subscription.unsubscribe()
 }

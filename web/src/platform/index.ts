@@ -5,6 +5,7 @@
 import {
   notificationPermission,
   subscribeToPush,
+  unsubscribeFromPush,
   type NotificationPermissionState,
   type PushResult,
 } from './push'
@@ -33,6 +34,8 @@ export interface Platform {
   isStandalone(): boolean
   /** Asks for notification permission and saves the push subscription (task 1.4). */
   enablePush(): Promise<PushResult>
+  /** Stops push to this device for the signed-in member (before signing out). */
+  disablePush(): Promise<void>
   /** The notification permission so far: 'default' until the member is asked. */
   notificationPermission(): NotificationPermissionState
   /** Hands the calendar feed URL to the phone's calendar app to subscribe. */
@@ -102,6 +105,8 @@ export async function enablePush(): Promise<PushResult> {
   return subscribeToPush()
 }
 
+export const disablePush: Platform['disablePush'] = unsubscribeFromPush
+
 export function addCalendarFeed(url: string): void {
   // webcal:// makes iOS offer to subscribe rather than download the file once.
   window.location.href = url.replace(/^https?:/, 'webcal:')
@@ -140,6 +145,7 @@ export const platform: Platform = {
   appUrl,
   isStandalone,
   enablePush,
+  disablePush,
   notificationPermission,
   addCalendarFeed,
   deviceSetting,
