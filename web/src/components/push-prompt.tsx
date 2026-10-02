@@ -17,26 +17,28 @@ function shouldShowPushPrompt(): boolean {
   )
 }
 
-let resynced = false
+let resyncedFor: string | undefined
 
 // Once permission is granted, re-save this phone's subscription once per app
-// launch. That recovers from a save that failed after the member said yes,
-// and picks up a subscription the phone has quietly replaced.
-function resyncSubscription() {
-  if (resynced || !platform.isStandalone() || platform.notificationPermission() !== 'granted') return
-  resynced = true
+// launch and signed-in member. That recovers from a save that failed after the
+// member said yes, picks up a subscription the phone has quietly replaced, and
+// subscribes again for whoever signs in after a sign-out (which removes it).
+function resyncSubscription(userId: string | undefined) {
+  if (!userId || resyncedFor === userId) return
+  if (!platform.isStandalone() || platform.notificationPermission() !== 'granted') return
+  resyncedFor = userId
   platform.enablePush().catch((error: unknown) => console.error(error))
 }
 
 // "Turn on notifications" (wireframe 10). Shown once, before the phone's own
 // permission prompt, so members know what they're agreeing to.
-export function PushPrompt() {
+export function PushPrompt({ userId }: { userId: string | undefined }) {
   const { t } = useTranslation()
   const [visible, setVisible] = useState(shouldShowPushPrompt)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<PushResult | 'error' | null>(null)
 
-  useEffect(resyncSubscription, [])
+  useEffect(() => resyncSubscription(userId), [userId])
 
   if (!visible) return null
 
