@@ -496,6 +496,16 @@
     "at_yesterday": "Yesterday, {{time}}",
     "error": "Home couldn't load. Check your connection and try again."
   },
+  "account": {
+    "heading": "Your account",
+    "leave": "Leave this Care Circle",
+    "leaveConfirm": "Leave this Care Circle?",
+    "leaveExplainer": "You'll stop seeing its tasks, appointments and updates. Things you added stay for the rest of the family. You can join again with a new invite link.",
+    "leaveYes": "Yes, leave",
+    "leaveNo": "Stay",
+    "signOut": "Sign out",
+    "signOutError": "Couldn't sign out. Check your connection and try again."
+  },
   "calendarFeed": {
     "heading": "Add Kindred to your calendar",
     "explainer": "Appointments you've agreed to do show up in your own calendar app, with their time and a link back to Kindred. Notes and updates stay in Kindred.",
