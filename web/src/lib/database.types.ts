@@ -311,13 +311,13 @@ isOneToOne: true
                   ]
                 },"notifications": {
                   Row: {
-                    "created_at": string,"id": number,"item_id": string | null,"kind": string,"line": string,"read_at": string | null,"user_id": string
+                    "created_at": string,"id": number,"item_id": string | null,"kind": string,"line": string,"outbox_id": number | null,"read_at": string | null,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"id"?: never,"item_id"?: string | null,"kind": string,"line": string,"read_at"?: string | null,"user_id": string
+                    "created_at"?: string,"id"?: never,"item_id"?: string | null,"kind": string,"line": string,"outbox_id"?: number | null,"read_at"?: string | null,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: never,"item_id"?: string | null,"kind"?: string,"line"?: string,"read_at"?: string | null,"user_id"?: string
+                    "created_at"?: string,"id"?: never,"item_id"?: string | null,"kind"?: string,"line"?: string,"outbox_id"?: number | null,"read_at"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -325,6 +325,12 @@ isOneToOne: true
       columns: ["item_id"]
 isOneToOne: false
       referencedRelation: "items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_outbox_id_fkey"
+      columns: ["outbox_id"]
+isOneToOne: true
+      referencedRelation: "outbox"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "notifications_user_id_fkey"
@@ -629,6 +635,24 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"claim_outbox_jobs":
+{ Args: { "max_jobs"?: number }; Returns: {
+              "attempts": number,
+"circle_id": string | null,
+"created_at": string,
+"id": number,
+"kind": string,
+"last_error": string | null,
+"payload": NonNullable<Json>,
+"run_at": string,
+"status": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "outbox"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "clean_relationship":
 { Args: { "relationship": string }; Returns: string
                            },
@@ -709,10 +733,16 @@ isOneToOne: false
 "delete_push_subscription":
 { Args: { "endpoint": string }; Returns: undefined
                            },
+"finish_outbox_job":
+{ Args: { "attempt": number,"failure"?: string,"job_id": number }; Returns: undefined
+                           },
 "invite_preview":
 { Args: { "code": string }; Returns: {
               "care_recipient_name": string,"expires_at": string,"in_other_circle": boolean,"inviter_name": string,"is_member": boolean,"member_count": number,"member_names": (string)[]
             }[]
+                           },
+"invoke_outbox_worker":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "is_circle_member":
 { Args: { "circle": string,"person": string }; Returns: boolean
@@ -783,6 +813,9 @@ isOneToOne: false
                            },
 "name_detail":
 { Args: { "person": string }; Returns: string
+                           },
+"outbox_catch_up":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "post_update":
 { Args: { "body": string,"item_id"?: string }; Returns: string

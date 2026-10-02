@@ -35,8 +35,8 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno lint supabase/functions/calendar-feed
-      - run: deno check supabase/functions/calendar-feed/index.ts
+      - run: deno lint supabase/functions/calendar-feed supabase/functions/outbox-worker supabase/functions/_shared
+      - run: deno check supabase/functions/calendar-feed/index.ts supabase/functions/outbox-worker/index.ts supabase/functions/push-test/index.ts
       - run: deno test supabase/functions/
 
   database:

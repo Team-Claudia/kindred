@@ -436,6 +436,14 @@ verify_jwt = false
 enabled = true
 verify_jwt = false
 
+# Push from the outbox (task 3.3). Called by the database (trigger and pg_cron
+# through pg_net), which has no user JWT, so the gateway check is off and the
+# function checks the x-outbox-secret header instead. Secrets:
+# OUTBOX_WORKER_SECRET, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
+[functions.outbox-worker]
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

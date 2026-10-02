@@ -109,6 +109,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 - **Constraints:** one circle per user (`circle_members.user_id` unique, BR-12); at most one `pending` assignment request and one `open` coverage request per item.
 - `notification_prefs` has one push switch per US 11.4 category: `requests`, `reminders`, `changes`, `updates`, `weekly_summary`, `comments` (all on) and `everything_else` (off).
 - `calendar_settings.feed_token` is a random 48-character hex string generated on insert.
+- `outbox.status` is `pending` → `sending` (claimed by the worker; `run_at` is then its 2-minute lease) → `done`, or back to `pending` to retry, or `failed` after 5 attempts (task 3.3). `notifications.outbox_id` (unique) is the job that wrote the row, so a retried job never writes a second one.
 
 ### 4.2 RPCs (all writes)
 
@@ -173,7 +174,7 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 | `google-oauth` | App ("Connect Google Calendar") | Redirect flow; stores refresh token in Vault |
 | `availability` | App (create sheet) | `{circle_id, start, end}` → `{member_id: "free" \| "busy" \| "unknown"}` |
 | `account` | App (Care Circle and settings) | `export` → JSON; `delete` → ADR-015 order |
-| `push-test` | App (temporary "Send test notification" on `/notifications`) | Verifies the caller's JWT, sends a push with only `{url}` to each of their `push_subscriptions` using VAPID, deletes ones the push service reports gone (404/410); returns `{sent, removed, failed}`. `outbox-worker` reuses its `sendPush` |
+| `push-test` | App (temporary "Send test notification" on `/notifications`) | Verifies the caller's JWT, sends a push with only `{url}` to each of their `push_subscriptions` using VAPID, deletes ones the push service reports gone (404/410); returns `{sent, removed, failed}`. Kept for debugging push on a phone. `sendPush` lives in `supabase/functions/_shared/web-push.ts`, shared with `outbox-worker` |
 | `static-map` | App (appointment create and detail) | `?item=<id>` → map image for members only, cached; nothing if the location wasn't found (ADR-017) |
 
 **`push` job payload** (written by the item RPCs, task 2.1). One `outbox` row per recipient, `kind = 'push'`, `status = 'pending'`, `run_at = now()`:
@@ -195,6 +196,32 @@ IDs and an event name only; never titles, notes or locations (ADR-010). The acto
 | `item_cancelled` | `cancel_item` | The owner and the proposed assignee |
 | `coverage_requested` | `request_coverage` | Every other member of the circle |
 | `coverage_taken` | `accept_coverage` | The member who asked for cover (the previous owner) |
+
+**Sending push jobs** (task 3.3, migration `outbox_push_worker`). `outbox-worker` runs only `push` jobs so far; the other kinds stay `pending` until task 4.5.
+
+- **Calls.** A statement-level trigger on `outbox` insert calls the worker through `pg_net` when the statement added a `push` job; the request goes out after the RPC's transaction commits. pg_cron job `outbox-worker` runs `outbox_catch_up()` every minute, which calls the worker only when a push job is due. Both read the function URL and shared secret from Vault (`outbox_worker_url`, `outbox_worker_secret`, §8.3); if either is missing they log and do nothing, and jobs wait as `pending`. The function has `verify_jwt = false` and rejects any call without the matching `x-outbox-secret` header (`OUTBOX_WORKER_SECRET`).
+- **Claim.** `claim_outbox_jobs(max_jobs)` (service role only) takes due `push` jobs (`pending`, or `sending` with an expired lease; `run_at <= now()`) oldest first with `for update skip locked`, sets them `sending`, adds 1 to `attempts` and leases them for 2 minutes. So the trigger's call and the cron's call never send the same job, and a job whose worker died is retried when its lease runs out. A job whose lease runs out on its 5th attempt is `failed` (`last_error = worker_did_not_finish`).
+- **Each job.** Dropped (`done`, nothing sent) if the item is gone or the recipient has left the circle. Otherwise the worker writes the `notifications` row (`kind` = event, `item_id`, `line` = the push body), then, if the recipient's category is on (no `notification_prefs` row → the defaults), sends `{title, body, url: "/i/<item_id>"}` to each of their `push_subscriptions` (10-second timeout per device), deleting any the push service reports gone (404/410).
+- **Result.** `finish_outbox_job(job_id, attempt, failure?)` (service role only; does nothing unless the job is still `sending` on the attempt the caller claimed, so a worker whose lease ran out can't overwrite a newer claim): no failure → `done`. A failure (no device got the push, or a database error) → `pending` again with `last_error`, retried after 1, 5, 15, then 60 minutes; the 5th failed attempt → `failed`. If some devices got it and others failed, the job is `done`, so nobody gets it twice. Inspect with `select * from outbox where status = 'failed'`.
+
+**Push copy** (`supabase/functions/_shared/push-copy.ts`, ADR-010). Title: "<care recipient>'s Care Circle". Body (also the in-app `line`) uses at most the actor's first name ("Someone" if they have none), never an item's title, notes, location or update text:
+
+| `event` | Body | `notification_prefs` category |
+| --- | --- | --- |
+| `assignment_requested` | Maya asked you to take something on | `requests` |
+| `assignment_accepted` | Maya accepted | `requests` |
+| `assignment_declined` | Maya declined | `requests` |
+| `assignment_withdrawn` | Maya withdrew their request | `requests` |
+| `reassigned_away` | Maya gave something of yours to someone else | `changes` |
+| `reconfirm_requested` | Maya changed the time. Can you still do it? | `changes` |
+| `item_changed` | Maya changed something you're on | `changes` |
+| `item_cancelled` | Maya cancelled something you were on | `changes` |
+| `coverage_requested` | Maya needs someone to cover for them | `requests` |
+| `coverage_taken` | Maya is covering for you | `requests` |
+| Any other `coverage_…` event | Something changed in Kindred | `requests` |
+| Anything else | Something changed in Kindred | `everything_else` |
+
+`coverage_requested` goes to every other member, `coverage_taken` to the previous owner (task 3.1).
 
 ### 4.5 App routes and platform adapter
 
@@ -430,6 +457,22 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 | Supabase Auth | Site URL = production URL; redirect URL = production URL only (no preview wildcard: anyone can create a matching `.vercel.app` site, so Google sign-in on a preview returns to production); Google provider on; email OTP on (6-digit code); anonymous sign-ins on; custom SMTP through the team Gmail account (`smtp.gmail.com:587`, an app password) with the Confirm signup and Magic Link templates showing the code (`supabase/templates/sign-in-code.html`) |
 | Google Cloud | Authorised redirect URIs for Supabase Auth and the `google-oauth` function; consent screen **In production** |
 | Database | pg_cron jobs (outbox catch-up every minute, recurrence extension and sample-circle reset nightly, weekly summary notification Sundays 08:00); DB webhook on `outbox` insert → `outbox-worker` |
+| Supabase function secrets (task 3.3) | `OUTBOX_WORKER_SECRET`: a long random string, the same value as `outbox_worker_secret` in Vault |
+| Supabase Vault (task 3.3) | `outbox_worker_url` = `https://<project-ref>.supabase.co/functions/v1/outbox-worker`; `outbox_worker_secret` = the same value as `OUTBOX_WORKER_SECRET`. The outbox catch-up cron job and the `outbox` insert trigger (the "DB webhook", a `pg_net` call) are created by a migration, not by hand |
+
+**Push from the outbox: one-time setup** (task 3.3). Do this once on the hosted project, after the PR merges (the deploy creates the `outbox-worker` function, the trigger and the cron job). Until it's done, push jobs wait as `pending` and nothing fails; once it's done, the cron sends the waiting ones within a minute.
+
+1. Make a secret: `openssl rand -hex 32`. Don't commit it or paste it anywhere public.
+2. Function secret: Dashboard → Edge Functions → Secrets → add `OUTBOX_WORKER_SECRET` with that value. Or: `supabase secrets set OUTBOX_WORKER_SECRET=<value> --project-ref <project-ref>`. Check `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` are already there (task 1.4).
+3. Vault: Dashboard → SQL Editor, run (with the real values):
+
+   ```sql
+   select vault.create_secret('https://<project-ref>.supabase.co/functions/v1/outbox-worker', 'outbox_worker_url');
+   select vault.create_secret('<the same secret>', 'outbox_worker_secret');
+   ```
+
+   To change one later: `select vault.update_secret((select id from vault.secrets where name = 'outbox_worker_secret'), '<new value>');` and update the function secret to match.
+4. Check: Dashboard → Edge Functions → `outbox-worker` → Details shows "Verify JWT" off. Assign an item to someone with notifications on; within a few seconds `select status, attempts, last_error from outbox order by id desc limit 5;` shows `done`. If it stays `pending`, look at `select * from net._http_response order by id desc limit 5;` (a 401 means the two secrets differ) and the function's logs.
 
 ### 8.4 Deployment checklist (task 4.6, before the freeze)
 
