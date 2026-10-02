@@ -1,17 +1,12 @@
 // push-test (task 1.4): sends a test web push to every device the caller has
-// turned notifications on for. Temporary; outbox-worker (task 3.3) can reuse
-// sendPush below.
+// turned notifications on for. Kept for debugging push on a phone; real
+// notifications come from outbox-worker (task 3.3).
 //
-// Secrets: VAPID_PRIVATE_KEY and VAPID_SUBJECT (exactly "mailto:" + address, no
-// spaces; Apple rejects a malformed subject with 403 BadJwtToken).
-// VAPID_PUBLIC_KEY is optional: when unset it is derived from the private key.
+// Secrets: VAPID_PRIVATE_KEY and VAPID_SUBJECT (see ../_shared/web-push.ts).
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { Buffer } from 'node:buffer'
-import { createECDH } from 'node:crypto'
-// @deno-types="npm:@types/web-push@3.6.4"
-import webpush from 'npm:web-push@3.6.7'
+import { configureVapid, sendPush, type Subscription } from '../_shared/web-push.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,46 +21,11 @@ function json(body: unknown, status = 200): Response {
   })
 }
 
-function vapidPublicKey(privateKey: string): string {
-  const configured = Deno.env.get('VAPID_PUBLIC_KEY')
-  if (configured) return configured
-  const ecdh = createECDH('prime256v1')
-  ecdh.setPrivateKey(Buffer.from(privateKey, 'base64url'))
-  return ecdh.getPublicKey().toString('base64url')
-}
-
-type Subscription = { id: number; endpoint: string; keys: { p256dh: string; auth: string } }
-
-// Sends one push. Resolves 'gone' when the push service says the subscription
-// no longer exists (404 or 410), so the caller can delete it.
-export async function sendPush(
-  subscription: Subscription,
-  payload: { url: string },
-): Promise<'sent' | 'gone'> {
-  try {
-    await webpush.sendNotification(
-      { endpoint: subscription.endpoint, keys: subscription.keys },
-      JSON.stringify(payload),
-      { TTL: 60 * 60, urgency: 'high' },
-    )
-    return 'sent'
-  } catch (error) {
-    const status = (error as { statusCode?: number }).statusCode
-    if (status === 404 || status === 410) return 'gone'
-    throw error
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
 
-  const privateKey = Deno.env.get('VAPID_PRIVATE_KEY')
-  const subject = Deno.env.get('VAPID_SUBJECT')
-  if (!privateKey || !subject) {
-    console.error('VAPID_PRIVATE_KEY and VAPID_SUBJECT must be set')
-    return json({ error: 'not_configured' }, 500)
-  }
+  if (!configureVapid()) return json({ error: 'not_configured' }, 500)
 
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -87,8 +47,6 @@ Deno.serve(async (req) => {
     console.error(readError)
     return json({ error: 'unknown' }, 500)
   }
-
-  webpush.setVapidDetails(subject, vapidPublicKey(privateKey), privateKey)
 
   // Generic payload: only the page to open. The service worker supplies the
   // notification text, so no care details are ever sent (ADR-010).
