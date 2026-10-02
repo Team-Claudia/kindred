@@ -56,13 +56,19 @@ export async function subscribeToPush(): Promise<Exclude<PushResult, 'needs_inst
 /**
  * Stops push to this device for the signed-in member, before signing out, so
  * the next person to use the phone doesn't get their notifications. Best
- * effort: the server copy is removed first, then the phone's own.
+ * effort: the server copy is removed first, then the phone's own, which
+ * happens even if the server call fails.
  */
 export async function unsubscribeFromPush(): Promise<void> {
   if (!pushSupported()) return
   const registration = await navigator.serviceWorker.getRegistration()
   const subscription = await registration?.pushManager.getSubscription()
   if (!subscription) return
-  await deletePushSubscription(subscription.endpoint)
-  await subscription.unsubscribe()
+  try {
+    await deletePushSubscription(subscription.endpoint)
+  } finally {
+    // Even if the server call fails (e.g. offline), this kills the endpoint,
+    // so the push service stops delivering to it.
+    await subscription.unsubscribe()
+  }
 }

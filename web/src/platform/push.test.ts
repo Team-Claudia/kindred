@@ -99,6 +99,19 @@ describe('disablePush', () => {
     expect(unsubscribe).toHaveBeenCalledOnce()
   })
 
+  test('still unsubscribes the phone when the server call fails', async () => {
+    setPushSupport()
+    const unsubscribe = vi.fn().mockResolvedValue(true)
+    pushManager.getSubscription.mockResolvedValue({ endpoint: 'https://push.example.test/sub', unsubscribe })
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { getRegistration: () => Promise.resolve({ pushManager }) },
+    })
+    vi.mocked(deletePushSubscription).mockRejectedValueOnce(new Error('offline'))
+    await expect(disablePush()).rejects.toThrow('offline')
+    expect(unsubscribe).toHaveBeenCalledOnce()
+  })
+
   test('does nothing when this device has no subscription', async () => {
     setPushSupport()
     Object.defineProperty(navigator, 'serviceWorker', {

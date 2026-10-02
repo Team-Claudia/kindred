@@ -24,9 +24,10 @@ export function AccountCard() {
     setError(null)
     try {
       await api.leaveCircle()
-      // Nothing cached from the old circle should show anywhere.
-      navigate('/welcome', { replace: true })
+      // Clear first, so no guard reads the old circle from the cache and sends
+      // the member back to it.
       queryClient.clear()
+      navigate('/welcome', { replace: true })
     } catch (err) {
       setError(errorMessage(err))
       setBusy(null)
@@ -41,8 +42,8 @@ export function AccountCard() {
     await platform.disablePush().catch(() => undefined)
     try {
       await signOut()
-      navigate('/sign-in', { replace: true })
       queryClient.clear()
+      navigate('/sign-in', { replace: true })
     } catch {
       setError(t('account.signOutError'))
       setBusy(null)
