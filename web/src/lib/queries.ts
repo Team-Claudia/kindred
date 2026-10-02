@@ -17,6 +17,10 @@ export const queryKeys = {
   notifications: ['notifications'] as const,
   coverageRemaining: ['coverage-remaining'] as const,
   weeklySummary: (weekStart: string) => ['weekly-summary', weekStart] as const,
+  // Home (task 2.3). Under 'items' and 'updates', so the live channel refreshes them.
+  itemsNeedingAttention: (before: string) => ['items', 'attention', before] as const,
+  latestUpdate: ['updates', 'latest'] as const,
+  itemCount: ['items', 'count'] as const,
 }
 
 async function rows<T>(query: PromiseLike<{ data: T | null; error: Error | null }>) {
@@ -90,6 +94,69 @@ export function useWeeklySummary(weekStart: string) {
   return useQuery({
     queryKey: queryKeys.weeklySummary(weekStart),
     queryFn: () => api.weeklySummary(weekStart),
+  })
+}
+
+// Home (task 2.3)
+
+// Item states that still need someone to act. Completed and Cancelled don't.
+const openStates = ['needs_someone', 'awaiting_acceptance', 'assigned', 'needs_coverage']
+
+/**
+ * Open items Home lists outside today: everything waiting on an answer,
+ * someone or cover, plus anything still open from before `before` (the start
+ * of today), which is overdue. Assigned items from today on are left out; the
+ * today range has those. Each comes with its pending assignment request, for
+ * who asked.
+ */
+export function useItemsNeedingAttention(before: string) {
+  return useQuery({
+    queryKey: queryKeys.itemsNeedingAttention(before),
+    queryFn: () =>
+      rows(
+        supabase
+          .from('items')
+          .select('*, assignment_requests(assigner_id)')
+          .in('state', openStates)
+          .or(`state.neq.assigned,starts_at.lt."${before}"`)
+          .eq('assignment_requests.status', 'pending')
+          .order('starts_at'),
+      ),
+  })
+}
+
+export type ItemNeedingAttention = NonNullable<
+  ReturnType<typeof useItemsNeedingAttention>['data']
+>[number]
+
+/** How many items the circle has ever had, so Home can tell a brand-new circle. */
+export function useItemCount() {
+  return useQuery({
+    queryKey: queryKeys.itemCount,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('items')
+        .select('id', { count: 'exact', head: true })
+      if (error) throw error
+      return count ?? 0
+    },
+  })
+}
+
+/** The circle's newest update, or null if nobody has posted one. */
+export function useLatestUpdate() {
+  return useQuery({
+    queryKey: queryKeys.latestUpdate,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('updates')
+        .select('id, author_id, body, created_at')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw error
+      return data
+    },
   })
 }
 

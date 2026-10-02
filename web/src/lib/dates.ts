@@ -61,6 +61,11 @@ export function dayKey(date: Date | string, timeZone: string): DayKey {
   return `${pad(year, 4)}-${pad(month)}-${pad(day)}`
 }
 
+/** The hour of the day (0–23) at `date` in `timeZone`. */
+export function hourOf(date: Date, timeZone: string): number {
+  return wallClock(date, timeZone).hour
+}
+
 /** The day `days` after (or before, if negative) `day`. */
 export function addDays(day: DayKey, days: number): DayKey {
   const { year, month, day: date } = parseDayKey(day)

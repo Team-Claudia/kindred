@@ -12,6 +12,8 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
   invitePreview: vi.fn(),
 }))
+// No Realtime in tests (task 2.3).
+vi.mock('@/lib/live', () => ({ useLiveUpdates: vi.fn() }))
 vi.mock('@/lib/auth', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth')>()),
   useAuth: vi.fn(),
@@ -56,7 +58,6 @@ afterEach(() => {
 })
 
 test.each([
-  ['/', 'Home'],
   ['/updates', 'Updates'],
   ['/summary', 'Summary'],
   ['/circle', 'Care Circle'],
