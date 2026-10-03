@@ -51,6 +51,12 @@ export interface Platform {
    * background tabs and Home Screen apps). Returns a function that stops it.
    */
   onAppVisible(callback: () => void): () => void
+  /**
+   * Calls `callback` when Safari restores the page from its back/forward cache
+   * (the member came back with Back), so state from before they left, such as
+   * a busy button, can be reset. Returns a function that stops it.
+   */
+  onPageRestored(callback: () => void): () => void
 }
 
 export interface ShareContent {
@@ -137,6 +143,14 @@ export function onAppVisible(callback: () => void): () => void {
   return () => document.removeEventListener('visibilitychange', listener)
 }
 
+export function onPageRestored(callback: () => void): () => void {
+  const listener = (event: PageTransitionEvent) => {
+    if (event.persisted) callback()
+  }
+  window.addEventListener('pageshow', listener)
+  return () => window.removeEventListener('pageshow', listener)
+}
+
 export const platform: Platform = {
   share,
   canShare,
@@ -150,4 +164,5 @@ export const platform: Platform = {
   addCalendarFeed,
   deviceSetting,
   onAppVisible,
+  onPageRestored,
 }

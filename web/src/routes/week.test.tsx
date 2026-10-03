@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import { useAuth, type AuthState } from '@/lib/auth'
@@ -230,4 +230,36 @@ test('shows an empty week', () => {
   renderWeek('/week?week=2026-10-05')
   expect(screen.getByText('Nothing is planned this week.')).toBeInTheDocument()
   expect(screen.getByText(/0 tasks, 0 appointments/)).toBeInTheDocument()
+})
+
+test('the header follows the week: This week, Next week, Last week, then Week of <Monday>', () => {
+  const heading = (name: string) => screen.getByRole('heading', { level: 1, name })
+  renderWeek('/week?week=2026-09-21')
+  expect(heading('This week')).toBeInTheDocument()
+  cleanup()
+  renderWeek('/week?week=2026-09-28')
+  expect(heading('Next week')).toBeInTheDocument()
+  cleanup()
+  renderWeek('/week?week=2026-09-14')
+  expect(heading('Last week')).toBeInTheDocument()
+  cleanup()
+  renderWeek('/week?week=2026-10-12')
+  expect(heading('Week of 12 October')).toBeInTheDocument()
+})
+
+test('the header is right across a daylight-saving change', () => {
+  // Sun 1 Nov 2026, 11 p.m. in Vancouver: clocks went back at 2 a.m. that day.
+  vi.setSystemTime(new Date('2026-11-02T07:00:00Z'))
+  const heading = (name: string) => screen.getByRole('heading', { level: 1, name })
+  renderWeek()
+  expect(heading('This week')).toBeInTheDocument()
+  cleanup()
+  renderWeek('/week?week=2026-11-02')
+  expect(heading('Next week')).toBeInTheDocument()
+  cleanup()
+  renderWeek('/week?week=2026-10-19')
+  expect(heading('Last week')).toBeInTheDocument()
+  cleanup()
+  renderWeek('/week?week=2026-11-09')
+  expect(heading('Week of 9 November')).toBeInTheDocument()
 })
