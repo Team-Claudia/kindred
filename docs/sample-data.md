@@ -109,6 +109,6 @@ Newest first:
 
 ## For the build
 
-- `build_sample_circle()` (migration `20261004007000_sample_circle.sql`) builds all of the above. Running it again deletes the sample circle and builds it fresh. Visitors who'd joined stay members, but anything they added or changed is undone.
+- `build_sample_circle()` (migration `20261004015000_sample_circle.sql`) builds all of the above. Running it again deletes the sample circle and builds it fresh. Visitors who'd joined stay members, but anything they added or changed is undone.
 - The fixed IDs are in plan §8.5. Changes to this page should be made to the function in the same PR (in a new migration once this one is merged).
 - When Try the demo adds a visitor (task 4.2), it also gives them a few items of their own to accept. Those aren't listed here.
