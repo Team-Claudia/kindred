@@ -52,7 +52,7 @@ select is_empty(
 );
 
 select throws_ok(
-  $$ select public.post_update('Dad slept well') $$,
+  $$ select * from public.weekly_summary('2026-10-05') $$,
   'P0001', 'not_implemented',
   'RPC stubs raise not_implemented'
 );

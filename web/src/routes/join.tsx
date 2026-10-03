@@ -1,5 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Copy } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
@@ -15,12 +16,15 @@ import {
   SetupScreen,
   TextField,
 } from '@/components/circle-setup'
+import { InstallGuide } from '@/components/install-guide'
 import { AgreeTermsText } from '@/components/legal'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { googleName, signInPath, useAuth } from '@/lib/auth'
 import { useInvitePreview, useProfile } from '@/lib/circles'
 import { errorMessage, RpcError } from '@/lib/errors'
+import { useInstallFirst } from '@/lib/install-guide'
+import { platform } from '@/platform'
 
 // /join/:code: an invite link (wireframes 07 and 08). Shows who invited you
 // and who's already in, then asks you to sign in, then joins you.
@@ -31,6 +35,7 @@ export default function Join() {
   const loading = auth.status === 'loading'
   const user = auth.status === 'signed_in' ? auth.session.user : null
   const preview = useInvitePreview(code, user?.id ?? null, !loading)
+  const installFirst = useInstallFirst()
 
   if (loading || preview.isPending) return <LoadingScreen />
 
@@ -61,8 +66,63 @@ export default function Join() {
     )
   }
 
+  // On an iPhone in Safari: install first, then join from the app with the
+  // code, since this link can't open the app (task 4.10).
+  if (!user && installFirst.show) {
+    return <InstallFirst code={code} invite={invite} onSignInHere={installFirst.dismiss} />
+  }
   if (!user) return <InviteLanding code={code} invite={invite} />
   return <JoinForm code={code} invite={invite} user={user} />
+}
+
+function InstallFirst({
+  code,
+  invite,
+  onSignInHere,
+}: {
+  code: string
+  invite: api.InvitePreview
+  onSignInHere: () => void
+}) {
+  const { t } = useTranslation()
+  const inviter = invite.inviter_name || undefined
+  const [copied, setCopied] = useState<boolean | null>(null)
+
+  return (
+    <InstallGuide
+      intro={t('install.joinIntro', {
+        inviter,
+        name: invite.care_recipient_name,
+        context: inviter ? 'named' : undefined,
+      })}
+      lastStep={t('install.joinLastStep')}
+      dismissLabel={t('install.signInHere')}
+      onDismiss={onSignInHere}
+    >
+      <section className="flex flex-col items-center gap-3 rounded-xl border bg-muted p-5 text-center">
+        <h2 className="font-mono text-sm font-medium tracking-wider text-muted-foreground uppercase">
+          {t('install.yourCode')}
+        </h2>
+        <p className="font-mono text-4xl font-semibold tracking-[0.15em] select-all">{code}</p>
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full"
+          onClick={() => void platform.copyText(code).then(setCopied)}
+        >
+          <Copy aria-hidden />
+          {t('install.copyCode')}
+        </Button>
+        <p role="status" className={copied === null ? 'text-sm text-muted-foreground' : 'text-sm'}>
+          {copied === null
+            ? t('install.codeHint')
+            : copied
+              ? t('install.copied')
+              : t('install.copyFailed')}
+        </p>
+      </section>
+    </InstallGuide>
+  )
 }
 
 function InviteLanding({ code, invite }: { code: string; invite: api.InvitePreview }) {

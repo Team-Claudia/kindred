@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router'
+import { createMemoryRouter, RouterProvider, useParams } from 'react-router'
 import '@/i18n'
 import * as api from '@/lib/api'
 import { useAuth, type AuthState } from '@/lib/auth'
 import * as circles from '@/lib/circles'
+import { RpcError } from '@/lib/errors'
 import { platform } from '@/platform'
 import Welcome from './welcome'
 
@@ -13,6 +14,7 @@ vi.mock('@/lib/api', () => ({
   createCircle: vi.fn(),
   createInvite: vi.fn(),
   setAdmin: vi.fn(),
+  invitePreview: vi.fn(),
 }))
 vi.mock('@/lib/auth', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth')>()),
@@ -31,11 +33,16 @@ vi.mock('@/platform', async (importOriginal) => {
 
 type Query<T extends (...args: never[]) => unknown> = ReturnType<T>
 
+function JoinCode() {
+  return <h1>Joining {useParams().code}</h1>
+}
+
 function renderWelcome() {
   const router = createMemoryRouter(
     [
       { path: '/welcome', element: <Welcome /> },
       { path: '/', element: <h1>Home</h1> },
+      { path: '/join/:code', element: <JoinCode /> },
     ],
     { initialEntries: ['/welcome'] },
   )
@@ -131,6 +138,73 @@ test('creates a circle in two steps, with the name filled in from Google', async
     relationship: 'parent',
     time_zone: expect.any(String),
     display_name: 'Maya Reyes',
+  })
+})
+
+describe('I have an invite code (task 4.10)', () => {
+  const preview: api.InvitePreview = {
+    care_recipient_name: 'Dad',
+    inviter_name: 'Maya',
+    member_names: ['Maya'],
+    member_count: 1,
+    expires_at: '2026-10-09T12:00:00Z',
+    is_member: false,
+    in_other_circle: false,
+  }
+
+  beforeEach(() => {
+    vi.mocked(api.invitePreview).mockReset()
+  })
+
+  function enterCode(text: string) {
+    fireEvent.click(screen.getByRole('button', { name: 'I have an invite code' }))
+    fireEvent.change(screen.getByLabelText('Invite code'), { target: { value: text } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+  }
+
+  test('a typed code opens the join screen for it', async () => {
+    vi.mocked(api.invitePreview).mockResolvedValue(preview)
+    renderWelcome()
+    enterCode(' aB3dEf7h ')
+    expect(await screen.findByRole('heading', { name: 'Joining aB3dEf7h' })).toBeInTheDocument()
+    expect(api.invitePreview).toHaveBeenCalledWith('aB3dEf7h')
+  })
+
+  test('a pasted invite link works too', async () => {
+    vi.mocked(api.invitePreview).mockResolvedValue(preview)
+    renderWelcome()
+    enterCode("Join Dad's Care Circle on Kindred https://kindred.example/join/aB3dEf7h")
+    expect(await screen.findByRole('heading', { name: 'Joining aB3dEf7h' })).toBeInTheDocument()
+  })
+
+  test('something that is not a code says so without checking', () => {
+    renderWelcome()
+    enterCode('hello')
+    expect(screen.getByRole('alert')).toHaveTextContent("That doesn't look like an invite code.")
+    expect(api.invitePreview).not.toHaveBeenCalled()
+  })
+
+  test('an unknown code says so', async () => {
+    vi.mocked(api.invitePreview).mockRejectedValue(new RpcError('invite_not_found'))
+    renderWelcome()
+    enterCode('aB3dEf7h')
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't find that code.")
+  })
+
+  test('an expired code says to ask for a new one', async () => {
+    vi.mocked(api.invitePreview).mockRejectedValue(new RpcError('invite_expired'))
+    renderWelcome()
+    enterCode('aB3dEf7h')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'This invite has expired. Ask for a new one.',
+    )
+  })
+
+  test('Back returns to setting up a circle', () => {
+    renderWelcome()
+    fireEvent.click(screen.getByRole('button', { name: 'I have an invite code' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByText('Step 1 of 3 · You')).toBeInTheDocument()
   })
 })
 

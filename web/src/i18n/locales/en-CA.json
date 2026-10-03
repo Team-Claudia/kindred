@@ -57,7 +57,18 @@
     "step2Detail": "Scroll down the list if you don't see it",
     "step3Title": "Open Kindred from the new icon",
     "step3Detail": "You'll stay signed in",
-    "notNow": "Not now — remind me later"
+    "notNow": "Not now — remind me later",
+    "firstIntro": "Kindred works best from your Home Screen: it can send you notifications, and you only sign in once. Add it first, then sign in there.",
+    "firstLastStep": "Then sign in there",
+    "joinIntro": "You're invited to {{name}}'s Care Circle. Add Kindred to your Home Screen first, so you only sign in once.",
+    "joinIntro_named": "{{inviter}} invited you to {{name}}'s Care Circle. Add Kindred to your Home Screen first, so you only sign in once.",
+    "joinLastStep": "Sign in, then tap \"I have an invite code\"",
+    "yourCode": "Your invite code",
+    "codeHint": "Copy it before you leave Safari. The app can't open this link, so you'll paste the code there.",
+    "copyCode": "Copy code",
+    "copied": "Copied. Paste it in the app.",
+    "copyFailed": "Couldn't copy it. Press and hold the code to copy it, or write it down.",
+    "signInHere": "Sign in here instead"
   },
   "status": {
     "overdue": "Overdue",
@@ -144,7 +155,20 @@
     "membersHint": "People show here once they've opened the link and joined.",
     "makeAdmin": "Also make {{name}} an admin. Admins can remove members and are told when something goes overdue.",
     "done": "Go to Kindred",
-    "skip": "Skip for now — invite people later"
+    "skip": "Skip for now — invite people later",
+    "haveCode": "I have an invite code"
+  },
+  "inviteCode": {
+    "title": "Join a Care Circle",
+    "heading": "Enter your invite code",
+    "intro": "It's the 8 letters and numbers at the end of the invite link someone shared with you.",
+    "label": "Invite code",
+    "hint": "You can paste the whole invite link.",
+    "invalid": "That doesn't look like an invite code. It's 8 letters and numbers.",
+    "notFound": "We couldn't find that code. Check it, or ask for a new invite.",
+    "expired": "This invite has expired. Ask for a new one.",
+    "submit": "Continue",
+    "checking": "Checking…"
   },
   "join": {
     "invited": "You're invited",
@@ -186,7 +210,9 @@
       "demoSoon": "Coming soon.",
       "disclaimer": "Kindred coordinates care. It does not store medical records or give medical advice.",
       "privacy": "Privacy policy",
-      "terms": "Terms of use"
+      "terms": "Terms of use",
+      "itemLinkTitle": "Using the Kindred app?",
+      "itemLink": "Open it from your Home Screen. You'll find this under This week, or on Home if it's a request. Or sign in here to see it in Safari."
     },
     "email": {
       "header": "Sign in with email",
@@ -306,11 +332,12 @@
     "appointmentTitle": "Appointment",
     "appointmentDetail": "A date, a time and a place someone has to be.",
     "updateTitle": "Update or note",
-    "updateDetail": "Tell the circle what happened. Coming soon.",
+    "updateDetail": "Tell the circle what happened.",
     "cancel": "Cancel"
   },
   "itemForm": {
     "newTask": "New task",
+    "followUpTo": "Follow-up to {{title}}",
     "newAppointment": "New appointment",
     "editTask": "Edit task",
     "editAppointment": "Edit appointment",
@@ -639,5 +666,42 @@
       "body": "If these terms change, the new version will be on this page. Using Kindred after a change means you accept it."
     },
     "back": "Back to Kindred"
+  },
+  "updates": {
+    "intro": "Everything the family has shared, in one place.",
+    "share": "Share an update with the circle…",
+    "empty": "No updates yet. When something happens, like a visit or a call with the doctor, share it here so everyone knows.",
+    "error": "Updates couldn't load. Check your connection and try again.",
+    "postedAt": "{{day}}, {{time}}",
+    "postedAt_today": "Today, {{time}}",
+    "postedAt_yesterday": "Yesterday, {{time}}",
+    "postedAt_tomorrow": "Tomorrow, {{time}}",
+    "linkedTo": "Linked to {{title}}",
+    "onItem": "Updates · {{count}}",
+    "addUpdate": "Add update",
+    "createFollowUp": "Create follow-up task",
+    "followUps": "Follow-up tasks",
+    "followUpTo": "Follow-up to",
+    "followUpToLoading": "Loading…"
+  },
+  "updateSheet": {
+    "title": "New update",
+    "cancel": "Cancel",
+    "post": "Post",
+    "postToUpdates": "Post to updates",
+    "posting": "Posting…",
+    "postingAs": "{{name}}, posting to the Care Circle",
+    "postingAsUnknown": "Posting to the Care Circle",
+    "body": "What happened?",
+    "bodyHint": "Text only. Keep it short; the family chat is still the place to talk it over.",
+    "problems": {
+      "required": "Write what happened.",
+      "tooLong": "Keep it under {{max}} characters."
+    },
+    "linkTo": "Link this to",
+    "nothing": "Nothing in particular",
+    "linkLoading": "Loading recent tasks and appointments…",
+    "whoIsTold": "Everyone in the Care Circle is notified.",
+    "whoIsTold_linked": "Everyone in the Care Circle is notified, and the update also shows on {{title}}."
   }
 }

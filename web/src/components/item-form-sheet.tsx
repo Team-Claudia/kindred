@@ -40,7 +40,12 @@ export type ItemFormSheetProps = {
   /** Called with the item's ID once it's saved. */
   onSaved: (itemId: string) => void
 } & (
-  | { kind: ItemKind; item?: undefined }
+  | {
+      kind: ItemKind
+      item?: undefined
+      /** Create it as a follow-up to this appointment (items.follow_up_of, US 10.2). */
+      followUpOf?: { id: string; title: string }
+    }
   | {
       item: Item
       kind?: undefined
@@ -86,6 +91,7 @@ export function ItemFormSheet(props: ItemFormSheetProps) {
         formId={formId}
         onSaved={props.onSaved}
         onConflict={props.item ? props.onConflict : undefined}
+        followUpOf={props.item ? undefined : props.followUpOf}
       />
     </Sheet>
   )
@@ -98,6 +104,7 @@ function ItemFormBody({
   formId,
   onSaved,
   onConflict,
+  followUpOf,
 }: {
   item: Item | undefined
   kind: ItemKind
@@ -105,6 +112,7 @@ function ItemFormBody({
   formId: string
   onSaved: (itemId: string) => void
   onConflict: ((error: RpcError) => void) | undefined
+  followUpOf: { id: string; title: string } | undefined
 }) {
   const { t } = useTranslation()
   // The item as it was when the sheet opened. The form is compared with and
@@ -129,7 +137,12 @@ function ItemFormBody({
   const patch = item && valid ? itemPatch(form, item, timeZone) : null
 
   const save = useItemMutation(async (values: ItemForm): Promise<string> => {
-    if (!item) return api.createItem(createItemArgs(values, timeZone))
+    if (!item) {
+      return api.createItem({
+        ...createItemArgs(values, timeZone),
+        ...(followUpOf && { follow_up_of: followUpOf.id }),
+      })
+    }
     const changes = itemPatch(values, item, timeZone)
     if (Object.keys(changes).length > 0) {
       await api.updateItem({ item_id: item.id, version: item.version }, changes)
@@ -168,6 +181,11 @@ function ItemFormBody({
 
   return (
     <form id={formId} noValidate onSubmit={onSubmit} className="flex flex-1 flex-col gap-5">
+      {followUpOf && (
+        <p className="rounded-lg bg-muted p-4 break-words">
+          {t('itemForm.followUpTo', { title: followUpOf.title })}
+        </p>
+      )}
       <Field
         label={t(isTask ? 'itemForm.taskTitle' : 'itemForm.appointmentTitle')}
         {...field('title')}
