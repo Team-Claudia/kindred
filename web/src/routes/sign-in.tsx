@@ -37,7 +37,7 @@ export default function SignIn() {
   // On an iPhone in Safari, add Kindred to the Home Screen first and sign in
   // there, or sign-in has to happen twice (task 4.10). Not for an item link:
   // that's someone already in a circle, so ItemLinkNote says where to find it.
-  if (installFirst.show && !isItemLink(next)) {
+  if (installFirst.show && auth.status === 'signed_out' && !isItemLink(next)) {
     return <InstallFirstGuide onSignInHere={installFirst.dismiss} />
   }
 
