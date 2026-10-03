@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useSyncExternalStore } from 'react'
 import { supabase } from './supabase'
 
-// Sign-in (ADR-004): Google, or a 6-digit email code. Screens use these
-// helpers rather than calling supabase.auth themselves.
+// Sign-in (ADR-004): Google, a 6-digit email code, or Try the demo (an
+// anonymous guest). Screens use these helpers rather than calling
+// supabase.auth themselves.
 
 export type AuthState =
   | { status: 'loading' }
@@ -34,6 +35,11 @@ function subscribe(listener: () => void) {
 /** The current sign-in state; re-renders when it changes. */
 export function useAuth(): AuthState {
   return useSyncExternalStore(subscribe, () => state)
+}
+
+/** Whether the signed-in person is a Try the demo guest (an anonymous sign-in). */
+export function isAnonymous(auth: AuthState): boolean {
+  return auth.status === 'signed_in' && auth.session.user.is_anonymous === true
 }
 
 /**
@@ -73,6 +79,15 @@ export async function sendEmailCode(email: string): Promise<void> {
 /** Checks the 6-digit code; on success the auth state becomes signed_in. */
 export async function verifyEmailCode(email: string, code: string): Promise<void> {
   const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' })
+  if (error) throw error
+}
+
+/**
+ * Try the demo: signs in as an anonymous guest, with no email or Google
+ * account. The sign-in guard then adds them to the sample circle.
+ */
+export async function signInAsGuest(): Promise<void> {
+  const { error } = await supabase.auth.signInAnonymously()
   if (error) throw error
 }
 

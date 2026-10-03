@@ -4,11 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
-import { signOut, useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/auth'
 import { circleKeys, useProfile } from '@/lib/circles'
 import { errorMessage } from '@/lib/errors'
-import { forgetPushResync } from '@/lib/push-resync'
-import { platform } from '@/platform'
+import { useSignOut } from '@/lib/use-sign-out'
 
 // "Your account" on Care Circle and settings (task 4.3): your name, Leave this
 // Care Circle and Sign out. Export and Delete account are Tier 2 and hidden.
@@ -16,6 +15,7 @@ export function AccountCard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const signOut = useSignOut()
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState<'leave' | 'signOut' | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -38,14 +38,8 @@ export function AccountCard() {
   async function onSignOut() {
     setBusy('signOut')
     setError(null)
-    // So the next person on this phone doesn't get this member's notifications.
-    // Best effort: signing out matters more.
-    await platform.disablePush().catch(() => undefined)
-    forgetPushResync()
     try {
       await signOut()
-      queryClient.clear()
-      navigate('/sign-in', { replace: true })
     } catch {
       setError(t('account.signOutError'))
       setBusy(null)
