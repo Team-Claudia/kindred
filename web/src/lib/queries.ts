@@ -306,3 +306,40 @@ export function useSetCalendarFeedTasks(userId: string | undefined) {
     onSuccess: (feed) => queryClient.setQueryData(calendarFeedKey(userId), feed),
   })
 }
+
+// Google Calendar connection (task 4.5a). Keyed by user, like the feed.
+export const googleCalendarKey = (userId: string | undefined) => ['google-calendar', userId] as const
+
+export function useGoogleCalendarConnected(userId: string | undefined) {
+  return useQuery({
+    queryKey: googleCalendarKey(userId),
+    queryFn: api.googleCalendarConnected,
+    enabled: userId !== undefined,
+  })
+}
+
+export function useDisconnectGoogleCalendar(userId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: api.disconnectGoogleCalendar,
+    onSuccess: () => {
+      queryClient.setQueryData(googleCalendarKey(userId), false)
+      // Your own row in any open picker turns back to Unknown.
+      return queryClient.invalidateQueries({ queryKey: ['availability'] })
+    },
+  })
+}
+
+/**
+ * Who's free for `slot` (task 4.5a): each member's free, busy or unknown.
+ * The function keeps answers for 5 minutes, so the app does too.
+ */
+export function useAvailability(circleId: string | undefined, slot: api.AvailabilitySlot | null) {
+  return useQuery({
+    queryKey: ['availability', circleId, slot?.start, slot?.end] as const,
+    queryFn: () => api.availability(circleId!, slot!),
+    enabled: Boolean(circleId && slot),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
+}

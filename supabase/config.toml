@@ -444,6 +444,20 @@ verify_jwt = false
 enabled = true
 verify_jwt = false
 
+# Connect Google Calendar (task 4.5a). Google sends the member back here with
+# no JWT, so the gateway check is off; the app's POSTs carry the member's JWT,
+# which the function verifies itself. Secrets: GOOGLE_CLIENT_ID,
+# GOOGLE_CLIENT_SECRET, APP_URL (plan §8.3).
+[functions.google-oauth]
+enabled = true
+verify_jwt = false
+
+# Who's free (task 4.5a). Verifies the caller's JWT itself, like push-test.
+# Secrets: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
+[functions.availability]
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

@@ -540,6 +540,11 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"availability_tokens":
+{ Args: { "caller_id": string,"circle_id": string }; Returns: {
+              "member_id": string,"refresh_token": string
+            }[]
+                           },
 "build_sample_circle":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -739,11 +744,17 @@ isOneToOne: false
 "demo_nightly_cleanup":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"disconnect_google_calendar":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "expand_overdue_job":
 { Args: { "attempt": number,"job_id": number }; Returns: number
                            },
 "finish_outbox_job":
 { Args: { "attempt": number,"failure"?: string,"job_id": number }; Returns: undefined
+                           },
+"google_calendar_connected":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "invite_preview":
 { Args: { "code": string }; Returns: {
@@ -880,6 +891,9 @@ isOneToOne: false
       } },
 "reset_demo_circle":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"save_google_connection":
+{ Args: { "refresh_token": string,"user_id": string }; Returns: undefined
                            },
 "save_profile":
 { Args: { "display_name": string,"user_id": string }; Returns: undefined

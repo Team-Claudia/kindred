@@ -29,6 +29,17 @@
     --state-overdue: oklch(1 0 0);
     --state-overdue-foreground: oklch(0.45 0.18 27);
 
+    /*
+      Who's free (task 4.5a): Free, Busy or Unknown in the ask-someone pickers,
+      always with the word. They reuse the state colours, so dark mode follows.
+    */
+    --availability-free: var(--state-assigned);
+    --availability-free-foreground: var(--state-assigned-foreground);
+    --availability-busy: var(--state-needs-coverage);
+    --availability-busy-foreground: var(--state-needs-coverage-foreground);
+    --availability-unknown: var(--state-completed);
+    --availability-unknown-foreground: var(--state-completed-foreground);
+
     --radius: 0.625rem;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);

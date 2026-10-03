@@ -25,6 +25,7 @@ vi.mock('@/lib/circles', async (importOriginal) => ({
 }))
 // Tested on their own; this is about the screen around them.
 vi.mock('@/components/calendar-feed-card', () => ({ CalendarFeedCard: () => null }))
+vi.mock('@/components/google-calendar-card', () => ({ GoogleCalendarCard: () => null }))
 vi.mock('@/components/account-card', () => ({ AccountCard: () => null }))
 vi.mock('@/components/push-settings-card', () => ({ PushSettingsCard: () => null }))
 vi.mock('@/platform', async (importOriginal) => {

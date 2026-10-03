@@ -20,6 +20,7 @@ import { useCircleMembers, useMyMembership } from '@/lib/circles'
 import { dayKey, firstOfNextMonth, formatDate, formatMonthDay, formatTime } from '@/lib/dates'
 import { errorMessage, RpcError } from '@/lib/errors'
 import { currentHolder, isAskedViewer, itemActions, type ItemAction } from '@/lib/item-actions'
+import { availabilitySlot } from '@/lib/availability'
 import { hasNoTime } from '@/lib/item-form'
 import { isOverdue, memberNames, type Item } from '@/lib/items'
 import { overdueAlertFor } from '@/lib/overdue-alert'
@@ -471,6 +472,7 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         subtitle={`${item.title} · ${when}`}
         viewerId={viewerId}
         exclude={currentHolder(item)}
+        slot={availabilitySlot(item, timeZone)}
         busy={busy}
         onAssign={(memberId) =>
           act(assigning ?? 'ask', () => api.assign(at, memberId), () => setAssigning(null))
