@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import { invitePreview } from '@/lib/api'
@@ -142,10 +142,24 @@ test('after signing in, /sign-in continues to the original destination', () => {
   expect(router.state.location.pathname).toBe('/join/ABCD1234')
 })
 
-test('the privacy page loads while signed out', () => {
+test.each([
+  ['/privacy', 'Privacy'],
+  ['/terms', 'Terms of use'],
+])('%s loads signed out and signed in', (path, title) => {
   given({ status: 'signed_out' })
-  renderAt('/privacy')
-  expect(screen.getByRole('heading', { name: 'Privacy', level: 1 })).toBeInTheDocument()
+  renderAt(path)
+  expect(screen.getByRole('heading', { name: title, level: 1 })).toBeInTheDocument()
+  cleanup()
+  given(signedIn)
+  renderAt(path)
+  expect(screen.getByRole('heading', { name: title, level: 1 })).toBeInTheDocument()
+})
+
+test('sign-in links the terms of use and privacy policy', () => {
+  given({ status: 'signed_out' })
+  renderAt('/sign-in')
+  expect(screen.getByRole('link', { name: 'Terms of use' })).toHaveAttribute('href', '/terms')
+  expect(screen.getByRole('link', { name: 'Privacy policy' })).toHaveAttribute('href', '/privacy')
 })
 
 test('nothing redirects while the session is still loading', () => {

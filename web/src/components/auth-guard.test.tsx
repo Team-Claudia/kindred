@@ -3,12 +3,13 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import { joinDemoCircle } from '@/lib/api'
-import { myCircleKey, useAuth, type AuthState } from '@/lib/auth'
+import { myCircleKey, signOut, useAuth, type AuthState } from '@/lib/auth'
 import { AuthGuard } from './auth-guard'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 vi.mock('@/lib/live', () => ({ useLiveUpdates: vi.fn() }))
-vi.mock('@/lib/push-resync', () => ({ useKeepPushSubscription: vi.fn() }))
+vi.mock('@/lib/push-resync', () => ({ useKeepPushSubscription: vi.fn(), forgetPushResync: vi.fn() }))
+vi.mock('@/platform', () => ({ platform: { disablePush: vi.fn(() => Promise.resolve()) } }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
   joinDemoCircle: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('@/lib/auth', async (importOriginal) => {
   return {
     ...actual,
     useAuth: vi.fn(),
+    signOut: vi.fn(),
     useMyCircleId: (userId: string | undefined) =>
       useQuery({
         queryKey: [...actual.myCircleKey, userId],
@@ -41,6 +43,7 @@ function renderAt(path: string) {
     [
       { element: <AuthGuard requireCircle />, children: [{ path: '/', element: <p>Home screen</p> }] },
       { element: <AuthGuard />, children: [{ path: '/welcome', element: <p>Welcome screen</p> }] },
+      { path: '/sign-in', element: <p>Sign-in screen</p> },
     ],
     { initialEntries: [path] },
   )
@@ -72,6 +75,17 @@ test('if joining fails, the guest can try again', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't open the demo.")
   fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
   expect(await screen.findByText('Home screen')).toBeInTheDocument()
+})
+
+test('a guest whose account is gone can start again from sign-in', async () => {
+  vi.mocked(useAuth).mockReturnValue(signedIn(true))
+  vi.mocked(joinDemoCircle).mockRejectedValue(new Error('user not found'))
+  vi.mocked(signOut).mockResolvedValue()
+  renderAt('/')
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Start again' }))
+  expect(await screen.findByText('Sign-in screen')).toBeInTheDocument()
+  expect(signOut).toHaveBeenCalledOnce()
 })
 
 test('a demo guest never sees Welcome', async () => {

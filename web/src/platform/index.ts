@@ -3,6 +3,7 @@
 // browser APIs directly.
 
 import {
+  hasPushSubscription,
   notificationPermission,
   subscribeToPush,
   unsubscribeFromPush,
@@ -38,6 +39,10 @@ export interface Platform {
   disablePush(): Promise<void>
   /** The notification permission so far: 'default' until the member is asked. */
   notificationPermission(): NotificationPermissionState
+  /** Whether notifications are on for this device (it has a push subscription). */
+  pushEnabled(): Promise<boolean>
+  /** Whether this is an iPhone or iPad, for iOS-only tips (e.g. calendar refresh). */
+  isIOS(): boolean
   /** Hands the calendar feed URL to the phone's calendar app to subscribe. */
   addCalendarFeed(url: string): void
   /**
@@ -51,6 +56,12 @@ export interface Platform {
    * background tabs and Home Screen apps). Returns a function that stops it.
    */
   onAppVisible(callback: () => void): () => void
+  /**
+   * Calls `callback` when Safari restores the page from its back/forward cache
+   * (the member came back with Back), so state from before they left, such as
+   * a busy button, can be reset. Returns a function that stops it.
+   */
+  onPageRestored(callback: () => void): () => void
 }
 
 export interface ShareContent {
@@ -107,6 +118,16 @@ export async function enablePush(): Promise<PushResult> {
 
 export const disablePush: Platform['disablePush'] = unsubscribeFromPush
 
+export const pushEnabled: Platform['pushEnabled'] = hasPushSubscription
+
+export function isIOS(): boolean {
+  // iPadOS reports itself as a Mac, so also count a Mac with a touch screen.
+  return (
+    /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+  )
+}
+
 export function addCalendarFeed(url: string): void {
   // webcal:// makes iOS offer to subscribe rather than download the file once.
   window.location.href = url.replace(/^https?:/, 'webcal:')
@@ -137,6 +158,14 @@ export function onAppVisible(callback: () => void): () => void {
   return () => document.removeEventListener('visibilitychange', listener)
 }
 
+export function onPageRestored(callback: () => void): () => void {
+  const listener = (event: PageTransitionEvent) => {
+    if (event.persisted) callback()
+  }
+  window.addEventListener('pageshow', listener)
+  return () => window.removeEventListener('pageshow', listener)
+}
+
 export const platform: Platform = {
   share,
   canShare,
@@ -147,7 +176,10 @@ export const platform: Platform = {
   enablePush,
   disablePush,
   notificationPermission,
+  pushEnabled,
+  isIOS,
   addCalendarFeed,
   deviceSetting,
   onAppVisible,
+  onPageRestored,
 }

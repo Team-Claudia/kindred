@@ -11,12 +11,14 @@ import {
   addDays,
   dayKey,
   formatDayLong,
+  formatDayMonth,
   formatDayShort,
   formatMonth,
   groupByDay,
   isDayKey,
   sameMonth,
   weekOf,
+  weekRelation,
   weekStart,
   weekStartOf,
   type DayKey,
@@ -85,6 +87,15 @@ function WeekAgenda({ careRecipient, timeZone }: { careRecipient: string; timeZo
   const goToWeek = (day: DayKey) => update({ week: day === thisWeek ? null : day })
 
   const sunday = week.days[6]
+  const relation = weekRelation(monday, thisWeek)
+  const title =
+    relation === 'this'
+      ? t('week.titleThis')
+      : relation === 'next'
+        ? t('week.titleNext')
+        : relation === 'last'
+          ? t('week.titleLast')
+          : t('week.titleOf', { date: formatDayMonth(monday, locale) })
   const range = t('week.range', {
     start: sameMonth(monday, sunday)
       ? formatDayShort(monday, locale)
@@ -100,7 +111,7 @@ function WeekAgenda({ careRecipient, timeZone }: { careRecipient: string; timeZo
       <main className="flex flex-col gap-6 px-4 py-6">
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <h1 className="text-3xl font-semibold">{t('screens.week')}</h1>
+            <h1 className="text-3xl font-semibold">{title}</h1>
             <div className="flex gap-2">
               <Button
                 variant="outline"

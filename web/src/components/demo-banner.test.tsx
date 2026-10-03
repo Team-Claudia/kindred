@@ -12,7 +12,9 @@ vi.mock('@/lib/auth', async (importOriginal) => ({
   useAuth: vi.fn(),
   signOut: vi.fn(),
 }))
-vi.mock('@/platform', () => ({ platform: { disablePush: vi.fn() } }))
+vi.mock('@/platform', () => ({
+  platform: { disablePush: vi.fn(), deviceSetting: { get: vi.fn(), set: vi.fn() } },
+}))
 
 function signedIn(isAnonymous: boolean): AuthState {
   return {

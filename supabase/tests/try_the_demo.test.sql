@@ -3,9 +3,10 @@
 --
 -- People: Gail and Gus are anonymous demo guests, Gina is an anonymous guest
 -- who already has a name, Alice is a real account in her own circle X ("Dad"),
--- and Olive is an anonymous guest from two days ago.
+-- Olive is an anonymous guest from two days ago, and Nina is a new anonymous
+-- guest who hasn't joined the demo yet.
 begin;
-select plan(32);
+select plan(37);
 
 create function pg_temp.sample() returns uuid language sql as $$
   select '5a3b1e00-0000-4000-8000-000000000100'::uuid
@@ -19,7 +20,8 @@ insert into auth.users (id, is_anonymous) values
   ('a0000000-0000-0000-0000-00000000000a', false), -- Alice
   ('b0000000-0000-0000-0000-00000000000b', true),  -- Gail
   ('c0000000-0000-0000-0000-00000000000c', true),  -- Gus
-  ('d0000000-0000-0000-0000-00000000000d', true);  -- Gina
+  ('d0000000-0000-0000-0000-00000000000d', true),  -- Gina
+  ('90000000-0000-0000-0000-000000000009', true);  -- Nina
 update public.profiles p set display_name = 'Gina' where p.id = 'd0000000-0000-0000-0000-00000000000d';
 insert into auth.users (id, is_anonymous, created_at) values
   ('e0000000-0000-0000-0000-00000000000e', true, now() - interval '2 days'), -- Olive
@@ -30,6 +32,8 @@ insert into public.circle_members (circle_id, user_id, role)
 values ('10000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'admin');
 insert into public.items (circle_id, kind, title, starts_at)
 values ('10000000-0000-0000-0000-000000000001', 'task', 'Laundry', now());
+insert into public.invites (code, circle_id, created_by)
+values ('DADinvt2', '10000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a');
 
 -- ---------------------------------------------------------------------------
 -- The migration loaded the sample circle
@@ -198,6 +202,45 @@ select throws_ok(
 );
 reset role;
 delete from public.circle_members m where m.user_id = 'e0000000-0000-0000-0000-00000000000e';
+
+-- ---------------------------------------------------------------------------
+-- Guests stay in the sample circle (migration 20261004031000_demo_guards)
+-- ---------------------------------------------------------------------------
+set local role authenticated;
+select set_config('request.jwt.claims', pg_temp.claims('90000000-0000-0000-0000-000000000009', true), true);
+
+select throws_ok(
+  $$ select public.join_circle('DADinvt2') $$,
+  'P0001', 'invalid_input',
+  'a guest on the way to an invite link cannot join a real family''s circle'
+);
+
+select throws_ok(
+  $$ select public.create_circle('Gran', 'Grandparent', 'America/Toronto') $$,
+  'P0001', 'invalid_input',
+  'a guest cannot start a circle of their own'
+);
+
+select set_config('request.jwt.claims', pg_temp.claims('b0000000-0000-0000-0000-00000000000b', true), true);
+select throws_ok(
+  $$ select public.create_invite() $$,
+  'P0001', 'invalid_input',
+  'a guest cannot invite anyone into the sample circle'
+);
+
+select set_config('request.jwt.claims', pg_temp.claims('a0000000-0000-0000-0000-00000000000a', false), true);
+select lives_ok(
+  $$ select public.create_invite() $$,
+  'a real member can still invite people'
+);
+reset role;
+
+select is_empty(
+  $$ select 1 from public.circle_members m where m.user_id = '90000000-0000-0000-0000-000000000009'
+     union all
+     select 1 from public.circles c where c.care_recipient_name = 'Gran' $$,
+  'the refused guest is in no circle and made none'
+);
 
 -- A guest changes the shared circle.
 update public.items i set state = 'assigned', owner_id = 'c0000000-0000-0000-0000-00000000000c'

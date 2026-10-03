@@ -750,6 +750,9 @@ isOneToOne: false
 "invoke_outbox_worker":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"is_anonymous_caller":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "is_circle_member":
 { Args: { "circle": string,"person": string }; Returns: boolean
                            },
@@ -879,6 +882,9 @@ isOneToOne: false
 { Args: { "enabled": boolean }; Returns: {
               "feed_tasks": boolean,"token": string
             }[]
+                           },
+"set_display_name":
+{ Args: { "display_name": string }; Returns: undefined
                            },
 "update_item":
 { Args: { "item_id": string,"patch": Json,"version": number }; Returns: {

@@ -32,6 +32,7 @@ vi.mock('@/lib/circles', async (importOriginal) => ({
 vi.mock('@/lib/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof queries>()),
   useItemsInRange: vi.fn(),
+  useItemsComingUp: vi.fn(),
   useItemsNeedingAttention: vi.fn(),
   useLatestUpdate: vi.fn(),
   useItemCount: vi.fn(),
@@ -113,12 +114,17 @@ function given({
     created_at: '2026-09-24T01:40:00Z',
   } as Query<typeof queries.useLatestUpdate>['data'],
   count = 5,
+  coming = [],
 }: {
   weekItems?: Attention[]
   open?: Attention[]
   update?: Query<typeof queries.useLatestUpdate>['data']
   count?: number
+  coming?: Attention[]
 } = {}) {
+  vi.mocked(queries.useItemsComingUp).mockReturnValue(
+    success(coming) as unknown as Query<typeof queries.useItemsComingUp>,
+  )
   vi.mocked(queries.useItemsInRange).mockReturnValue(
     success(weekItems) as unknown as Query<typeof queries.useItemsInRange>,
   )
@@ -212,6 +218,33 @@ test('greets the member and shows the counts and every section', () => {
   const update = screen.getByRole('region', { name: 'Latest update' })
   expect(within(update).getByText('Stuck at work until seven.')).toBeInTheDocument()
   expect(within(update).getByText('Jonah')).toBeInTheDocument()
+})
+
+test('labels the counts as this week', () => {
+  renderHome()
+  expect(screen.getByRole('list', { name: 'This week' })).toHaveTextContent(
+    'This week:2 tasks1 appointment1 overdue',
+  )
+})
+
+test('Coming up for you lists your next items and links to This week filtered to you', () => {
+  // Two weeks away, so nowhere in this week.
+  given({
+    coming: [item({ id: 'dentist', kind: 'appointment', title: 'Dentist', starts_at: '2026-10-07T17:00:00Z' })],
+  })
+  renderHome()
+
+  const coming = screen.getByRole('region', { name: 'Coming up for you' })
+  expect(within(coming).getByRole('link', { name: /Dentist/ })).toHaveAttribute('href', '/i/dentist')
+  expect(within(coming).getByRole('link', { name: 'See all' })).toHaveAttribute('href', '/week?member=maya')
+  // From the start of tomorrow (Fri 25 Sep) in the circle's time zone.
+  expect(queries.useItemsComingUp).toHaveBeenCalledWith('maya', '2026-09-25T07:00:00.000Z')
+})
+
+test('Coming up for you says so when there is nothing', () => {
+  renderHome()
+  const coming = screen.getByRole('region', { name: 'Coming up for you' })
+  expect(within(coming).getByText('Nothing else coming up for you.')).toBeInTheDocument()
 })
 
 test('a new circle shows a welcome and an empty state in every section', () => {

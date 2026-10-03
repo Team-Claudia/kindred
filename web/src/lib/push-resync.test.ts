@@ -1,6 +1,13 @@
 import { renderHook } from '@testing-library/react'
 import { platform } from '@/platform'
-import { forgetPushResync, resyncSubscription, useKeepPushSubscription } from './push-resync'
+import {
+  forgetPushResync,
+  resyncSubscription,
+  setPushTurnedOff,
+  useKeepPushSubscription,
+} from './push-resync'
+
+const settings = new Map<string, string>()
 
 vi.mock('@/platform', () => ({
   platform: {
@@ -8,6 +15,10 @@ vi.mock('@/platform', () => ({
     notificationPermission: vi.fn(),
     enablePush: vi.fn(),
     onAppVisible: vi.fn(),
+    deviceSetting: {
+      get: (key: string) => settings.get(key) ?? null,
+      set: (key: string, value: string) => settings.set(key, value),
+    },
   },
 }))
 
@@ -16,6 +27,7 @@ let onVisible: (() => void) | undefined
 const stopWatching = vi.fn()
 
 beforeEach(() => {
+  settings.clear()
   forgetPushResync()
   mocked.isStandalone.mockReturnValue(true)
   mocked.notificationPermission.mockReturnValue('granted')
@@ -46,10 +58,18 @@ test('saves it again after a sign-out, even for the same member', () => {
 test.each([
   ['in a browser tab', () => mocked.isStandalone.mockReturnValue(false)],
   ['before notifications are allowed', () => mocked.notificationPermission.mockReturnValue('default')],
+  ['once the member turned them off for this phone', () => setPushTurnedOff(true)],
 ])('does nothing %s', (_, arrange) => {
   arrange()
   resyncSubscription('maya')
   expect(mocked.enablePush).not.toHaveBeenCalled()
+})
+
+test('a sign-out forgets that the last member turned them off', () => {
+  setPushTurnedOff(true)
+  forgetPushResync()
+  resyncSubscription('jonah')
+  expect(mocked.enablePush).toHaveBeenCalledOnce()
 })
 
 test('saves it on sign-in and again each time Kindred comes back on screen', () => {

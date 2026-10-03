@@ -1,11 +1,8 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { isAnonymous, signOut, useAuth } from '@/lib/auth'
-import { forgetPushResync } from '@/lib/push-resync'
-import { platform } from '@/platform'
+import { isAnonymous, useAuth } from '@/lib/auth'
+import { useSignOut } from '@/lib/use-sign-out'
 
 /**
  * "You're trying the demo", for Try the demo guests only (task 4.2). Sign in
@@ -15,8 +12,7 @@ import { platform } from '@/platform'
 export function DemoBanner() {
   const { t } = useTranslation()
   const auth = useAuth()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const signOut = useSignOut()
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
 
@@ -25,14 +21,8 @@ export function DemoBanner() {
   async function signInForReal() {
     setBusy(true)
     setFailed(false)
-    // As in the account card: this phone stops getting the guest's
-    // notifications. Best effort; signing out matters more.
-    await platform.disablePush().catch(() => undefined)
-    forgetPushResync()
     try {
       await signOut()
-      queryClient.clear()
-      navigate('/sign-in', { replace: true })
     } catch {
       setFailed(true)
       setBusy(false)

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import * as api from '@/lib/api'
 import { isAnonymous, myCircleKey, signInPath, useAuth, useMyCircleId } from '@/lib/auth'
 import { useLiveUpdates } from '@/lib/live'
 import { useKeepPushSubscription } from '@/lib/push-resync'
+import { useSignOut } from '@/lib/use-sign-out'
 
 function Loading() {
   const { t } = useTranslation()
@@ -58,14 +59,12 @@ export function AuthGuard({ requireCircle = false }: { requireCircle?: boolean }
   if (!requireCircle) return guest ? <Navigate to="/" replace /> : <Outlet />
 
   if (circle.isPending) return <Loading />
-  if (circle.isError || joinFailed) {
+  if (joinFailed) return <DemoJoinFailed onRetry={joinDemo.reset} />
+  if (circle.isError) {
     return (
       <main className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-4 px-6">
-        <p role="alert">{t(joinFailed ? 'auth.errors.demoJoin' : 'auth.errors.circleCheck')}</p>
-        <Button
-          variant="outline"
-          onClick={() => (joinFailed ? joinDemo.reset() : void circle.refetch())}
-        >
+        <p role="alert">{t('auth.errors.circleCheck')}</p>
+        <Button variant="outline" onClick={() => void circle.refetch()}>
           {t('auth.tryAgain')}
         </Button>
       </main>
@@ -74,4 +73,40 @@ export function AuthGuard({ requireCircle = false }: { requireCircle?: boolean }
   if (needsDemo) return <Loading />
   if (circle.data === null) return <Navigate to="/welcome" replace />
   return <Outlet />
+}
+
+/**
+ * Joining the demo failed. Offline, Try again works; if the guest account is
+ * gone (the nightly clean-up deletes guests after a day), only starting again
+ * from the sign-in screen does.
+ */
+function DemoJoinFailed({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation()
+  const signOut = useSignOut()
+  const [busy, setBusy] = useState(false)
+  const [signOutFailed, setSignOutFailed] = useState(false)
+
+  async function startAgain() {
+    setBusy(true)
+    setSignOutFailed(false)
+    try {
+      await signOut()
+    } catch {
+      setSignOutFailed(true)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <main className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-4 px-6">
+      <p role="alert">{t('auth.errors.demoJoin')}</p>
+      <Button variant="outline" disabled={busy} onClick={onRetry}>
+        {t('auth.tryAgain')}
+      </Button>
+      <Button variant="outline" disabled={busy} onClick={() => void startAgain()}>
+        {t('demo.startAgain')}
+      </Button>
+      {signOutFailed && <p className="text-sm">{t('account.signOutError')}</p>}
+    </main>
+  )
 }

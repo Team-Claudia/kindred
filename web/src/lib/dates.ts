@@ -229,3 +229,18 @@ export function formatMonthDay(day: DayKey, locale: string): string {
     dayKeyDate(day),
   )
 }
+
+/** Whether the week starting `monday` is this week, the next or the last, relative to `thisMonday`. */
+export function weekRelation(monday: DayKey, thisMonday: DayKey): 'this' | 'next' | 'last' | 'other' {
+  if (monday === thisMonday) return 'this'
+  if (monday === addDays(thisMonday, 7)) return 'next'
+  if (monday === addDays(thisMonday, -7)) return 'last'
+  return 'other'
+}
+
+/** "12 October" */
+export function formatDayMonth(day: DayKey, locale: string): string {
+  const date = dayKeyDate(day)
+  const options = { timeZone: 'UTC' } as const
+  return `${new Intl.DateTimeFormat(locale, { ...options, day: 'numeric' }).format(date)} ${formatMonth(day, locale)}`
+}
