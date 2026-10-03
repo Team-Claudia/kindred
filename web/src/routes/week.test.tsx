@@ -248,8 +248,8 @@ test('the header follows the week: This week, Next week, Last week, then Week of
 })
 
 test('the header is right across a daylight-saving change', () => {
-  // Sun 1 Nov 2026, 11 p.m. in Vancouver: clocks went back at 2 a.m. that day.
-  vi.setSystemTime(new Date('2026-11-02T07:00:00Z'))
+  // Sun 1 Nov 2026, noon in Vancouver: clocks went back at 2 a.m. that day.
+  vi.setSystemTime(new Date('2026-11-01T20:00:00Z'))
   const heading = (name: string) => screen.getByRole('heading', { level: 1, name })
   renderWeek()
   expect(heading('This week')).toBeInTheDocument()
