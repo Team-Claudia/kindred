@@ -3,6 +3,7 @@ import { AccountCard } from '@/components/account-card'
 import { CalendarFeedCard } from '@/components/calendar-feed-card'
 import { CircleMembersCard } from '@/components/circle-members-card'
 import { DemoBanner } from '@/components/demo-banner'
+import { GoogleCalendarCard } from '@/components/google-calendar-card'
 import { InviteCard } from '@/components/invite-card'
 import { LegalLinks } from '@/components/legal'
 import { PushSettingsCard } from '@/components/push-settings-card'
@@ -45,8 +46,9 @@ export default function Circle() {
       {/* Invite someone */}
       {circle && !guest && <InviteCard circleId={circle.id} recipientName={circle.care_recipient_name} />}
 
-      {/* Your calendar. Task 4.5a adds the "Connect Google Calendar" card here. */}
+      {/* Your calendar: the feed out, and free/busy in from Google (task 4.5a). Hidden for demo guests. */}
       {!guest && <CalendarFeedCard />}
+      {!guest && <GoogleCalendarCard />}
 
       {/* Notifications on this phone. Per-category switches are Tier 2. */}
       <PushSettingsCard />

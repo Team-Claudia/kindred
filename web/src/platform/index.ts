@@ -46,6 +46,11 @@ export interface Platform {
   /** Hands the calendar feed URL to the phone's calendar app to subscribe. */
   addCalendarFeed(url: string): void
   /**
+   * Leaves Kindred for another site that sends the member back when done,
+   * such as Google's consent screen for Connect Google Calendar.
+   */
+  openExternal(url: string): void
+  /**
    * Small per-device settings (e.g. "remind me later"). Not for anything that
    * must persist: storage can be missing or blocked, so reads return null and
    * writes are dropped then.
@@ -133,6 +138,12 @@ export function addCalendarFeed(url: string): void {
   window.location.href = url.replace(/^https?:/, 'webcal:')
 }
 
+export function openExternal(url: string): void {
+  // Same window: on a Home Screen app, iPhone shows the other site in a sheet
+  // and returns to Kindred when it redirects back.
+  window.location.assign(url)
+}
+
 export const deviceSetting: Platform['deviceSetting'] = {
   get(key) {
     try {
@@ -179,6 +190,7 @@ export const platform: Platform = {
   pushEnabled,
   isIOS,
   addCalendarFeed,
+  openExternal,
   deviceSetting,
   onAppVisible,
   onPageRestored,

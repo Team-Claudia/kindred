@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { MemberPicker } from '@/components/member-picker'
 import { Sheet, SheetClose } from '@/components/sheet'
 import { Button } from '@/components/ui/button'
+import type { AvailabilitySlot } from '@/lib/api'
 import { useCircleMembers } from '@/lib/circles'
 import { memberNames } from '@/lib/items'
 
 /**
- * "Ask someone to do this" (wireframe 20, without who's free): pick a member
- * for Ask someone, Ask someone else or Reassign. Picking yourself takes it
- * straight away (BR-03). `exclude` is whoever already has it.
+ * "Ask someone to do this" (wireframe 20): pick a member for Ask someone, Ask
+ * someone else or Reassign, with who's free at `slot` (task 4.5a). Picking
+ * yourself takes it straight away (BR-03). `exclude` is whoever already has it.
  */
 export function AssignSheet({
   open,
@@ -18,6 +19,7 @@ export function AssignSheet({
   subtitle,
   viewerId,
   exclude,
+  slot = null,
   busy,
   onAssign,
 }: {
@@ -28,13 +30,15 @@ export function AssignSheet({
   subtitle: string
   viewerId: string
   exclude: string | null
+  /** When the item happens, for Free / Busy / Unknown; null if it has no time. */
+  slot?: AvailabilitySlot | null
   busy: boolean
   onAssign: (memberId: string) => void
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={title} description={subtitle}>
       {/* Mounted only while open, so each opening starts with nobody picked. */}
-      <AssignBody viewerId={viewerId} exclude={exclude} busy={busy} onAssign={onAssign} />
+      <AssignBody viewerId={viewerId} exclude={exclude} slot={slot} busy={busy} onAssign={onAssign} />
     </Sheet>
   )
 }
@@ -42,11 +46,13 @@ export function AssignSheet({
 function AssignBody({
   viewerId,
   exclude,
+  slot,
   busy,
   onAssign,
 }: {
   viewerId: string
   exclude: string | null
+  slot: AvailabilitySlot | null
   busy: boolean
   onAssign: (memberId: string) => void
 }) {
@@ -72,6 +78,7 @@ function AssignBody({
           value={picked}
           onChange={setPicked}
           exclude={exclude}
+          slot={slot}
         />
       )}
       <div className="grid grid-cols-2 gap-3 pt-2">

@@ -580,6 +580,29 @@
     "iosTip": "On iPhone, for quicker updates: Settings → Calendar → Accounts → Fetch New Data, then choose Every 15 Minutes.",
     "iosCheckNow": "To check now, open Calendar and tap Calendars at the bottom."
   },
+  "googleCalendar": {
+    "heading": "Show when you're free",
+    "explainer": "Connect Google Calendar so others in the Care Circle can see whether you're free or busy when they ask you to do something.",
+    "private": "Kindred only reads when you're free or busy, never your events' titles or details.",
+    "connect": "Connect Google Calendar",
+    "connecting": "Opening Google…",
+    "connected": "Google Calendar is connected.",
+    "disconnect": "Disconnect",
+    "disconnecting": "Disconnecting…",
+    "justConnected": "Connected. Others can now see when you're free or busy.",
+    "declined": "Google Calendar wasn't connected. You can connect it any time.",
+    "notSetUp": "Connecting Google Calendar isn't set up yet. Everyone shows as Unknown for now.",
+    "error": "Couldn't connect Google Calendar. Check your connection and try again.",
+    "disconnectError": "Couldn't disconnect. Check your connection and try again.",
+    "loadError": "We couldn't check your Google Calendar connection. Check your connection and try again."
+  },
+  "availability": {
+    "free": "Free",
+    "busy": "Busy",
+    "unknown": "Unknown",
+    "checking": "Checking…",
+    "note": "Free and Busy come from Google Calendar. Unknown means they haven't connected it."
+  },
   "circle": {
     "title": "{{name}}'s Care Circle",
     "members": "Members · {{count}}",
