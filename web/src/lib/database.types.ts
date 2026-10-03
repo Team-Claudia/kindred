@@ -917,7 +917,7 @@ isOneToOne: false
 "save_push_subscription":
 { Args: { "endpoint": string,"keys": Json }; Returns: undefined
                            },
-"series_horizon":
+"series_now":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "series_occurrence_at":

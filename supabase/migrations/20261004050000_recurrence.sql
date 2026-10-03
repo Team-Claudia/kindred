@@ -49,13 +49,14 @@ create unique index items_series_occurrence_idx on public.items (series_id, occu
 -- Occurrences
 -- ---------------------------------------------------------------------------
 
--- How far ahead occurrences are inserted. A function so the pgTAP tests can
--- fix "now" for dates on either side of a daylight-saving change.
-create function public.series_horizon()
+-- "Now" for making occurrences: those before it are skipped, and they're made
+-- up to 90 days after it. A function so the pgTAP tests can fix it, for dates
+-- on either side of a daylight-saving change.
+create function public.series_now()
 returns timestamptz
 language sql stable set search_path = ''
 as $$
-  select now() + interval '90 days'
+  select now()
 $$;
 
 -- When occurrence n of a series starting at `first` starts: the same local
@@ -72,11 +73,13 @@ as $$
             end) at time zone series_occurrence_at.time_zone
 $$;
 
--- Inserts a series' missing occurrences up to series_horizon() (or its
+-- Inserts a series' missing occurrences up to 90 days ahead (or its
 -- until), each Needing someone, with a `created` history row by `actor` (null
--- for the nightly job). Locks the series, so two runs never insert the same
--- occurrence. Inserts at most 400 per call; the next night carries on.
--- Returns how many it inserted.
+-- for the nightly job). Occurrences that would already have started are
+-- skipped, so a series entered with a past start gets its first occurrence
+-- as entered and then only upcoming ones, not a backlog of overdue items.
+-- Locks the series, so two runs never insert the same occurrence. Inserts at
+-- most 400 per call; the next night carries on. Returns how many it inserted.
 create function public.extend_series(series_id uuid, actor uuid)
 returns integer
 language plpgsql security definer set search_path = ''
@@ -84,7 +87,8 @@ as $$
 declare
   v_series public.series;
   v_time_zone text;
-  v_through timestamptz := public.series_horizon();
+  v_now timestamptz := public.series_now();
+  v_through timestamptz := v_now + interval '90 days';
   v_start timestamptz;
   v_item public.items;
   v_added integer := 0;
@@ -106,6 +110,11 @@ begin
     exit when v_added >= 400;
     v_start := public.series_occurrence_at(v_series.starts_at, v_series.repeat, v_series.next_index, v_time_zone);
     exit when v_start > v_through;
+
+    if v_start < v_now then
+      v_series.next_index := v_series.next_index + 1;
+      continue;
+    end if;
 
     insert into public.items (
       circle_id, kind, title, starts_at, ends_at, location, private_notes,
@@ -284,7 +293,7 @@ end $$;
 -- ---------------------------------------------------------------------------
 
 revoke execute on function
-  public.series_horizon(),
+  public.series_now(),
   public.series_occurrence_at(timestamptz, text, integer, text),
   public.extend_series(uuid, uuid),
   public.extend_all_series()

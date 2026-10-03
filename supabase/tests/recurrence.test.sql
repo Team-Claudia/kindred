@@ -2,10 +2,11 @@
 --
 -- People: Alice and Bob are in circle X (America/Toronto, which changes its
 -- clocks on 1 Nov 2026 and 14 Mar 2027, unlike Vancouver in CI's time zone
--- data). Alice creates every series. The 90-day horizon is fixed per test
--- with pg_temp.horizon(), so the dates don't depend on when the tests run.
+-- data). Alice creates every series. "Now" for making occurrences is fixed
+-- per test with pg_temp.horizon(), which sets the 90-day horizon (and so now,
+-- 90 days earlier), so the dates don't depend on when the tests run.
 begin;
-select plan(49);
+select plan(51);
 
 insert into auth.users (id) values
   ('a0000000-0000-0000-0000-00000000000a'), -- Alice
@@ -29,14 +30,15 @@ insert into public.circle_members (circle_id, user_id, role) values
 -- Test helpers
 -- ---------------------------------------------------------------------------
 
--- "Now plus 90 days", fixed by the test. Rolled back with the transaction.
-create or replace function public.series_horizon()
+-- "Now", fixed by the test. Rolled back with the transaction.
+create or replace function public.series_now()
 returns timestamptz language sql stable set search_path = '' as $$
-  select current_setting('test.horizon')::timestamptz
+  select current_setting('test.now')::timestamptz
 $$;
 
+-- Makes occurrences up to horizon_at, as if it were 90 days earlier.
 create function pg_temp.horizon(horizon_at timestamptz) returns void language sql as $$
-  select set_config('test.horizon', horizon_at::text, true);
+  select set_config('test.now', (horizon_at - interval '90 days')::text, true);
 $$;
 
 create function pg_temp.sign_in_as(uid uuid) returns void language sql as $$
@@ -123,7 +125,7 @@ select ok(
 -- Bad input
 -- ---------------------------------------------------------------------------
 
-select pg_temp.horizon('2028-06-01 00:00+00');
+select pg_temp.horizon('2027-01-01 00:00+00');
 select pg_temp.sign_in_as('a0000000-0000-0000-0000-00000000000a');
 
 select throws_ok($$ select public.create_item('task', 'Laundry', now(), repeat => 'yearly') $$,
@@ -213,21 +215,23 @@ select is((select string_agg(to_char(o.ends_at at time zone 'America/Toronto', '
 -- Monthly on the 31st, across the clocks going forward (14 Mar 2027)
 -- ---------------------------------------------------------------------------
 
+select pg_temp.horizon('2027-05-01 00:00+00');
 select set_config('test.bills', public.create_item(
   'task', 'Pay Dad''s bills', '2027-01-31 09:00 America/Toronto',
-  repeat => 'monthly', until => '2027-05-31 23:59 America/Toronto')::text, true);
+  repeat => 'monthly', until => '2027-03-31 23:59 America/Toronto')::text, true);
 
 select is(pg_temp.local('bills'),
-  '2027-01-31 09:00, 2027-02-28 09:00, 2027-03-31 09:00, 2027-04-30 09:00, 2027-05-31 09:00',
-  'monthly on the 31st falls on the last day of shorter months, and back on the 31st');
-select is(pg_temp.utc('bills'), '01-31 14:00, 02-28 14:00, 03-31 13:00, 04-30 13:00, 05-31 13:00',
+  '2027-01-31 09:00, 2027-02-28 09:00, 2027-03-31 09:00',
+  'monthly on the 31st falls on the last day of a shorter month, and back on the 31st');
+select is(pg_temp.utc('bills'), '01-31 14:00, 02-28 14:00, 03-31 13:00',
   'at 9 am local before and after the clocks go forward');
 
+select pg_temp.horizon('2028-03-01 00:00+00');
 select set_config('test.leap', public.create_item(
   'task', 'Order supplies', '2027-12-29 08:00 America/Toronto',
-  repeat => 'monthly', until => '2028-03-29 23:59 America/Toronto')::text, true);
+  repeat => 'monthly', until => '2028-02-29 23:59 America/Toronto')::text, true);
 select is(pg_temp.local('leap'),
-  '2027-12-29 08:00, 2028-01-29 08:00, 2028-02-29 08:00, 2028-03-29 08:00',
+  '2027-12-29 08:00, 2028-01-29 08:00, 2028-02-29 08:00',
   'the 29th exists in a leap-year February');
 
 -- ---------------------------------------------------------------------------
@@ -255,7 +259,7 @@ select is(to_char((select max(o.starts_at) from pg_temp.occurrences('walk') o) a
 select is(pg_temp.created('walk', by_kindred => true), 10, 'the added ones were created by Kindred, not a member');
 select is((select count(*)::integer from pg_temp.occurrences('walk') o where o.state = 'needs_someone'), 30,
   'and Need someone; the claimed walk is still Bob''s');
-select is(pg_temp.n('med') || ' ' || pg_temp.n('physio') || ' ' || pg_temp.n('bills'), '14 4 5',
+select is(pg_temp.n('med') || ' ' || pg_temp.n('physio') || ' ' || pg_temp.n('bills'), '14 4 3',
   'series with an end date stop there');
 select is(public.extend_all_series(), 0, 'running it again adds nothing');
 
@@ -267,7 +271,7 @@ select is(pg_temp.n('far') || ' ' || pg_temp.n('walk'), '5 91', 'both reach the 
 -- Assigning at creation asks about the first occurrence only
 -- ---------------------------------------------------------------------------
 
-select pg_temp.horizon('2027-06-01 00:00+00');
+select pg_temp.horizon('2027-01-01 00:00+00');
 select pg_temp.sign_in_as('a0000000-0000-0000-0000-00000000000a');
 select set_config('test.asked', public.create_item(
   'task', 'Water the plants', '2026-10-06 18:00 America/Toronto',
@@ -305,6 +309,21 @@ reset role;
 select public.extend_all_series();
 select is(pg_temp.jobs('soon', 'overdue') || ' ' || pg_temp.jobs('soon', 'reminder'), '3 1',
   'the nightly job queues no duplicates');
+
+-- ---------------------------------------------------------------------------
+-- A series entered with a past start: the first as entered, then upcoming only
+-- ---------------------------------------------------------------------------
+
+select pg_temp.sign_in_as('a0000000-0000-0000-0000-00000000000a');
+select set_config('test.late', public.create_item(
+  'task', 'Daily meds', now() - interval '10 days' + interval '3 hours',
+  repeat => 'daily', until => now() + interval '2 days 12 hours')::text, true);
+select is((select array_agg(o.occurrence_index) from pg_temp.occurrences('late') o), array[0, 10, 11, 12],
+  'past occurrences after the first are skipped, not created overdue');
+reset role;
+select public.extend_all_series();
+select is((select array_agg(o.occurrence_index) from pg_temp.occurrences('late') o), array[0, 10, 11, 12],
+  'and the nightly job doesn''t fill them in later');
 
 select * from finish();
 rollback;
