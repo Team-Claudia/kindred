@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import { sendEmailCode, signInWithGoogle, useAuth, verifyEmailCode } from '@/lib/auth'
@@ -78,4 +78,17 @@ test('Use a different email goes back to the email step', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Use a different email' }))
   expect(screen.getByRole('heading', { name: "What's your email?" })).toBeInTheDocument()
   expect(screen.getByLabelText('Email')).toHaveValue('maya@example.com')
+})
+
+test('the buttons work again when Safari restores the page after Back', async () => {
+  vi.mocked(signInWithGoogle).mockReturnValue(new Promise(() => {})) // leaves for Google
+  renderSignIn()
+  fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
+  expect(screen.getByRole('button', { name: 'Email me a code' })).toBeDisabled()
+
+  act(() => {
+    window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: true }))
+  })
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Email me a code' })).toBeEnabled())
+  expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeEnabled()
 })
