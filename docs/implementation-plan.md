@@ -142,6 +142,7 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 | `save_push_subscription` | `endpoint`, `keys` (`{p256dh, auth}`) | `invalid_input`; upserts on `endpoint` for the caller, so a phone that changes account moves to the new one |
 | `delete_push_subscription` | `endpoint` | — (only removes the caller's own) |
 | `reset_demo_circle` | — | Service role only |
+| `build_sample_circle` | — → circle ID | Service role only (task 4.7), for `reset_demo_circle`. Deletes the sample circle (fixed ID, §8.5) and builds it again as in `docs/sample-data.md`, with dates relative to `now()` in Vancouver time. Other members (demo guests) stay in the rebuilt circle; their items and changes are cleared. The sample people are `auth.users` rows nobody can sign in to |
 | `calendar_feed` | — → `{token, feed_tasks}` (one row) | `not_member` (signed out). Creates the caller's `calendar_settings` row on first use; a member only ever gets their own token (task 3.4) |
 | `set_calendar_feed_tasks` | `enabled` → `{token, feed_tasks}` (one row) | `invalid_input` (null). Turns tasks in the caller's feed on or off (US 5.2); creates the row if needed |
 | `calendar_feed_for_token` | `token` → `{care_recipient_name, time_zone, items}`, or null for an unknown token | Service role only, for the `calendar-feed` function. `items` are the token owner's Assigned and Needs coverage items in their circle (appointments if `feed_appointments`, tasks if `feed_tasks`), from 30 days ago to a year ahead, with `id`, `kind`, `state`, `title`, `starts_at`, `ends_at`, `updated_at`, `version` only |
@@ -151,10 +152,10 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 **Conventions** (set in task 0.3):
 
 - **Arguments** use the names above, so the app calls `supabase.rpc('claim', { item_id, version })`. `web/src/lib/api.ts` has one typed wrapper per RPC; screens use those.
-- **Returns:** RPCs that act on an item return the updated `items` row. `create_circle`, `join_circle` and `join_demo_circle` return the circle ID; `create_item` and `post_update` return the new ID; `create_invite` returns the code; `calendar_feed` and `set_calendar_feed_tasks` return one `{token, feed_tasks}` row; the rest return nothing.
+- **Returns:** RPCs that act on an item return the updated `items` row. `create_circle`, `join_circle`, `join_demo_circle` and `build_sample_circle` return the circle ID; `create_item` and `post_update` return the new ID; `create_invite` returns the code; `calendar_feed` and `set_calendar_feed_tasks` return one `{token, feed_tasks}` row; the rest return nothing.
 - **Errors:** raise the code as the message, with any values the message needs as a JSON object in `DETAIL`: `raise exception 'coverage_resolved' using detail = json_build_object('name', owner_name)::text`. A message with a `_named` variant in `en-CA.json` uses it when `name` is sent. Unfinished RPCs raise `not_implemented`.
 - **Names:** many arguments share a column's name (`item_id`, `version`, `kind`), which plpgsql rejects as ambiguous. In bodies, qualify columns with a table alias and arguments with the function name: `update public.items i set version = i.version + 1 where i.id = claim.item_id and i.version = claim.version`.
-- **Security:** RPCs are `security definer` with `set search_path = ''`. Supabase grants `EXECUTE` to `anon` by default, so every new function needs `revoke execute ... from public, anon, authenticated`, then `grant execute ... to authenticated` if the app calls it. Demo guests are anonymous sign-ins, which use the `authenticated` role. `reset_demo_circle` is granted to `service_role` only.
+- **Security:** RPCs are `security definer` with `set search_path = ''`. Supabase grants `EXECUTE` to `anon` by default, so every new function needs `revoke execute ... from public, anon, authenticated`, then `grant execute ... to authenticated` if the app calls it. Demo guests are anonymous sign-ins, which use the `authenticated` role. `reset_demo_circle` and `build_sample_circle` are granted to `service_role` only.
 - **`weekly_summary(week_start date)`** runs as the caller (RLS applies) and returns rows of `kind`, `item_id`, `item_title`, `person_id`, `at`, `count`.
 
 ### 4.3 Reads and live updates
@@ -535,7 +536,19 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 
 **Outline for T1:** care recipient "Mom" (Margaret), time zone `America/Vancouver`, three fictional siblings (Maya, Daniel, Priya), a weekly "Drive Mom to physio" series, a cardiology appointment with an update and a follow-up task, a daily "Evening medication check", some completed history, and one coverage request already used by Maya this month (so the coverage flow shows "1 of 2 remaining").
 
-Task 4.7 drafts this as `docs/sample-data.md` for the team to review (T1), then builds it as SQL; 4.2 loads and resets it. It's separate from the local development seed (`supabase/seed.sql`, task 2.5), which uses the wireframes' family.
+Task 4.7 drafts this as `docs/sample-data.md` for the team to review (T1), then builds it as SQL; 4.2 loads and resets it.
+
+**Built by** `build_sample_circle()` (task 4.7, see §4.2), from `docs/sample-data.md`. Fixed IDs, for task 4.2 and tests:
+
+| What | ID |
+| --- | --- |
+| Circle (Mom, America/Vancouver) | `5a3b1e00-0000-4000-8000-000000000100` |
+| Maya Hart (admin) | `5a3b1e00-0000-4000-8000-000000000001` |
+| Daniel Hart | `5a3b1e00-0000-4000-8000-000000000002` |
+| Priya Hart | `5a3b1e00-0000-4000-8000-000000000003` |
+| Items 1–16 in `docs/sample-data.md` order | `5a3b1e00-0000-4000-8000-000000000201` to `…000000000216` |
+
+The three people have `@example.invalid` addresses, no password and no identity, so nobody can sign in as them; task 4.2's anonymous-user clean-up must leave them alone (they aren't anonymous). The sample circle is separate from the local development seed (`supabase/seed.sql`, task 2.5), which uses the wireframes' family.
 
 The team's own circle is created through the app, not seeded.
 

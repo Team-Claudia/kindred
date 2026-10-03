@@ -540,6 +540,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"build_sample_circle":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "calendar_feed":
 { Args: Record<PropertyKey, never>; Returns: {
               "feed_tasks": boolean,"token": string
