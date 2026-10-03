@@ -3,7 +3,7 @@
 -- People: Alice, Bob and Erin are in circle X. Carol is in circle Y. Dave
 -- isn't in any circle.
 begin;
-select plan(23);
+select plan(24);
 
 insert into auth.users (id) values
   ('a0000000-0000-0000-0000-00000000000a'), -- Alice
@@ -174,6 +174,8 @@ select throws_ok($$ select public.post_update('') $$,
   'P0001', 'invalid_input', 'an empty body raises invalid_input');
 select throws_ok($$ select public.post_update('   ') $$,
   'P0001', 'invalid_input', 'a blank body raises invalid_input');
+select throws_ok(format('select public.post_update(%L)', E'\n\t \r\n'),
+  'P0001', 'invalid_input', 'a body of only newlines and tabs raises invalid_input');
 select throws_ok($$ select public.post_update(null) $$,
   'P0001', 'invalid_input', 'a missing body raises invalid_input');
 select throws_ok(format('select public.post_update(%L)', repeat('a', 2001)),

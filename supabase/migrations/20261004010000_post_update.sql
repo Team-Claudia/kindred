@@ -23,7 +23,8 @@ as $$
 declare
   v_user uuid := auth.uid();
   v_circle uuid := public.current_circle_id();
-  v_body text := nullif(btrim(post_update.body), '');
+  -- Strip all whitespace, not just spaces, so a body of only newlines is blank.
+  v_body text := nullif(btrim(post_update.body, E' \t\r\n'), '');
   v_id uuid;
 begin
   if v_circle is null then
