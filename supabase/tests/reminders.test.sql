@@ -5,7 +5,7 @@
 -- every RPC unless the test says otherwise. Each item's jobs are read with
 -- pg_temp.jobs(), which lists its pending reminder and overdue jobs.
 begin;
-select plan(61);
+select plan(66);
 
 insert into auth.users (id) values
   ('a0000000-0000-0000-0000-00000000000a'), -- Alice
@@ -91,6 +91,8 @@ select ok(not has_function_privilege('authenticated', 'public.expand_overdue_job
   'signed-in users cannot expand overdue jobs');
 select ok(not has_function_privilege('authenticated', 'public.reminder_run_at(text, timestamptz, text)', 'execute'),
   'reminder_run_at is internal');
+select ok(not has_function_privilege('authenticated', 'public.overdue_run_at(text, timestamptz, text)', 'execute'),
+  'overdue_run_at is internal');
 select has_trigger('public', 'items', 'items_schedule_jobs', 'a trigger on items queues the jobs');
 
 -- ---------------------------------------------------------------------------
@@ -118,6 +120,14 @@ select is(public.reminder_run_at('task', '2026-10-05 20:00+00', 'America/Toronto
 select is(public.reminder_run_at('task', '2026-10-05 20:00+00', 'America/Vancouver'),
   '2026-10-05 16:00+00'::timestamptz, 'and 9 am in Vancouver for a Vancouver circle');
 
+select is(public.overdue_run_at('appointment', '2026-11-01 15:00 America/Toronto', 'America/Toronto'),
+  '2026-11-01 15:00 America/Toronto'::timestamptz, 'an appointment is overdue at its start');
+select is(public.overdue_run_at('task', '2026-11-01 15:00 America/Toronto', 'America/Toronto'),
+  '2026-11-01 15:00 America/Toronto'::timestamptz, 'a task with a time is overdue at that time');
+select is(public.overdue_run_at('task', '2026-10-31 23:59 America/Toronto', 'America/Toronto'),
+  '2026-11-01 14:00+00'::timestamptz,
+  'a task with no time (23:59) is alerted at 9 am the next morning, across the clock change');
+
 -- ---------------------------------------------------------------------------
 -- create_item
 -- ---------------------------------------------------------------------------
@@ -131,6 +141,13 @@ select is(
   jsonb_build_object('item_id', pg_temp.id('open'), 'starts_at', now() + interval '1 day'),
   'the overdue payload holds the item and its due time only'
 );
+
+select set_config('test.notime', public.create_item('task', 'Pharmacy run',
+  (date_trunc('day', now() at time zone 'America/Toronto') + interval '1 day 23 hours 59 minutes')
+    at time zone 'America/Toronto')::text, true);
+select is(pg_temp.run_at('notime', 'overdue'),
+  (date_trunc('day', now() at time zone 'America/Toronto') + interval '2 days 9 hours') at time zone 'America/Toronto',
+  'a task with no time is alerted the next morning, not at midnight');
 
 select set_config('test.mine', public.create_item('appointment', 'Dentist', now() + interval '2 hours 5 minutes',
   assignee_id => 'a0000000-0000-0000-0000-00000000000a')::text, true);

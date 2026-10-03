@@ -13,8 +13,9 @@
 --     hours before if they're due before 11 am. Skipped if that has passed.
 --
 --   overdue   {item_id, starts_at}
---     For every open item, at its due time (starts_at); queued again when the
---     time changes or the item reopens. Skipped if the due time has passed.
+--     For every open item, at overdue_run_at(): its due time (starts_at), or
+--     9 am the next morning for a task with no time. Queued again when the
+--     time changes or the item reopens. Skipped if that has passed.
 --     When it runs, expand_overdue_job() re-checks the item and fans it out
 --     into one overdue job per person to tell, {item_id, starts_at,
 --     recipient_id}: the owner (or the proposed assignee if not yet accepted)
@@ -45,6 +46,22 @@ as $$
       then (date_trunc('day', reminder_run_at.starts_at at time zone reminder_run_at.time_zone)
             + interval '9 hours') at time zone reminder_run_at.time_zone
     else reminder_run_at.starts_at - interval '2 hours'
+  end
+$$;
+
+-- When an overdue alert runs: at the due time, except for a task with no time
+-- (stored at 23:59 in the circle's time zone, meaning "by the end of the
+-- day"), which is alerted at 9 am the next morning rather than at midnight.
+create function public.overdue_run_at(kind text, starts_at timestamptz, time_zone text)
+returns timestamptz
+language sql stable set search_path = ''
+as $$
+  select case
+    when overdue_run_at.kind = 'task'
+         and (overdue_run_at.starts_at at time zone overdue_run_at.time_zone)::time = time '23:59'
+      then (date_trunc('day', overdue_run_at.starts_at at time zone overdue_run_at.time_zone)
+            + interval '1 day 9 hours') at time zone overdue_run_at.time_zone
+    else overdue_run_at.starts_at
   end
 $$;
 
@@ -108,12 +125,16 @@ begin
     set status = 'done', last_error = 'superseded'
     where o.kind = 'overdue' and o.status = 'pending' and o.payload ->> 'item_id' = new.id::text;
   end if;
-  if v_open and (v_insert or not v_was_open or v_moved) and new.starts_at > now() then
-    insert into public.outbox (circle_id, kind, run_at, payload)
-    values (new.circle_id, 'overdue', new.starts_at, jsonb_build_object(
-      'item_id', new.id,
-      'starts_at', new.starts_at
-    ));
+  if v_open and (v_insert or not v_was_open or v_moved) then
+    select public.overdue_run_at(new.kind, new.starts_at, c.time_zone) into v_run_at
+    from public.circles c where c.id = new.circle_id;
+    if v_run_at > now() then
+      insert into public.outbox (circle_id, kind, run_at, payload)
+      values (new.circle_id, 'overdue', v_run_at, jsonb_build_object(
+        'item_id', new.id,
+        'starts_at', new.starts_at
+      ));
+    end if;
   end if;
 
   return null;
@@ -261,6 +282,7 @@ end $$;
 
 revoke execute on function
   public.reminder_run_at(text, timestamptz, text),
+  public.overdue_run_at(text, timestamptz, text),
   public.is_open_state(text),
   public.items_schedule_jobs(),
   public.expand_overdue_job(bigint, integer)

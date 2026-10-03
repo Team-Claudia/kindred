@@ -736,6 +736,9 @@ isOneToOne: false
 "delete_push_subscription":
 { Args: { "endpoint": string }; Returns: undefined
                            },
+"expand_overdue_job":
+{ Args: { "attempt": number,"job_id": number }; Returns: number
+                           },
 "finish_outbox_job":
 { Args: { "attempt": number,"failure"?: string,"job_id": number }; Returns: undefined
                            },
@@ -749,6 +752,9 @@ isOneToOne: false
                            },
 "is_circle_member":
 { Args: { "circle": string,"person": string }; Returns: boolean
+                           },
+"is_open_state":
+{ Args: { "state": string }; Returns: boolean
                            },
 "join_circle":
 { Args: { "code": string,"display_name"?: string,"relationship"?: string }; Returns: string
@@ -820,11 +826,17 @@ isOneToOne: false
 "outbox_catch_up":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"overdue_run_at":
+{ Args: { "kind": string,"starts_at": string,"time_zone": string }; Returns: string
+                           },
 "post_update":
 { Args: { "body": string,"item_id"?: string }; Returns: string
                            },
 "queue_push":
 { Args: { "actor": string,"event": string,"item": Database["public"]['Tables']["items"]['Row'],"recipients": (string)[] }; Returns: undefined
+                           },
+"reminder_run_at":
+{ Args: { "kind": string,"starts_at": string,"time_zone": string }; Returns: string
                            },
 "remove_member":
 { Args: { "member_id": string }; Returns: undefined

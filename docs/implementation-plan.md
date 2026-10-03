@@ -238,7 +238,7 @@ The actor is never a recipient, and nor is anyone who has left the circle. Event
 | `kind` | Queued when | `run_at` | Payload |
 | --- | --- | --- | --- |
 | `reminder` | The item becomes Assigned (create assigned to yourself, `accept_assignment`, `claim`, `assign` to yourself, `accept_coverage`, `cancel_coverage`), its owner changes, or an Assigned item's `starts_at` changes | `reminder_run_at(kind, starts_at, circles.time_zone)`: appointments 2 hours before; tasks 9 am on the due day in the circle's time zone, or 2 hours before if due before 11 am. Not queued if that has passed | `{item_id, recipient_id, starts_at}` |
-| `overdue` | An open item is created, reopens, or its `starts_at` changes. Moving between open states (asked, accepted, covered) keeps the job | `starts_at`. Not queued if it has passed | `{item_id, starts_at}` |
+| `overdue` | An open item is created, reopens, or its `starts_at` changes. Moving between open states (asked, accepted, covered) keeps the job | `overdue_run_at(kind, starts_at, time_zone)`: `starts_at`, except a task with no time (23:59 in the circle's time zone) is alerted at 9 am the next morning. Not queued if that has passed | `{item_id, starts_at}` |
 
 - **Superseding.** Queuing either kind for an item first marks that item's pending jobs of the same kind `done` with `last_error = 'superseded'`; so do completing or cancelling it (both kinds) and any change of state, owner or time (`reminder`). Moving a time away and back never sends twice.
 - **Claim and calls.** `claim_outbox_jobs` and `outbox_catch_up` take due `push`, `reminder` and `overdue` jobs alike, so the cron starts a reminder within a minute of its `run_at`. The insert trigger still calls the worker only for `push` jobs.
