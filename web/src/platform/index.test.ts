@@ -1,4 +1,4 @@
-import { appUrl, copyText, deviceSetting, isIOS, onAppVisible, share, whatsAppUrl } from './index'
+import { appUrl, copyText, deviceSetting, isIOS, onAppVisible, onPageRestored, share, whatsAppUrl } from './index'
 
 const content = { text: 'Physio ride on Friday', url: 'https://kindred.example/i/123' }
 
@@ -116,5 +116,23 @@ describe('isIOS', () => {
   ])('is right for %s', (_label, userAgent, maxTouchPoints, expected) => {
     stubNavigator({ userAgent, maxTouchPoints })
     expect(isIOS()).toBe(expected)
+  })
+})
+
+describe('onPageRestored', () => {
+  function pageshow(persisted: boolean) {
+    window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted }))
+  }
+
+  test('calls back only when the page comes back from the back/forward cache, until stopped', () => {
+    const callback = vi.fn()
+    const stop = onPageRestored(callback)
+    pageshow(false)
+    expect(callback).not.toHaveBeenCalled()
+    pageshow(true)
+    expect(callback).toHaveBeenCalledTimes(1)
+    stop()
+    pageshow(true)
+    expect(callback).toHaveBeenCalledTimes(1)
   })
 })

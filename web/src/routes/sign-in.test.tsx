@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import { sendEmailCode, signInWithGoogle, useAuth, verifyEmailCode } from '@/lib/auth'
@@ -143,4 +143,17 @@ test('on a computer, signs in straight away with no app note', () => {
   renderSignIn(`/sign-in?next=${encodeURIComponent('/i/item-1')}`)
   expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeInTheDocument()
   expect(screen.queryByRole('note')).not.toBeInTheDocument()
+})
+
+test('the buttons work again when Safari restores the page after Back', async () => {
+  vi.mocked(signInWithGoogle).mockReturnValue(new Promise(() => {})) // leaves for Google
+  renderSignIn()
+  fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
+  expect(screen.getByRole('button', { name: 'Email me a code' })).toBeDisabled()
+
+  act(() => {
+    window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: true }))
+  })
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Email me a code' })).toBeEnabled())
+  expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeEnabled()
 })
