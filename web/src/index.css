@@ -23,6 +23,12 @@
     --color-state-cancelled-foreground: var(--state-cancelled-foreground);
     --color-state-overdue: var(--state-overdue);
     --color-state-overdue-foreground: var(--state-overdue-foreground);
+    --color-availability-free: var(--availability-free);
+    --color-availability-free-foreground: var(--availability-free-foreground);
+    --color-availability-busy: var(--availability-busy);
+    --color-availability-busy-foreground: var(--availability-busy-foreground);
+    --color-availability-unknown: var(--availability-unknown);
+    --color-availability-unknown-foreground: var(--availability-unknown-foreground);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);

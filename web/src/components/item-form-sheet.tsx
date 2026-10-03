@@ -5,6 +5,7 @@ import { Sheet, SheetClose } from '@/components/sheet'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
+import { formAvailabilitySlot } from '@/lib/availability'
 import { useCircleMembers } from '@/lib/circles'
 import { dayKey } from '@/lib/dates'
 import { errorMessage, RpcError } from '@/lib/errors'
@@ -252,6 +253,7 @@ function ItemFormBody({
           value={form.assigneeId}
           onChange={(memberId) => set('assigneeId', memberId)}
           allowNobody
+          slot={formAvailabilitySlot(form, timeZone)}
         />
       )}
 

@@ -129,3 +129,51 @@ export async function setCalendarFeedTasks(enabled: boolean): Promise<CalendarFe
   if (!feed) throw new RpcError('unknown')
   return feed
 }
+
+// Google Calendar free/busy (task 4.5a, ADR-008). Connecting goes through the
+// google-oauth Edge Function; the refresh token never reaches the app.
+export const googleCalendarConnected = () => call('google_calendar_connected')
+export const disconnectGoogleCalendar = () => call('disconnect_google_calendar')
+
+/**
+ * Where to send the member to connect: Google's consent screen, or
+ * 'not_configured' until the team's one-time Google setup is done (plan §8.3).
+ */
+export async function startGoogleConnect(): Promise<{ url: string } | 'not_configured'> {
+  const { data, error } = await supabase.functions.invoke<{ url?: string; status?: string }>(
+    'google-oauth',
+    { method: 'POST', body: { action: 'start' } },
+  )
+  if (error || !data) throw new RpcError('unknown', {}, error)
+  if (data.status === 'not_configured') return 'not_configured'
+  if (!data.url) throw new RpcError('unknown')
+  return { url: data.url }
+}
+
+/** Finishes connecting with the code and state Google sent back. */
+export async function finishGoogleConnect(code: string, state: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke<{ status?: string }>('google-oauth', {
+    method: 'POST',
+    body: { action: 'finish', code, state },
+  })
+  if (error || data?.status !== 'connected') throw new RpcError('unknown', {}, error)
+}
+
+export type Availability = 'free' | 'busy' | 'unknown'
+export type AvailabilitySlot = { start: string; end: string }
+
+/**
+ * Who's free (task 4.5a): each member of the circle as free, busy or unknown
+ * for the slot. Only members who connected Google Calendar can be free or busy.
+ */
+export async function availability(
+  circleId: string,
+  slot: AvailabilitySlot,
+): Promise<Record<string, Availability>> {
+  const { data, error } = await supabase.functions.invoke<Record<string, Availability>>('availability', {
+    method: 'POST',
+    body: { circle_id: circleId, start: slot.start, end: slot.end },
+  })
+  if (error || !data) throw new RpcError('unknown', {}, error)
+  return data
+}

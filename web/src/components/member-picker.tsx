@@ -1,11 +1,14 @@
 import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { Availability, AvailabilitySlot } from '@/lib/api'
 import { firstName, relationshipLabel, useMyMembership, type CircleMember } from '@/lib/circles'
+import { useAvailability } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 // "Ask someone to do it" (wireframes 16, 18 and 20): one row per member with
-// their relationship, and optionally Nobody yet. Who's free comes with
-// Google Calendar (task 4.5).
+// their relationship, and optionally Nobody yet. Given a `slot`, each member
+// also shows Free, Busy or Unknown from Google Calendar (task 4.5a). It's
+// only a hint: anyone can still be chosen.
 
 export function MemberPicker({
   legend,
@@ -15,6 +18,7 @@ export function MemberPicker({
   onChange,
   allowNobody = false,
   exclude,
+  slot = null,
 }: {
   legend: string
   members: readonly CircleMember[]
@@ -25,16 +29,21 @@ export function MemberPicker({
   allowNobody?: boolean
   /** A member who can't be picked, e.g. who the item already belongs to. */
   exclude?: string | null
+  /** When the item happens, to show who's free; null for no time (e.g. a task due any time that day). */
+  slot?: AvailabilitySlot | null
 }) {
   const { t } = useTranslation()
   const group = useId()
   // For "Dad's child" under each name; already loaded by the screens that open this.
-  const recipientName = useMyMembership(viewerId).data?.circles?.care_recipient_name
+  const circle = useMyMembership(viewerId).data?.circles
+  const recipientName = circle?.care_recipient_name
+  const availability = useAvailability(circle?.id, slot)
   const shown = members.filter((member) => member.user_id !== exclude)
 
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-2 text-sm font-semibold tracking-wider uppercase">{legend}</legend>
+      {slot && <p className="text-sm text-muted-foreground">{t('availability.note')}</p>}
       {shown.map((member) => {
         const name = memberName(t, member, viewerId)
         return (
@@ -46,6 +55,13 @@ export function MemberPicker({
             initial={name.charAt(0).toUpperCase() || '?'}
             label={name}
             detail={relationshipLabel(t, member.relationship, recipientName)}
+            availability={
+              !slot
+                ? undefined
+                : availability.isPending
+                  ? 'checking'
+                  : (availability.data?.[member.user_id] ?? 'unknown')
+            }
           />
         )
       })}
@@ -84,6 +100,7 @@ function PickerRow({
   label,
   detail,
   dashed = false,
+  availability,
 }: {
   group: string
   checked: boolean
@@ -92,6 +109,7 @@ function PickerRow({
   label: string
   detail?: string | null
   dashed?: boolean
+  availability?: Availability | 'checking'
 }) {
   return (
     <label
@@ -120,7 +138,32 @@ function PickerRow({
         <span className="font-semibold break-words">{label}</span>
         {detail && <span className="text-sm break-words text-muted-foreground">{detail}</span>}
       </span>
+      {availability && <AvailabilityBadge availability={availability} />}
     </label>
+  )
+}
+
+// Full class names, so Tailwind finds them. Colours are the availability
+// token pairs in tokens.css; the word is always shown too.
+const availabilityStyles: Record<Availability | 'checking', string> = {
+  free: 'bg-availability-free text-availability-free-foreground',
+  busy: 'bg-availability-busy text-availability-busy-foreground',
+  unknown: 'bg-availability-unknown text-availability-unknown-foreground',
+  checking: 'text-muted-foreground',
+}
+
+function AvailabilityBadge({ availability }: { availability: Availability | 'checking' }) {
+  const { t } = useTranslation()
+  return (
+    <span
+      data-availability={availability}
+      className={cn(
+        'ml-auto shrink-0 rounded-full px-3 py-1 text-sm font-medium leading-tight',
+        availabilityStyles[availability],
+      )}
+    >
+      {t(`availability.${availability}`)}
+    </span>
   )
 }
 
