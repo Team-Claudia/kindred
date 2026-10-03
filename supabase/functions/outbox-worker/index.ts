@@ -19,13 +19,15 @@ import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { pushAllowed, pushMessage, type NotificationPrefs } from '../_shared/push-copy.ts'
 import { configureVapid, sendPush, type Subscription } from '../_shared/web-push.ts'
+// Reminders and overdue alerts (task 4.5b).
+import { runScheduledJob } from './scheduled.ts'
 
 const BATCH_SIZE = 10
 // Stop claiming new batches after this long, well inside the claim's 2-minute
 // lease and the function's time limit; the cron picks up the rest.
 const TIME_BUDGET_MS = 40_000
 
-type Job = { id: number; attempts: number; payload: Record<string, unknown> }
+type Job = { id: number; kind: string; attempts: number; payload: Record<string, unknown> }
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -165,7 +167,8 @@ Deno.serve(async (req) => {
       jobs.map(async (job) => {
         let failure: string | null
         try {
-          failure = await runJob(admin, job)
+          failure =
+            job.kind === 'push' ? await runJob(admin, job) : await runScheduledJob(admin, job)
         } catch (error) {
           failure = error instanceof Error ? error.message : JSON.stringify(error)
         }
