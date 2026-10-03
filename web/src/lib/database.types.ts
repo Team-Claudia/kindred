@@ -736,6 +736,9 @@ isOneToOne: false
 "delete_push_subscription":
 { Args: { "endpoint": string }; Returns: undefined
                            },
+"demo_nightly_cleanup":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "finish_outbox_job":
 { Args: { "attempt": number,"failure"?: string,"job_id": number }; Returns: undefined
                            },
@@ -757,6 +760,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "leave_circle":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"lock_demo_circle":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "lock_item":
