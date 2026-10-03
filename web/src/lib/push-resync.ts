@@ -24,6 +24,8 @@ export function isPushTurnedOff(): boolean {
  */
 export function forgetPushResync() {
   resyncedFor = undefined
+  // "Off" was that member's choice; the next person on this phone starts fresh.
+  setPushTurnedOff(false)
 }
 
 /**

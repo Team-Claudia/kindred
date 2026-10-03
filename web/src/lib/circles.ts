@@ -22,10 +22,6 @@ export const relationships = [
 
 export type Relationship = (typeof relationships)[number]
 
-export function isRelationship(value: string | null | undefined): value is Relationship {
-  return (relationships as readonly (string | null | undefined)[]).includes(value)
-}
-
 /**
  * How a member relates to the care recipient, for showing next to their name:
  * stored "parent" (Dad is my parent) reads "Dad's child". Null when the member
@@ -38,8 +34,10 @@ export function relationshipLabel(
   recipientName: string | null | undefined,
 ): string | null {
   const name = recipientName?.trim()
-  if (!isRelationship(value) || !name) return null
-  return t(`circleSetup.relationshipOf.${value}`, { name })
+  // Older rows may hold a key in another case (e.g. 'Parent').
+  const key = relationships.find((option) => option.toLowerCase() === value?.trim().toLowerCase())
+  if (!key || !name) return null
+  return t(`circleSetup.relationshipOf.${key}`, { name })
 }
 
 /** A member's full name, or "New member" if they haven't given one. */

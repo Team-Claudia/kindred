@@ -65,6 +65,13 @@ test.each([
   expect(mocked.enablePush).not.toHaveBeenCalled()
 })
 
+test('a sign-out forgets that the last member turned them off', () => {
+  setPushTurnedOff(true)
+  forgetPushResync()
+  resyncSubscription('jonah')
+  expect(mocked.enablePush).toHaveBeenCalledOnce()
+})
+
 test('saves it on sign-in and again each time Kindred comes back on screen', () => {
   const { unmount } = renderHook(() => useKeepPushSubscription('maya'))
   expect(mocked.enablePush).toHaveBeenCalledOnce()

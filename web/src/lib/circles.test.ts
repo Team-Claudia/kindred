@@ -26,6 +26,10 @@ test('every option has a label', () => {
   }
 })
 
+test('reads a key stored in another case', () => {
+  expect(relationshipLabel(t, 'Parent', 'Dad')).toBe("Dad's child")
+})
+
 test.each([
   ['no relationship', null, 'Dad'],
   ['an unknown relationship', 'cousin', 'Dad'],

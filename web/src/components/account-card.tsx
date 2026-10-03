@@ -139,7 +139,7 @@ function NameForm() {
         }}
         autoComplete="name"
         maxLength={80}
-        disabled={!profile.data}
+        disabled={profile.isPending}
         aria-invalid={Boolean(error)}
         aria-describedby={`${id}-note`}
       />

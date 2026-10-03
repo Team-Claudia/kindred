@@ -24,7 +24,9 @@ vi.mock('@/lib/circles', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/circles')>()),
   useProfile: vi.fn(),
 }))
-vi.mock('@/platform', () => ({ platform: { disablePush: vi.fn() } }))
+vi.mock('@/platform', () => ({
+  platform: { disablePush: vi.fn(), deviceSetting: { get: vi.fn(), set: vi.fn() } },
+}))
 
 function renderCard() {
   const router = createMemoryRouter(
