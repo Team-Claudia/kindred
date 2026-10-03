@@ -145,6 +145,7 @@ select is_empty(
 select is(public.join_demo_circle(), pg_temp.sample(), 'joining again returns the same circle');
 
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 
 select is(
   (select count(*)::integer from public.items i
@@ -177,6 +178,7 @@ select public.join_demo_circle();
 select set_config('request.jwt.claims', pg_temp.claims('c0000000-0000-0000-0000-00000000000c', true), true);
 select public.join_demo_circle();
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 
 select is(
   (select p.display_name from public.profiles p where p.id = 'd0000000-0000-0000-0000-00000000000d'),
@@ -201,6 +203,7 @@ select throws_ok(
   'an anonymous user in another circle cannot join the demo'
 );
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 delete from public.circle_members m where m.user_id = 'e0000000-0000-0000-0000-00000000000e';
 
 -- ---------------------------------------------------------------------------
@@ -234,6 +237,7 @@ select lives_ok(
   'a real member can still invite people'
 );
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 
 select is_empty(
   $$ select 1 from public.circle_members m where m.user_id = '90000000-0000-0000-0000-000000000009'
@@ -257,6 +261,7 @@ select throws_ok(
   'a guest cannot reset the demo circle'
 );
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 
 select ok(
   has_function_privilege('service_role', 'public.reset_demo_circle()', 'execute')
@@ -272,6 +277,7 @@ select set_config('test.reset_started', clock_timestamp()::text, true);
 set local role service_role;
 select lives_ok($$ select public.reset_demo_circle() $$, 'the service role can reset the demo circle');
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 
 select ok(
   clock_timestamp() - current_setting('test.reset_started')::timestamptz < interval '1 minute',
@@ -310,6 +316,7 @@ set local role authenticated;
 select set_config('request.jwt.claims', pg_temp.claims('b0000000-0000-0000-0000-00000000000b', true), true);
 select public.join_demo_circle();
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 
 select is(
   (select count(*)::integer from public.items i
@@ -324,6 +331,7 @@ select is(
 set local role service_role;
 select public.demo_nightly_cleanup();
 reset role;
+select set_config('request.jwt.claims', '', true); -- as postgres, with no token
 
 select set_eq(
   $$ select u.id from auth.users u
