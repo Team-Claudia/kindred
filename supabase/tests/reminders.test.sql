@@ -61,6 +61,19 @@ create function pg_temp.run_at(name text, job_kind text) returns timestamptz lan
   where o.kind = job_kind and o.status = 'pending' and o.payload ->> 'item_id' = pg_temp.id(name)::text
 $$;
 
+-- The payload of an item's pending job of one kind.
+create function pg_temp.payload(name text, job_kind text) returns jsonb language sql security definer as $$
+  select o.payload from public.outbox o
+  where o.kind = job_kind and o.status = 'pending' and o.payload ->> 'item_id' = pg_temp.id(name)::text
+$$;
+
+-- reminder_run_at in this circle's time zone (it is internal, so not callable
+-- while signed in).
+create function pg_temp.reminder_at(item_kind text, starts_at timestamptz) returns timestamptz
+language sql security definer as $$
+  select public.reminder_run_at(item_kind, starts_at, 'America/Toronto')
+$$;
+
 -- How many of an item's jobs were superseded.
 create function pg_temp.superseded(name text) returns bigint language sql security definer as $$
   select count(*) from public.outbox o
@@ -114,7 +127,7 @@ select set_config('test.open', public.create_item('task', 'Groceries', now() + i
 select is(pg_temp.jobs('open'), 'overdue -', 'an open item gets an overdue job and no reminder');
 select is(pg_temp.run_at('open', 'overdue'), now() + interval '1 day', 'due at its due time');
 select is(
-  (select o.payload from public.outbox o where o.kind = 'overdue' and o.payload ->> 'item_id' = pg_temp.id('open')::text),
+  pg_temp.payload('open', 'overdue'),
   jsonb_build_object('item_id', pg_temp.id('open'), 'starts_at', now() + interval '1 day'),
   'the overdue payload holds the item and its due time only'
 );
@@ -125,7 +138,7 @@ select is(pg_temp.jobs('mine'), 'overdue -, reminder Alice', 'assigning yourself
 select is(pg_temp.run_at('mine', 'reminder'), now() + interval '5 minutes',
   'an appointment 2 h 5 min away is reminded in 5 minutes');
 select is(
-  (select o.payload from public.outbox o where o.kind = 'reminder' and o.payload ->> 'item_id' = pg_temp.id('mine')::text),
+  pg_temp.payload('mine', 'reminder'),
   jsonb_build_object('item_id', pg_temp.id('mine'), 'recipient_id', 'a0000000-0000-0000-0000-00000000000a'::uuid,
     'starts_at', now() + interval '2 hours 5 minutes'),
   'the reminder payload holds IDs and the time only'
@@ -166,7 +179,7 @@ select pg_temp.sign_in_as('b0000000-0000-0000-0000-00000000000b');
 select public.claim(pg_temp.id('open'), pg_temp.ver('open'));
 select is(pg_temp.jobs('open'), 'overdue -, reminder Bob', 'claiming queues a reminder');
 select is(pg_temp.run_at('open', 'reminder'),
-  public.reminder_run_at('task', now() + interval '1 day', 'America/Toronto'),
+  pg_temp.reminder_at('task', now() + interval '1 day'),
   'a task''s reminder uses the circle time zone');
 
 -- ---------------------------------------------------------------------------
