@@ -108,23 +108,27 @@ export function TextField({
   )
 }
 
+// "<Name> is my…", asked the same way in setup and join (task 4.9). The answer
+// is what the care recipient is to the member; member lists show it the other
+// way round with relationshipLabel.
 export function RelationshipField({
-  label,
+  recipientName,
   value,
   onChange,
   hint,
 }: {
-  label: string
+  recipientName: string
   value: string
   onChange: (value: string) => void
   hint?: string
 }) {
   const { t } = useTranslation()
   const id = useId()
+  const name = recipientName.trim()
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={id} className={fieldLabel}>
-        {label}
+        {name ? t('circleSetup.relationshipLabel', { name }) : t('circleSetup.relationshipLabelNoName')}
       </label>
       <select
         id={id}

@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
-import { firstName, relationshipLabel, type CircleMember } from '@/lib/circles'
+import { firstName, relationshipLabel, useMyMembership, type CircleMember } from '@/lib/circles'
 import { cn } from '@/lib/utils'
 
 // "Ask someone to do it" (wireframes 16, 18 and 20): one row per member with
@@ -28,6 +28,8 @@ export function MemberPicker({
 }) {
   const { t } = useTranslation()
   const group = useId()
+  // For "Dad's child" under each name; already loaded by the screens that open this.
+  const recipientName = useMyMembership(viewerId).data?.circles?.care_recipient_name
   const shown = members.filter((member) => member.user_id !== exclude)
 
   return (
@@ -43,7 +45,7 @@ export function MemberPicker({
             onSelect={() => onChange(member.user_id)}
             initial={name.charAt(0).toUpperCase() || '?'}
             label={name}
-            detail={relationshipLabel(t, member.relationship)}
+            detail={relationshipLabel(t, member.relationship, recipientName)}
           />
         )
       })}

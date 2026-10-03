@@ -25,6 +25,8 @@ export const queryKeys = {
   weeklySummary: (weekStart: string) => ['weekly-summary', weekStart] as const,
   // Home (task 2.3). Under 'items' and 'updates', so the live channel refreshes them.
   itemsNeedingAttention: (before: string) => ['items', 'attention', before] as const,
+  // Coming up for you (task 4.11), under 'items' like the rest of Home.
+  itemsComingUp: (ownerId: string, from: string) => ['items', 'coming-up', ownerId, from] as const,
   latestUpdate: ['updates', 'latest'] as const,
   itemCount: ['items', 'count'] as const,
 }
@@ -209,6 +211,31 @@ export function useItemsNeedingAttention(before: string) {
           .or(`state.neq.assigned,starts_at.lt."${before}"`)
           .eq('assignment_requests.status', 'pending')
           .order('starts_at'),
+      ),
+  })
+}
+
+/** How many of your own upcoming items Home shows before "See all". */
+export const comingUpLimit = 3
+
+/**
+ * Coming up for you: `ownerId`'s next accepted items (Assigned or Needs
+ * coverage) at or after `from`, soonest first, at any date. Filtered and
+ * limited in the query, so it never fetches the whole circle.
+ */
+export function useItemsComingUp(ownerId: string, from: string) {
+  return useQuery({
+    queryKey: queryKeys.itemsComingUp(ownerId, from),
+    queryFn: () =>
+      rows(
+        supabase
+          .from('items')
+          .select('*')
+          .eq('owner_id', ownerId)
+          .in('state', ['assigned', 'needs_coverage'])
+          .gte('starts_at', from)
+          .order('starts_at')
+          .limit(comingUpLimit),
       ),
   })
 }

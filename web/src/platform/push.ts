@@ -26,6 +26,13 @@ export function notificationPermission(): NotificationPermissionState {
   return pushSupported() ? Notification.permission : 'unsupported'
 }
 
+/** Whether this device has a push subscription, i.e. notifications are on here. */
+export async function hasPushSubscription(): Promise<boolean> {
+  if (!pushSupported() || Notification.permission !== 'granted') return false
+  const registration = await navigator.serviceWorker.getRegistration()
+  return Boolean(await registration?.pushManager.getSubscription())
+}
+
 /**
  * Asks for notification permission, subscribes this device to push and saves
  * the subscription. platform.enablePush checks for the Home Screen first.

@@ -20,6 +20,7 @@ vi.mock('@/platform', () => ({
     appUrl: (path: string) => `https://kindred.example${path}`,
     addCalendarFeed: vi.fn(),
     copyText: vi.fn(),
+    isIOS: vi.fn(() => false),
   },
 }))
 
@@ -76,6 +77,19 @@ test('the tasks switch saves the setting', async () => {
   fireEvent.click(tasks)
   await vi.waitFor(() => expect(tasks).toBeChecked())
   expect(vi.mocked(setCalendarFeedTasks).mock.calls[0][0]).toBe(true)
+})
+
+test('on iPhone, says how to make calendar changes show up sooner', () => {
+  vi.mocked(platform.isIOS).mockReturnValue(true)
+  renderCard()
+  expect(screen.getByText(/Fetch New Data, then choose Every 15 Minutes/)).toBeInTheDocument()
+  expect(screen.getByText(/open Calendar and tap Calendars/)).toBeInTheDocument()
+})
+
+test('leaves the iPhone tip out elsewhere', () => {
+  vi.mocked(platform.isIOS).mockReturnValue(false)
+  renderCard()
+  expect(screen.queryByText(/Fetch New Data/)).not.toBeInTheDocument()
 })
 
 test('offers Try again if the link fails to load', async () => {

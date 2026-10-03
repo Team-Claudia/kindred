@@ -1,8 +1,9 @@
 import { ChevronLeft } from 'lucide-react'
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { Link, Navigate, useSearchParams } from 'react-router'
+import { Navigate, useSearchParams } from 'react-router'
 import { CodeInput } from '@/components/code-input'
+import { LegalLinks } from '@/components/legal'
 import { Button } from '@/components/ui/button'
 import {
   authErrorKind,
@@ -14,6 +15,7 @@ import {
   type AuthErrorKind,
 } from '@/lib/auth'
 import { CODE_LENGTH } from '@/lib/sign-in-code'
+import { platform } from '@/platform'
 
 // Wireframes 01 (welcome), 02 (sign in with email) and 03 (enter code).
 type Step = 'start' | 'email' | 'code'
@@ -52,6 +54,9 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthErrorKind | null>(null)
 
+  // Back from Google: Safari restores this page with `busy` still set.
+  useEffect(() => platform.onPageRestored(() => setBusy(false)), [])
+
   async function continueWithGoogle() {
     setBusy(true)
     setError(null)
@@ -88,9 +93,7 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
           {t('auth.start.demoSoon')}
         </p>
         <p className="text-center text-sm text-muted-foreground">{t('auth.start.disclaimer')}</p>
-        <Button asChild variant="link" className="self-center">
-          <Link to="/privacy">{t('auth.start.privacy')}</Link>
-        </Button>
+        <LegalLinks />
       </div>
     </main>
   )

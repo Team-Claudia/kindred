@@ -871,6 +871,9 @@ isOneToOne: false
               "feed_tasks": boolean,"token": string
             }[]
                            },
+"set_display_name":
+{ Args: { "display_name": string }; Returns: undefined
+                           },
 "update_item":
 { Args: { "item_id": string,"patch": Json,"version": number }; Returns: {
               "circle_id": string,
