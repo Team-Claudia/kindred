@@ -545,6 +545,9 @@ isOneToOne: false
               "member_id": string,"refresh_token": string
             }[]
                            },
+"build_sample_circle":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "calendar_feed":
 { Args: Record<PropertyKey, never>; Returns: {
               "feed_tasks": boolean,"token": string
