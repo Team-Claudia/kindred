@@ -526,3 +526,74 @@ test('Create follow-up task on an appointment makes a task linked to it, then op
     expect.objectContaining({ kind: 'task', title: 'Pick up prescription', follow_up_of: 'pharmacy' }),
   )
 })
+
+describe('Overdue (task 4.5b)', () => {
+  // Due Wed 23, 5 pm in Vancouver; it is now Thu 24, noon.
+  const overdueItem = item({ state: 'assigned', owner_id: 'jonah', starts_at: '2026-09-24T00:00:00Z' })
+
+  function mockHistory(data: unknown[]) {
+    vi.mocked(queries.useItemHistory).mockReturnValue({ data } as unknown as Query<
+      typeof queries.useItemHistory
+    >)
+  }
+
+  test('says since when and who was told, and keeps the usual actions', () => {
+    mockItem(overdueItem)
+    mockHistory([
+      { id: 1, type: 'created', actor_id: 'ada', at: '2026-09-22T18:00:00Z', data: {} },
+      {
+        id: 2,
+        type: 'overdue_alerted',
+        actor_id: null,
+        at: '2026-09-24T00:00:40Z',
+        data: { starts_at: '2026-09-24T00:00:00+00:00', told: ['jonah', 'maya'] },
+      },
+    ])
+    renderItem()
+
+    expect(
+      screen.getByRole('heading', { name: 'Overdue since Wednesday, September 23' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Jonah and Maya (you) were told on Wednesday, September 23.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Nothing happens automatically. Someone has to pick it up.'),
+    ).toBeInTheDocument()
+    expect(buttons()).toContain('Reassign')
+    expect(buttons()).toContain('Edit')
+  })
+
+  test('before the alert has gone out, it names nobody', () => {
+    mockItem(overdueItem)
+    renderItem()
+
+    expect(
+      screen.getByRole('heading', { name: 'Overdue since Wednesday, September 23' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/was told|were told/)).not.toBeInTheDocument()
+  })
+
+  test('an alert for an earlier due date is not shown', () => {
+    mockItem(overdueItem)
+    mockHistory([
+      {
+        id: 2,
+        type: 'overdue_alerted',
+        actor_id: null,
+        at: '2026-09-21T00:00:40Z',
+        data: { starts_at: '2026-09-21T00:00:00Z', told: ['jonah'] },
+      },
+    ])
+    renderItem()
+
+    expect(screen.queryByText(/was told/)).not.toBeInTheDocument()
+  })
+
+  test('an item still to come shows no overdue notice', () => {
+    mockItem(item({ state: 'assigned', owner_id: 'jonah' }))
+    renderItem()
+
+    expect(screen.queryByText(/Overdue since/)).not.toBeInTheDocument()
+  })
+})

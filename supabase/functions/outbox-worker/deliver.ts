@@ -1,7 +1,6 @@
 // Delivers one notification to one member: the in-app row, then a push to each
-// of their devices if their preference allows. Used by scheduled jobs
-// (reminders and overdue alerts, task 4.5b). runJob in index.ts does the same
-// inline; it can call this once task 4.1's worker changes have merged.
+// of their devices if their preference allows. Shared by push jobs (index.ts)
+// and scheduled jobs (reminders and overdue alerts, scheduled.ts).
 
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { sendPush, type PushPayload, type Subscription } from '../_shared/web-push.ts'

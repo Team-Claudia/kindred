@@ -481,6 +481,12 @@
     "accept": "I can do it",
     "accepting": "Taking it…"
   },
+  "overdueAlert": {
+    "since": "Overdue since {{date}}",
+    "told_one": "{{names}} was told on {{date}}.",
+    "told_other": "{{names}} were told on {{date}}.",
+    "body": "Nothing happens automatically. Someone has to pick it up."
+  },
   "item": {
     "kind": {
       "task": "Task",
