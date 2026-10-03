@@ -1,7 +1,10 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { signInPath, useAuth, useMyCircleId } from '@/lib/auth'
+import * as api from '@/lib/api'
+import { isAnonymous, myCircleKey, signInPath, useAuth, useMyCircleId } from '@/lib/auth'
 import { useLiveUpdates } from '@/lib/live'
 import { useKeepPushSubscription } from '@/lib/push-resync'
 
@@ -19,6 +22,10 @@ function Loading() {
  * and come back here afterwards. With `requireCircle`, signed-in people who
  * aren't in a circle yet go to /welcome to start one, and members get live
  * updates for their circle.
+ *
+ * Try the demo guests (anonymous sign-ins) are only ever in the sample circle
+ * (BR-12): one with no circle (just signed in, or removed by the nightly
+ * reset) joins it here, and /welcome sends them Home.
  */
 export function AuthGuard({ requireCircle = false }: { requireCircle?: boolean }) {
   const { t } = useTranslation()
@@ -32,23 +39,39 @@ export function AuthGuard({ requireCircle = false }: { requireCircle?: boolean }
   // Keep this phone subscribed to push for whoever is signed in.
   useKeepPushSubscription(userId)
 
+  const guest = isAnonymous(auth)
+  const queryClient = useQueryClient()
+  const joinDemo = useMutation({
+    mutationFn: api.joinDemoCircle,
+    onSuccess: (circleId) => queryClient.setQueryData([...myCircleKey, userId], circleId),
+  })
+  const needsDemo = requireCircle && guest && circle.data === null
+  const { isPending: joining, isError: joinFailed, mutate: join } = joinDemo
+  useEffect(() => {
+    if (needsDemo && !joining && !joinFailed) join()
+  }, [needsDemo, joining, joinFailed, join])
+
   if (auth.status === 'loading') return <Loading />
   if (auth.status === 'signed_out') {
     return <Navigate to={signInPath(location.pathname + location.search)} replace />
   }
-  if (!requireCircle) return <Outlet />
+  if (!requireCircle) return guest ? <Navigate to="/" replace /> : <Outlet />
 
   if (circle.isPending) return <Loading />
-  if (circle.isError) {
+  if (circle.isError || joinFailed) {
     return (
       <main className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-4 px-6">
-        <p role="alert">{t('auth.errors.circleCheck')}</p>
-        <Button variant="outline" onClick={() => void circle.refetch()}>
+        <p role="alert">{t(joinFailed ? 'auth.errors.demoJoin' : 'auth.errors.circleCheck')}</p>
+        <Button
+          variant="outline"
+          onClick={() => (joinFailed ? joinDemo.reset() : void circle.refetch())}
+        >
           {t('auth.tryAgain')}
         </Button>
       </main>
     )
   }
+  if (needsDemo) return <Loading />
   if (circle.data === null) return <Navigate to="/welcome" replace />
   return <Outlet />
 }

@@ -3,6 +3,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link, Navigate, useSearchParams } from 'react-router'
 import { CodeInput } from '@/components/code-input'
+import { TryDemo } from '@/components/try-demo'
 import { Button } from '@/components/ui/button'
 import {
   authErrorKind,
@@ -80,13 +81,7 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
         <Button size="lg" variant="outline" onClick={onEmail} disabled={busy}>
           {t('auth.start.email')}
         </Button>
-        <p className="text-center text-sm">
-          {t('auth.start.demoPrompt')}{' '}
-          <Button variant="link" className="h-11 px-1" disabled>
-            {t('auth.start.demo')}
-          </Button>{' '}
-          {t('auth.start.demoSoon')}
-        </p>
+        <TryDemo />
         <p className="text-center text-sm text-muted-foreground">{t('auth.start.disclaimer')}</p>
         <Button asChild variant="link" className="self-center">
           <Link to="/privacy">{t('auth.start.privacy')}</Link>

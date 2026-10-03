@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { DemoBanner } from '@/components/demo-banner'
 import { HomeTopBar } from '@/components/home-top-bar'
 import { InstallGuide } from '@/components/install-guide'
 import { ItemRow } from '@/components/item-row'
@@ -151,6 +152,7 @@ function HomeSections({
 
   return (
     <main className="flex flex-col gap-8 px-4 py-6">
+      <DemoBanner />
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl leading-tight font-semibold break-words">
           {name

@@ -170,9 +170,9 @@
       "body": "Tasks, appointments and updates for the person you care for, shared with everyone who helps.",
       "google": "Continue with Google",
       "email": "Email me a code",
-      "demoPrompt": "Just looking?",
       "demo": "Try the demo",
-      "demoSoon": "Coming soon.",
+      "demoBody": "Look around a sample family's Care Circle. No account needed.",
+      "demoBusy": "Opening the demo…",
       "disclaimer": "Kindred coordinates care. It does not store medical records or give medical advice.",
       "privacy": "Privacy"
     },
@@ -198,8 +198,15 @@
       "rate_limited": "Too many codes have been sent. Wait a few minutes, then try again.",
       "code_invalid": "That code didn't work. Check it, or send a new code.",
       "unknown": "Something went wrong. Try again.",
-      "circleCheck": "We couldn't load your Care Circle. Check your connection and try again."
+      "circleCheck": "We couldn't load your Care Circle. Check your connection and try again.",
+      "demoRateLimited": "Lots of people are trying the demo right now. Wait a few minutes, then try again.",
+      "demoJoin":"We couldn't open the demo. Check your connection and try again."
     }
+  },
+  "demo": {
+    "banner": "You're trying the demo",
+    "bannerBody": "This sample family is shared with other visitors and starts over every night.",
+    "signInForReal": "Sign in for real"
   },
   "privacy": {
     "title": "Privacy",
