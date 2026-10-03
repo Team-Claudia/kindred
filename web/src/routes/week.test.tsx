@@ -248,8 +248,19 @@ test('the header follows the week: This week, Next week, Last week, then Week of
 })
 
 test('the header is right across a daylight-saving change', () => {
-  // Sun 1 Nov 2026, noon in Vancouver: clocks went back at 2 a.m. that day.
-  vi.setSystemTime(new Date('2026-11-01T20:00:00Z'))
+  // Toronto, not Vancouver: from tz data 2026c, British Columbia stays on daylight time.
+  vi.mocked(circles.useMyMembership).mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: {
+      role: 'admin',
+      relationship: 'parent',
+      circles: { id: 'circle-1', care_recipient_name: 'Dad', time_zone: 'America/Toronto' },
+    },
+  } as Query<typeof circles.useMyMembership>)
+  // Sun 1 Nov 2026, 11 p.m. in Toronto: clocks went back at 2 a.m. that day, so this is
+  // Monday in UTC and would be next week if the offset before the change were used.
+  vi.setSystemTime(new Date('2026-11-02T04:00:00Z'))
   const heading = (name: string) => screen.getByRole('heading', { level: 1, name })
   renderWeek()
   expect(heading('This week')).toBeInTheDocument()
