@@ -39,6 +39,7 @@ const LINES: Record<string, (actor: string) => string> = {
   item_cancelled: (actor) => `${actor} cancelled something you were on`,
   coverage_requested: (actor) => `${actor} needs someone to cover for them`,
   coverage_taken: (actor) => `${actor} is covering for you`,
+  update_posted: (actor) => `${actor} posted an update`,
 }
 
 export const FALLBACK_LINE = 'Something changed in Kindred'
@@ -52,6 +53,7 @@ const CATEGORIES: Record<string, PrefCategory> = {
   reconfirm_requested: 'changes',
   item_changed: 'changes',
   item_cancelled: 'changes',
+  update_posted: 'updates',
 }
 
 // The notification_prefs switch that decides whether an event is pushed.
@@ -73,10 +75,17 @@ export function firstName(displayName: string | null | undefined): string | null
   return first ? first : null
 }
 
-// The notification's title, body (also the in-app line) and tap target.
+// Events about an update (task 4.1). Their tap opens the Updates thread, which
+// shows the update and its linked item, if any.
+export function isUpdateEvent(event: string): boolean {
+  return event === 'update_posted'
+}
+
+// The notification's title, body (also the in-app line) and tap target: the
+// Updates thread for an update event or when there's no item, else the item.
 export function pushMessage(input: {
   event: string
-  itemId: string
+  itemId: string | null
   careRecipientName: string | null
   actorName: string | null
 }): { title: string; body: string; url: string } {
@@ -86,6 +95,9 @@ export function pushMessage(input: {
   return {
     title: recipient ? `${recipient}'s Care Circle` : 'Kindred',
     body: line,
-    url: `/i/${encodeURIComponent(input.itemId)}`,
+    url:
+      input.itemId && !isUpdateEvent(input.event)
+        ? `/i/${encodeURIComponent(input.itemId)}`
+        : '/updates',
   }
 }

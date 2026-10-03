@@ -25,7 +25,8 @@ const weeklySummaries = ['weekly-summary'] as const
  * screen starts reading a new table, add its keys here.
  */
 export const keysForTable: Record<LiveTable, readonly QueryKey[]> = {
-  items: [queryKeys.items, weeklySummaries, queryKeys.coverageRemaining],
+  // Updates show their linked item's title, so they refresh too.
+  items: [queryKeys.items, weeklySummaries, queryKeys.coverageRemaining, queryKeys.updates],
   activity_events: [queryKeys.items, weeklySummaries],
   coverage_requests: [queryKeys.items, queryKeys.coverageRemaining],
   updates: [queryKeys.updates],

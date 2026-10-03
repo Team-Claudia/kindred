@@ -27,6 +27,9 @@ vi.mock('@/lib/queries', async (importOriginal) => ({
   useItemHistory: vi.fn(),
   usePendingRequest: vi.fn(),
   useCoverageRemaining: vi.fn(),
+  useItemUpdates: vi.fn(),
+  useFollowUps: vi.fn(),
+  useItemsInRange: vi.fn(),
 }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof api>()),
@@ -38,6 +41,8 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   requestCoverage: vi.fn(),
   cancelCoverage: vi.fn(),
   acceptCoverage: vi.fn(),
+  createItem: vi.fn(),
+  postUpdate: vi.fn(),
 }))
 
 type Query<T extends (...args: never[]) => unknown> = ReturnType<T>
@@ -82,6 +87,7 @@ function renderItem() {
     [
       { path: '/i/:itemId', element: <ItemScreen /> },
       { path: '/', element: <p>Home screen</p> },
+      { path: '/i/new-task', element: <p>New task screen</p> },
     ],
     { initialEntries: ['/i/pharmacy'] },
   )
@@ -131,6 +137,15 @@ beforeEach(() => {
     typeof queries.usePendingRequest
   >)
   mockCoverageLeft(2)
+  vi.mocked(queries.useItemUpdates).mockReturnValue({ data: [] } as unknown as Query<
+    typeof queries.useItemUpdates
+  >)
+  vi.mocked(queries.useFollowUps).mockReturnValue({ data: [] } as unknown as Query<
+    typeof queries.useFollowUps
+  >)
+  vi.mocked(queries.useItemsInRange).mockReturnValue({ isPending: false, data: [] } as unknown as Query<
+    typeof queries.useItemsInRange
+  >)
 })
 
 function mockCoverageLeft(count: number | undefined) {
@@ -411,4 +426,103 @@ test('Needs coverage, anyone else: I can do it in one tap, or who got there firs
     expect(api.acceptCoverage).toHaveBeenCalledWith({ item_id: 'pharmacy', version: 4 }),
   )
   expect(await screen.findByRole('alert')).toHaveTextContent('Ada is already covering this.')
+})
+
+// Updates and follow-ups (task 4.1)
+
+const cardiology = () =>
+  item({
+    id: 'pharmacy',
+    kind: 'appointment',
+    title: 'Cardiology',
+    state: 'assigned',
+    owner_id: 'jonah',
+    starts_at: '2026-09-23T21:00:00Z',
+  })
+
+test('an appointment lists its updates and follow-up tasks', () => {
+  mockItem(cardiology())
+  vi.mocked(queries.useItemUpdates).mockReturnValue({
+    data: [
+      {
+        id: 'u1',
+        author_id: 'jonah',
+        body: 'Back from cardiology, next visit in six weeks.',
+        created_at: '2026-09-24T18:12:00Z',
+        item_id: 'pharmacy',
+        items: { id: 'pharmacy', title: 'Cardiology', kind: 'appointment' },
+      },
+    ],
+  } as unknown as Query<typeof queries.useItemUpdates>)
+  vi.mocked(queries.useFollowUps).mockReturnValue({
+    data: [item({ id: 'rx', title: 'Pick up prescription', follow_up_of: 'pharmacy' })],
+  } as unknown as Query<typeof queries.useFollowUps>)
+  renderItem()
+
+  const updates = screen.getByRole('region', { name: 'Updates · 1' })
+  expect(updates).toHaveTextContent('Jonah')
+  expect(updates).toHaveTextContent('Today, 11:12 a.m.')
+  expect(updates).toHaveTextContent('Back from cardiology, next visit in six weeks.')
+  // No chip back to the item it's already on.
+  expect(within(updates).queryByRole('link')).toBeNull()
+
+  const followUps = screen.getByRole('region', { name: 'Follow-up tasks' })
+  expect(within(followUps).getByRole('link', { name: /Pick up prescription/ })).toHaveAttribute('href', '/i/rx')
+})
+
+test('a task with no updates shows neither section, and offers Add update but no follow-up', () => {
+  mockItem(item({}))
+  renderItem()
+
+  expect(screen.queryByRole('region', { name: /Updates/ })).toBeNull()
+  expect(screen.queryByRole('region', { name: 'Follow-up tasks' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Add update' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Create follow-up task' })).toBeNull()
+})
+
+test('a follow-up task links to its appointment', () => {
+  const task = item({ follow_up_of: 'cardio' })
+  const appointment = { ...cardiology(), id: 'cardio' }
+  vi.mocked(queries.useItem).mockImplementation(
+    (id: string) =>
+      ({ isPending: false, isError: false, isSuccess: true, data: id === 'cardio' ? appointment : task }) as unknown as Query<
+        typeof queries.useItem
+      >,
+  )
+  renderItem()
+
+  expect(screen.getByText('Follow-up to')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Cardiology' })).toHaveAttribute('href', '/i/cardio')
+})
+
+test('Add update opens the sheet already linked to the item', async () => {
+  mockItem(cardiology())
+  vi.mocked(api.postUpdate).mockResolvedValue('u2')
+  renderItem()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Add update' }))
+  const sheet = await screen.findByRole('dialog', { name: 'New update' })
+  expect(within(sheet).getByRole('radio', { name: /Cardiology/ })).toBeChecked()
+  expect(sheet).toHaveTextContent('the update also shows on Cardiology')
+
+  fireEvent.change(within(sheet).getByLabelText('What happened?'), { target: { value: 'All fine' } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Post to updates' }))
+  await waitFor(() => expect(api.postUpdate).toHaveBeenCalledWith({ body: 'All fine', item_id: 'pharmacy' }))
+})
+
+test('Create follow-up task on an appointment makes a task linked to it, then opens it', async () => {
+  mockItem(cardiology())
+  vi.mocked(api.createItem).mockResolvedValue('new-task')
+  const router = renderItem()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Create follow-up task' }))
+  const sheet = await screen.findByRole('dialog', { name: 'New task' })
+  expect(sheet).toHaveTextContent('Follow-up to Cardiology')
+  fireEvent.change(within(sheet).getByLabelText('Task'), { target: { value: 'Pick up prescription' } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Add task' }))
+
+  await waitFor(() => expect(router.state.location.pathname).toBe('/i/new-task'))
+  expect(api.createItem).toHaveBeenCalledWith(
+    expect.objectContaining({ kind: 'task', title: 'Pick up prescription', follow_up_of: 'pharmacy' }),
+  )
 })

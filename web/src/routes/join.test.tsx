@@ -6,6 +6,7 @@ import * as api from '@/lib/api'
 import { useAuth, type AuthState } from '@/lib/auth'
 import * as circles from '@/lib/circles'
 import { RpcError } from '@/lib/errors'
+import { platform } from '@/platform'
 import Join from './join'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
@@ -74,6 +75,57 @@ test('sends a signed-out visitor to sign in and back to the invite', async () =>
   for (const link of [google, email]) {
     expect(link).toHaveAttribute('href', '/sign-in?next=%2Fjoin%2FABCD1234')
   }
+})
+
+describe('on an iPhone in Safari (task 4.10)', () => {
+  beforeEach(() => {
+    vi.spyOn(platform.deviceSetting, 'get').mockReturnValue(null)
+    vi.spyOn(platform.deviceSetting, 'set').mockImplementation(() => {})
+    vi.spyOn(platform, 'isIOS').mockReturnValue(true)
+    vi.spyOn(platform, 'isStandalone').mockReturnValue(false)
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('asks to install first and shows the invite code to copy', async () => {
+    const copy = vi.spyOn(platform, 'copyText').mockResolvedValue(true)
+    renderJoin()
+    expect(
+      await screen.findByRole('heading', { name: 'Add Kindred to your Home Screen' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Maya invited you to Dad's Care Circle/)).toBeInTheDocument()
+    expect(screen.getByText('ABCD1234')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
+    expect(copy).toHaveBeenCalledWith('ABCD1234')
+    expect(await screen.findByText('Copied. Paste it in the app.')).toBeInTheDocument()
+  })
+
+  test('says so if the code could not be copied', async () => {
+    vi.spyOn(platform, 'copyText').mockResolvedValue(false)
+    renderJoin()
+    fireEvent.click(await screen.findByRole('button', { name: 'Copy code' }))
+    expect(await screen.findByText(/Couldn't copy it/)).toBeInTheDocument()
+  })
+
+  test('"Sign in here instead" shows the usual invite', async () => {
+    renderJoin()
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in here instead' }))
+    expect(
+      screen.getByRole('heading', { name: "Maya invited you to Dad's Care Circle" }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Continue with Google' })).toBeInTheDocument()
+  })
+
+  test('not in the Home Screen app', async () => {
+    vi.mocked(platform.isStandalone).mockReturnValue(true)
+    renderJoin()
+    expect(
+      await screen.findByRole('heading', { name: "Maya invited you to Dad's Care Circle" }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Copy code' })).not.toBeInTheDocument()
+  })
 })
 
 test('explains an expired invite in plain language', async () => {

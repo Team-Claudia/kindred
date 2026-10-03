@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Navigate, useSearchParams } from 'react-router'
 import { CodeInput } from '@/components/code-input'
+import { InstallGuide } from '@/components/install-guide'
 import { LegalLinks } from '@/components/legal'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +15,7 @@ import {
   verifyEmailCode,
   type AuthErrorKind,
 } from '@/lib/auth'
+import { useInstallFirst } from '@/lib/install-guide'
 import { CODE_LENGTH } from '@/lib/sign-in-code'
 import { platform } from '@/platform'
 
@@ -26,10 +28,18 @@ export default function SignIn() {
   const next = safeNext(searchParams.get('next'))
   const [step, setStep] = useState<Step>('start')
   const [email, setEmail] = useState('')
+  const installFirst = useInstallFirst()
 
   // Signed in (a code was accepted, or they were already): carry on to where
   // they were going. The guard there sends people with no circle to /welcome.
   if (auth.status === 'signed_in') return <Navigate to={next} replace />
+
+  // On an iPhone in Safari, add Kindred to the Home Screen first and sign in
+  // there, or sign-in has to happen twice (task 4.10). Not for an item link:
+  // that's someone already in a circle, so ItemLinkNote says where to find it.
+  if (installFirst.show && auth.status === 'signed_out' && !isItemLink(next)) {
+    return <InstallFirstGuide onSignInHere={installFirst.dismiss} />
+  }
 
   if (step === 'email') {
     return (
@@ -71,6 +81,7 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-6 px-6 py-8">
       <p className="text-xl font-semibold">{t('auth.appName')}</p>
+      <ItemLinkNote next={next} />
       <div className="aspect-[4/3] w-full rounded-xl bg-muted" aria-hidden="true" />
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold">{t('auth.start.title')}</h1>
@@ -96,6 +107,36 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
         <LegalLinks />
       </div>
     </main>
+  )
+}
+
+function isItemLink(next: string) {
+  return next.startsWith('/i/')
+}
+
+function InstallFirstGuide({ onSignInHere }: { onSignInHere: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <InstallGuide
+      intro={t('install.firstIntro')}
+      lastStep={t('install.firstLastStep')}
+      dismissLabel={t('install.signInHere')}
+      onDismiss={onSignInHere}
+    />
+  )
+}
+
+// An item link opened in Safari on iPhone, where links can't open the Home
+// Screen app (task 4.10): say where to find it there. Signed out, we can't
+// tell whether it's on This week or a request on Home, so name both.
+function ItemLinkNote({ next }: { next: string }) {
+  const { t } = useTranslation()
+  if (!isItemLink(next) || !platform.isIOS() || platform.isStandalone()) return null
+  return (
+    <div role="note" className="flex flex-col gap-1 rounded-lg border bg-muted px-5 py-4">
+      <p className="font-semibold">{t('auth.start.itemLinkTitle')}</p>
+      <p>{t('auth.start.itemLink')}</p>
+    </div>
   )
 }
 
