@@ -10,7 +10,7 @@ Read it with:
 - [judging-criteria.md](judging-criteria.md): why the plan favours depth over breadth
 
 **Status:** Draft for team review
-**Date:** 2026-09-25
+**Date:** 2026-09-25 (updated 2026-10-02 for Phase 4)
 **Deadline:** feature freeze at the end of Tuesday 13 October 2026
 
 ---
@@ -38,7 +38,7 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 | --- | --- | --- |
 | Sign in: **Google** (prominent), email code, **Try the demo** (anonymous) | US 1.2 | Google is the main way in for people outside the team; email codes are sent through the team Gmail account (about 500 a day). Apple is deferred to native (ADR-004) |
 | Create a Care Circle (with each member's relationship to the care recipient), invite by link, join via `/join/<code>` | Epics 2–3, BR-12 | Invite shared through the share sheet |
-| Home screen: needs your answer (Accept / Decline), today, needs someone, coverage requests, latest update | §9 | Status always text + colour |
+| Home screen: needs your answer (Accept / Decline), today (the whole family's), coming up for you, needs someone, coverage requests, latest update, counts labelled "This week" | §9 | Status always text + colour |
 | Create task or appointment (title, date/time, location, private notes, optional assignee) | US 4.2, 7.1 | One create sheet for both kinds |
 | Assign → **Accept / Decline** (one tap), **Claim** ("I'll do it"), **Complete** | US 7.2–7.5, BR-02, BR-03 | Atomic RPCs (ADR-006) |
 | **Coverage**: "Need coverage — N of 2 remaining", confirm, "I can do it", limit-reached message | Epic 8, BR-01 | Counted in the circle's time zone |
@@ -48,7 +48,7 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 | Installable PWA (manifest, icon, full-screen, "Add to Home Screen" guide) | ADR-001 | |
 | **Calendar feed** (`.ics`): accepted items appear in the owner's calendar app | US 5.2, 8.3 | ~Half a day (ADR-008) |
 | **Updates tab**: post an update linked to an item or to nothing; the thread; linked updates on item detail; follow-up task | US 10.1–10.2 | Part of the §28 flow. Text only, no @mentions |
-| Sample data and a reset script | — | So anyone trying the prototype lands on a realistic Care Circle |
+| Sample data and a reset script | — | So anyone trying the prototype lands on a realistic Care Circle. Content drafted in task 4.7, reviewed by the team (T1) |
 
 ### Tier 2: P0 in simplified form (build after Tier 1; cut in this order)
 
@@ -61,7 +61,7 @@ These are the product thesis: acceptance vs. assignment, atomic transitions, the
 | Google Calendar connect + free/busy | One "Who's free?" check for the chosen slot in the create sheet. If cut, everyone shows **Unknown** | Cut 4th |
 | Reminders and overdue alerts | One fixed lead time (appointments 2 h, tasks 9 am on the due day); overdue alert to owner and admins at the due time; both re-checked at send (ADR-010). Overdue alerts are P1 and can be cut on their own | Cut 5th |
 | Recurrence | Daily / weekly / monthly create; edits apply to **this occurrence only** | "This and future" edits are not built |
-| Withdraw, reassign, reschedule (BR-11) | Handled by `assign`, `withdraw_assignment` and `update_item` | Cut 6th |
+| Withdraw, reassign, reschedule (BR-11) | Handled by `assign`, `withdraw_assignment` and `update_item`. **Built in task 2.2** (Withdraw, Reassign and Edit on item detail) | Done |
 | Notification preferences | One on/off switch per §21 category | Cut 7th |
 | Account export and deletion | Export JSON; delete per ADR-015 | Cut last |
 
@@ -268,7 +268,8 @@ flowchart LR
     end
     subgraph P4["Phase 4 · Finish and open up"]
         t41["4.1 Updates tab + follow-up"]
-        t42["4.2 Sample data + Try the demo"]
+        t47["4.7 Sample circle"] --> t42["4.2 Try the demo"]
+        t48["4.8–4.12 M3 fixes"]
         t43["4.3 Care Circle and settings"]
         t45["4.5 Tier 2 items"]
         t44["4.4 Design pass"] --> t46["4.6 Production check"]
@@ -286,6 +287,8 @@ Each checkpoint is tested on **real phones against the production URL** by the w
 | **M2: Core loop** | On two phones: create → assign → accept (live update on the other phone) → complete. Claim works. Two people claiming at once: one wins, the other sees "already taken" |
 | **M3: Coverage** | The §3 coverage flow runs end to end, including the push and the WhatsApp share. Accepted items appear in a subscribed Apple Calendar |
 | **Feature freeze** (end of Tue 13 Oct) | Both §3 flows run start to finish on three phones against production. A phone that has never used Kindred gets in with Google and with Try the demo. The deployment checklist (§8.4) is complete |
+
+**Progress.** M1 passed. M2 was tested together with M3 on two iPhones on 2026-10-02, and both passed; the bugs found became tasks 4.8–4.12.
 
 **Protecting the freeze.** Tier 2 work only starts once M3 passes. If M3 is reached with little time left, skip Tier 2 and use the time for the Tier 1 tasks in Phase 4 and for fixes. Whatever isn't merged and tested by the freeze is cut.
 
@@ -337,18 +340,24 @@ Phase 0 runs in one session, in order: everything after it builds on the scaffol
 
 | ID | Task | Runs alongside | Done when |
 | --- | --- | --- | --- |
-| 4.1 | **Updates tab and follow-up** (wireframes 13, 19, 23): `post_update`; the Updates thread; linked updates on item detail; "Create follow-up task" from appointment detail (`follow_up_of`) | 4.2, 4.3, 4.5 | The §3 normal coordination flow runs end to end |
-| 4.2 | **Sample data and Try the demo**: sample circle seed from T1 (§8.5); `join_demo_circle()` and `reset_demo_circle()`; anonymous sign-in behind "Try the demo"; nightly pg_cron reset and anonymous-user clean-up | 4.1, 4.3, 4.5 | A new phone taps Try the demo and lands on a populated Home; `reset_demo_circle()` restores the sample circle in under a minute |
-| 4.3 | **Care Circle and settings** (wireframe 30): members with relationship (admin: remove), invite link, calendar feed link, notifications on/off, leave circle. Also a plain-language **terms of use page at `/terms`** (reachable signed out, like `/privacy`), with "terms of use" and "privacy policy" linked wherever they're mentioned: the terms checkbox in setup (04) and join (08), the sign-in screen and settings | 4.1, 4.2, 4.5 | Every item on the screen works or is hidden; the terms and privacy links open their pages |
+| 4.1 | **Updates tab and follow-up** (wireframes 13, 19, 23): `post_update`; the Updates thread; linked updates on item detail; "Create follow-up task" from appointment detail (`follow_up_of`) | 4.2, 4.3, 4.5, 4.7–4.12 | The §3 normal coordination flow runs end to end |
+| 4.2 | **Try the demo**: load the sample circle from 4.7 into the hosted database; `join_demo_circle()` and `reset_demo_circle()`; anonymous sign-in behind "Try the demo"; nightly pg_cron reset and anonymous-user clean-up | 4.1, 4.3, 4.5 (after 4.7) | A new phone taps Try the demo and lands on a populated Home; `reset_demo_circle()` restores the sample circle in under a minute |
+| 4.3 | **Care Circle and settings** (wireframe 30): members with relationship (admin: remove), invite link, notifications on/off, around the calendar feed card (3.4) and Leave / Sign out (built early, PR #48, for testing). Includes 4.9 (relationship wording). Also a plain-language **terms of use page at `/terms`** (reachable signed out, like `/privacy`), with "terms of use" and "privacy policy" linked wherever they're mentioned: the terms checkbox in setup (04) and join (08), the sign-in screen and settings | 4.1, 4.2, 4.5, 4.7 | Every item on the screen works or is hidden; the terms and privacy links open their pages |
 | 4.4 | **Design-application pass**: apply the final colours, type, spacing and icons through `tokens.css`; match layouts to final screens; check WCAG 2.2 AA contrast for every state badge | Nothing: it touches every screen, so run it alone once the other Phase 4 screens are merged | Screens match the designs |
-| 4.5 | **Tier 2, as time allows** (§2), built in this order: Google connect + free/busy → reminders and overdue alerts → recurrence → withdraw/reassign/reschedule UI → notification preferences → account export/delete → in-app notification list → weekly summary → map preview. When time runs short, cut from the end of this list first. Each item is its own task | 4.1, 4.2, 4.3, and each other | Whatever isn't done by the freeze is cut |
+| 4.5 | **Tier 2, as time allows** (§2), built in this order: Google connect + free/busy (4.5a) → reminders and overdue alerts (4.5b) → recurrence (4.5c) → notification preferences → account export/delete → in-app notification list → weekly summary → map preview. (Withdraw/reassign/reschedule was built in 2.2.) When time runs short, cut from the end of this list first. Each item is its own task; issues exist for 4.5a–c, and the rest get one only if time allows | 4.1, 4.2, 4.3, and each other | Whatever isn't done by the freeze is cut |
 | 4.6 | **Production check**: work through the deployment checklist (§8.4) | — | Checklist complete |
+| 4.7 | **Sample circle content and seed**: write `docs/sample-data.md` from the §8.5 outline (replaces T1's drafting; the team reviews it), and turn it into a re-runnable SQL function that builds the sample circle with dates relative to `now()`, for 4.2 to load and reset | 4.1, 4.3, 4.5, 4.8–4.12 | The team has approved `docs/sample-data.md`; pgTAP shows the function builds a circle with items in every state and the §8.5 coverage count |
+| 4.8 | **Fix: sign-in buttons after Back, and the This week header** (M3 testing): reset the buttons when Safari restores the page; header reads This week / Next week / Last week / Week of <date> | Any | Both work on an iPhone |
+| 4.9 | **Fix: relationship labels** (M3 testing): ask "<Name> is my…" in setup and join; show "Maya · Dad's child" next to names | With 4.3 | Labels read the right way round everywhere |
+| 4.10 | **iPhone install and links** (M3 testing): on iPhone in Safari, Add to Home Screen *before* signing in; "I have an invite code" in the app; when a Kindred link opens Safari, explain how to find it in the app (§10) | Any (coordinate with 4.3 on sign-in, join and Welcome) | A fresh iPhone gets from an invite link into the circle, in the Home Screen app, signing in once |
+| 4.11 | **Home: labelled counts and "Coming up for you"** (M3 testing): counts read "This week: …"; a section with your next 3 accepted items after today, with See all; Today stays the whole family's | Any | An item you accepted weeks ahead is on your Home; counts match This week |
+| 4.12 | **Calendar refresh tip** (M3 testing): on the calendar card, how to set iPhone's Fetch New Data to every 15 minutes | With 4.3 | The tip shows under "Add Kindred to my calendar" |
 
 ### 6.6 Team tasks (not code)
 
 | ID | Task | Needed by |
 | --- | --- | --- |
-| T1 | **Sample data content** (`docs/sample-data.md`): the family, care recipient, 10–15 items across states and two weeks of history, following the outline in §8.5, turned into seed SQL in 4.2 | Task 4.2 |
+| T1 | **Review the sample circle** that task 4.7 drafts in `docs/sample-data.md` (the family, care recipient, 10–15 items across states and two weeks of history, §8.5), and approve or change it | Task 4.7, then 4.2 |
 | T2 | **Checkpoint testing** at M1, M2, M3 and the freeze: the team runs the checkpoint's steps (and later the §3 flows) on their own phones. Log bugs in the team chat or `docs/qa-notes.md` with phone, steps and screenshot | Each checkpoint |
 
 ---
@@ -370,6 +379,7 @@ Each task in §6 becomes a GitHub issue, and each Claude Code session works from
 - **Create a phase's issues when the phase starts**, not all up front, so the copied context matches the current documents. Claude Code can do this with a prompt like: *"Create the GitHub issues for Phase 2 from `docs/implementation-plan.md` using the task issue template. Copy in only the context each task needs."*
 - **The documents stay the source of truth.** If the PRD, ADR or this plan changes, update any open issue that quotes the changed text.
 - **A PR closes its issue** with `Closes #N` in its description.
+- **Bugs from a checkpoint** that don't block the next phase become numbered tasks in it (as 4.8–4.12 did after M3), labelled `bug` as well; ones that block it are fixed first.
 
 ### 7.2 Parallel sessions with worktrees
 
@@ -392,6 +402,8 @@ Because `CLAUDE.md` and the issue hold the conventions and the context, every se
 - **Only one local Supabase stack can run at a time**, because the worktrees share the same project settings. Run the local database in one worktree; sessions in the other worktrees rely on CI to run pgTAP.
 - **Merge database changes first.** When two PRs both change the schema, merge one, then have the other session rebase on `main` and regenerate `database.types.ts`. Screens that need new RPCs wait until those RPCs are merged, because previews use the hosted database, which only gets migrations from `main` (§8.2).
 - Migrations use the Supabase CLI's timestamped names, so two branches never pick the same file name. Never edit a merged migration; add a new one.
+- **A new migration must sort after every migration already on `main`.** The deploy's `supabase db push` refuses one that's older than the newest applied, and stops the deploy (this happened when 3.2 and 3.4 merged out of order). CI's Database job checks this, but only when it runs: if `main` has moved since a PR's checks passed, rebase or re-run CI before merging. An unmerged migration can simply be renamed to a later timestamp.
+- Parallel sessions share one scratch folder: give temporary files a task-specific name (e.g. `pr-3-1.md`) so sessions don't overwrite each other's PR descriptions.
 - Change the spec in §4 (RPC arguments, error codes, table columns) in the same PR that changes the code.
 - No secrets, team names or email addresses in the repo.
 
@@ -411,6 +423,13 @@ PRs aren't tested on a phone one by one. Instead:
 - **Merge when CI is green.** Merging deploys to production, which is fine before the freeze because only the team uses it. Production may be briefly broken between checkpoints.
 - **Test the batch at the checkpoint.** When every task in a phase is merged, the team runs the checkpoint (§5) on their phones against production. Bugs go into one fix PR, then the checkpoint is re-run.
 - **Exception:** changes to push, Home Screen install and sign-in only fail on real devices, so try those on a phone straight after merging (tasks 1.1, 1.3, 1.4, 3.3 and 4.2).
+
+**Testing on iPhones, lessons from M2 and M3:**
+- **Test accounts:** Gmail's `you+maya@gmail.com`, `you+jonah@gmail.com`… are separate Kindred accounts whose codes all reach one inbox. Use a different `+name` per person and never reuse one, so accounts are easy to tell apart in Supabase → Authentication → Users.
+- **Switching account:** Care Circle screen (your initial on Home) → Sign out. Signing out also stops this phone's notifications for that account; the next sign-in subscribes again.
+- **Safari and the Home Screen app don't share sign-in.** Links (WhatsApp, Messages, Calendar) always open Safari, so join through the invite link in Safari, then sign in again in the Home Screen app (until 4.10 makes this smoother). Tapping a push notification does open the app.
+- **Calendar:** set Settings → Calendar → Accounts → Fetch New Data to Every 15 Minutes, and keep Low Power Mode off; to refresh now, open Calendar and tap Calendars.
+- **Starting afresh:** sign out on every device first, then delete the circles and `auth.users` rows in the SQL Editor; settings, secrets and jobs are unaffected.
 
 **Local development:** `supabase start` and `npm run dev` in `web/`. Testers don't need a local setup; they use the production URL.
 
@@ -472,7 +491,7 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
    ```
 
    To change one later: `select vault.update_secret((select id from vault.secrets where name = 'outbox_worker_secret'), '<new value>');` and update the function secret to match.
-4. Check: Dashboard → Edge Functions → `outbox-worker` → Details shows "Verify JWT" off. Assign an item to someone with notifications on; within a few seconds `select status, attempts, last_error from outbox order by id desc limit 5;` shows `done`. If it stays `pending`, look at `select * from net._http_response order by id desc limit 5;` (a 401 means the two secrets differ) and the function's logs.
+4. Check: Dashboard → Edge Functions → `outbox-worker` → Details shows "Verify JWT" off. Assign an item to someone with notifications on; within a few seconds `select status, attempts, last_error from outbox order by id desc limit 5;` shows `done`. If it stays `pending`, look at `select * from net._http_response order by id desc limit 5;` (a 401 means the two secrets differ) and the function's logs. The worker compares the secrets exactly, so paste the value with no spaces or line breaks. To compare them without showing either: the Secrets page lists each secret's SHA-256 digest, and `select length(decrypted_secret), encode(extensions.digest(decrypted_secret, 'sha256'), 'hex') from vault.decrypted_secrets where name = 'outbox_worker_secret';` should show 64 and the same digest.
 
 ### 8.4 Deployment checklist (task 4.6, before the freeze)
 
@@ -480,6 +499,7 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 - [ ] Anonymous sign-in rate limit raised in the Supabase dashboard (many people on one Wi-Fi network share an IP address).
 - [ ] All migrations and functions on the hosted project match `main`; pg_cron jobs and the outbox webhook are active.
 - [ ] `select * from outbox where status = 'failed'` returns nothing unexpected.
+- [ ] `OUTBOX_WORKER_SECRET` and Vault's `outbox_worker_secret` have the same digest (§8.3), and `APP_URL` is set to the production URL.
 - [ ] The calendar feed URL works through the Vercel rewrite and subscribes in Apple Calendar.
 - [ ] `reset_demo_circle()` runs cleanly on production.
 - [ ] Supabase project used within the last week (free projects pause after a week idle; ADR §5).
@@ -489,6 +509,8 @@ There is one hosted Supabase project. The free tier allows two; the second is ke
 **Sample circle design.** Everyone who taps Try the demo joins one shared sample circle as a member, so the seed includes enough **Needs someone** items for many visitors to claim, and `join_demo_circle()` creates a few items **awaiting the new guest's acceptance**. A per-guest copy of the circle would stop visitors seeing each other's changes but is more work; revisit only if the shared circle proves confusing in testing. `reset_demo_circle()` restores it nightly and on demand.
 
 **Outline for T1:** care recipient "Mom" (Margaret), time zone `America/Vancouver`, three fictional siblings (Maya, Daniel, Priya), a weekly "Drive Mom to physio" series, a cardiology appointment with an update and a follow-up task, a daily "Evening medication check", some completed history, and one coverage request already used by Maya this month (so the coverage flow shows "1 of 2 remaining").
+
+Task 4.7 drafts this as `docs/sample-data.md` for the team to review (T1), then builds it as SQL; 4.2 loads and resets it. It's separate from the local development seed (`supabase/seed.sql`, task 2.5), which uses the wireframes' family.
 
 The team's own circle is created through the app, not seeded.
 
@@ -522,6 +544,8 @@ Technical risks and mitigations are in ADR §6. Risks specific to this build:
 | Web push on iPhone is fiddly (standalone mode, permission prompts, service-worker updates) | Push spike in Phase 1 (task 1.4), tried on a phone as soon as it's merged; Realtime updates on Home still show requests without push |
 | A migration breaks the hosted database | pgTAP runs on every PR before merge; fixes go forward as new migrations; `reset_demo_circle()` restores sample data |
 | Design lands late and forces layout changes | Wireframes needed before Phase 2; once Phase 4 starts, only token and polish changes |
+| On iPhone, links always open Safari, and Safari doesn't share sign-in with the Home Screen app | A web app can't claim links on iPhone (only App Store apps can; ADR-002/011). Push notifications do open the app. Task 4.10 has people install before signing in, adds invite codes in the app, and explains what to do when a link opens Safari |
+| Calendar changes can take hours to appear on an iPhone | The phone's Fetch New Data setting decides, and a web app can't change it. Task 4.12 tells people how to set 15 minutes; on stage, open Calendar and tap Calendars to refresh |
 | Visitors in the shared sample circle see each other's changes | Enough open items to claim; per-guest items from `join_demo_circle()`; nightly and on-demand reset |
 
 ---
