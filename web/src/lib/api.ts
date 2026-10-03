@@ -55,6 +55,8 @@ export const joinCircle = (args: Args<'join_circle'>) => call('join_circle', arg
 export const leaveCircle = () => call('leave_circle')
 export const removeMember = (memberId: string) => call('remove_member', { member_id: memberId })
 export const setAdmin = (memberId: string) => call('set_admin', { member_id: memberId })
+export const setDisplayName = (displayName: string) =>
+  call('set_display_name', { display_name: displayName })
 
 // What /join/:code shows before the visitor joins; signed-out visitors can call it.
 export type InvitePreview = Returns<'invite_preview'>[number]

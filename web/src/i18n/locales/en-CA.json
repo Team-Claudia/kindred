@@ -86,9 +86,11 @@
     "signedInAs": "Signed in as {{email}}",
     "yourName": "Your name",
     "nameRequired": "Enter your name.",
-    "agreeTerms": "I agree to the terms of use and privacy policy.",
+    "agreeTerms": "I agree to the <terms>terms of use</terms> and <privacy>privacy policy</privacy>.",
     "termsRequired": "Agree to the terms of use and privacy policy to continue.",
     "chooseRelationship": "Choose…",
+    "relationshipLabel": "{{name}} is my…",
+    "relationshipLabelNoName": "They are my…",
     "relationship": {
       "parent": "Parent",
       "grandparent": "Grandparent",
@@ -99,10 +101,21 @@
       "friend": "Friend",
       "other": "Someone else"
     },
+    "relationshipOf": {
+      "parent": "{{name}}'s child",
+      "grandparent": "{{name}}'s grandchild",
+      "spouse": "{{name}}'s spouse or partner",
+      "sibling": "{{name}}'s sibling",
+      "child": "{{name}}'s parent",
+      "otherRelative": "{{name}}'s relative",
+      "friend": "{{name}}'s friend",
+      "other": "Helps care for {{name}}"
+    },
     "unnamedMember": "New member",
     "youAdmin": "You · Admin",
     "you": "You",
     "admin": "Admin",
+    "member": "Member",
     "joined": "Joined"
   },
   "welcome": {
@@ -118,7 +131,6 @@
     "recipientIntro": "This names the shared space everyone in the family will see.",
     "recipientName": "What the family calls them",
     "recipientRequired": "Enter what the family calls them.",
-    "relationshipLabel": "Their relationship to you",
     "relationshipHint": "Everyone who joins picks their own.",
     "notMedical": "Kindred keeps logistics, not health records. Nothing here is a medical file.",
     "creating": "Setting up…",
@@ -149,7 +161,6 @@
     "expires_named": "Invite from {{inviter}} · works until {{date}}",
     "title": "Join {{name}}'s Care Circle",
     "lastThing": "One last thing",
-    "relationshipLabel": "{{name}} is your…",
     "relationshipHint": "Shown next to your name in the member list.",
     "oneCircle": "You can be in one Care Circle at a time. If you're already in another, Kindred asks you to leave it first.",
     "submit": "Join {{name}}'s Care Circle",
@@ -174,7 +185,8 @@
       "demo": "Try the demo",
       "demoSoon": "Coming soon.",
       "disclaimer": "Kindred coordinates care. It does not store medical records or give medical advice.",
-      "privacy": "Privacy"
+      "privacy": "Privacy policy",
+      "terms": "Terms of use"
     },
     "email": {
       "header": "Sign in with email",
@@ -273,6 +285,10 @@
     "counts": "{{tasks}}, {{appointments}}",
     "previous": "Previous week",
     "next": "Next week",
+    "titleThis": "This week",
+    "titleNext": "Next week",
+    "titleLast": "Last week",
+    "titleOf": "Week of {{date}}",
     "backToThisWeek": "Back to this week",
     "show": "Show",
     "everyone": "Everyone",
@@ -460,6 +476,7 @@
     "circleLine_one": "{{name}}'s care · Care Circle of {{count}}",
     "circleLine_other": "{{name}}'s care · Care Circle of {{count}}",
     "countsLabel": "This week",
+    "countsHeading": "This week:",
     "overdue_one": "{{count}} overdue",
     "overdue_other": "{{count}} overdue",
     "newCircle": "Nothing is planned yet. Add the first task or appointment, and everyone in the Care Circle will see it here.",
@@ -473,6 +490,9 @@
     "declining": "Declining…",
     "today": "Today · {{day}}",
     "todayEmpty": "Nothing is planned for today.",
+    "comingUp": "Coming up for you",
+    "comingUpEmpty": "Nothing else coming up for you.",
+    "comingUpSeeAll": "See all",
     "needsSomeone": "Needs someone",
     "needsSomeoneEmpty": "Everything has someone for now.",
     "claim": "I'll do it",
@@ -498,6 +518,12 @@
   },
   "account": {
     "heading": "Your account",
+    "nameLabel": "Your name",
+    "nameHint": "Shown to everyone in your Care Circle.",
+    "saveName": "Save name",
+    "savingName": "Saving…",
+    "nameSaved": "Name saved.",
+    "nameRequired": "Enter your name.",
     "leave": "Leave this Care Circle",
     "leaveConfirm": "Leave this Care Circle?",
     "leaveExplainer": "You'll stop seeing its tasks, appointments and updates. Things you added stay for the rest of the family. You can join again with a new invite link.",
@@ -515,6 +541,80 @@
     "tasks": "Include tasks as well as appointments",
     "tasksError": "Couldn't change that. Check your connection and try again.",
     "error": "We couldn't load your calendar link. Check your connection and try again.",
-    "delay": "Changes can take a while to show up, because your calendar app checks for them on its own schedule. Kindred itself is always up to date."
+    "delay": "Changes can take a while to show up, because your calendar app checks for them on its own schedule. Kindred itself is always up to date.",
+    "iosTip": "On iPhone, for quicker updates: Settings → Calendar → Accounts → Fetch New Data, then choose Every 15 Minutes.",
+    "iosCheckNow": "To check now, open Calendar and tap Calendars at the bottom."
+  },
+  "circle": {
+    "title": "{{name}}'s Care Circle",
+    "members": "Members · {{count}}",
+    "membersError": "Members couldn't load. Check your connection and try again.",
+    "makeAdmin": "Make admin",
+    "makeAdminNamed": "Make admin: {{name}}",
+    "remove": "Remove",
+    "removeNamed": "Remove {{name}}",
+    "removeConfirm": "Remove {{name}} from the Care Circle?",
+    "removeExplainer": "They'll stop seeing the Care Circle's tasks, appointments and updates. Things they added stay. They can join again with a new invite link.",
+    "removeYes": "Yes, remove",
+    "removeNo": "Keep {{name}}",
+    "working": "Working…",
+    "legalLinks": "Terms and privacy"
+  },
+  "invite": {
+    "heading": "Invite someone",
+    "share": "Share invite link",
+    "preparing": "Getting your link ready…",
+    "hint": "The link works for 14 days. Anyone with it can join, so send it only to people helping with care."
+  },
+  "pushSettings": {
+    "heading": "Notifications on this phone",
+    "state": {
+      "checking": "Checking…",
+      "on": "On",
+      "off": "Off",
+      "blocked": "Blocked",
+      "needs_install": "Not set up",
+      "unsupported": "Not available"
+    },
+    "explain": {
+      "on": "Kindred can send notifications to this phone.",
+      "off": "Kindred won't send notifications to this phone.",
+      "blocked": "Notifications are blocked in iPhone Settings. To allow them, open Settings, then Notifications, then Kindred.",
+      "needs_install": "Add Kindred to your Home Screen first, then open it from there to turn on notifications.",
+      "unsupported": "This browser can't show notifications from Kindred."
+    },
+    "turnOn": "Turn on notifications",
+    "turnOff": "Turn off notifications",
+    "working": "Working…",
+    "error": "Something went wrong changing notifications. Try again."
+  },
+  "terms": {
+    "title": "Terms of use",
+    "intro": "Kindred is a prototype that helps families coordinate care for someone they love. By using it, you agree to these terms. They're written in plain language.",
+    "what": {
+      "title": "What Kindred is",
+      "body": "A shared place for your Care Circle to keep track of tasks, appointments and updates, and who's doing what. It's a prototype, so it may change, have mistakes, or stop running."
+    },
+    "notMedical": {
+      "title": "Not medical advice or an emergency service",
+      "body": "Kindred doesn't give medical advice and isn't a medical record. In an emergency, call 911. Don't rely on Kindred for anything urgent or life-critical, such as medication timing."
+    },
+    "you": {
+      "title": "What we ask of you",
+      "body": "Add only what your whole Care Circle should see. Be kind to the person you care for and to each other. Only invite people who are helping with care, and don't use Kindred for anything unlawful."
+    },
+    "circle": {
+      "title": "Your Care Circle",
+      "body": "Everyone in a Care Circle can add, change, take on and cancel tasks and appointments. Admins can also remove members and make others admins. Anyone can leave at any time."
+    },
+    "noWarranty": {
+      "title": "No guarantees",
+      "body": "Kindred is offered as it is, free of charge, without any promise that it will always work or be available. Notifications and calendar updates can arrive late or not at all, so check Kindred itself for the latest."
+    },
+    "changes": {
+      "title": "Changes to these terms",
+      "body": "If these terms change, the new version will be on this page. Using Kindred after a change means you accept it."
+    },
+    "back": "Back to Kindred"
   }
 }

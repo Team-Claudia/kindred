@@ -6,12 +6,26 @@ import { platform } from '@/platform'
 
 let resyncedFor: string | undefined
 
+// Set when the member turns notifications off for this phone in Care Circle
+// and settings (task 4.3), so the resync below doesn't quietly turn them on again.
+const TURNED_OFF_KEY = 'pushTurnedOff'
+
+export function setPushTurnedOff(off: boolean) {
+  platform.deviceSetting.set(TURNED_OFF_KEY, off ? '1' : '0')
+}
+
+export function isPushTurnedOff(): boolean {
+  return platform.deviceSetting.get(TURNED_OFF_KEY) === '1'
+}
+
 /**
  * Called on sign-out, which removes this phone's subscription, so the next
  * sign-in (even by the same member) saves it again.
  */
 export function forgetPushResync() {
   resyncedFor = undefined
+  // "Off" was that member's choice; the next person on this phone starts fresh.
+  setPushTurnedOff(false)
 }
 
 /**
@@ -23,6 +37,7 @@ export function forgetPushResync() {
 export function resyncSubscription(userId: string | undefined, always = false) {
   if (!userId || (!always && resyncedFor === userId)) return
   if (!platform.isStandalone() || platform.notificationPermission() !== 'granted') return
+  if (isPushTurnedOff()) return
   resyncedFor = userId
   platform.enablePush().catch((error: unknown) => console.error(error))
 }

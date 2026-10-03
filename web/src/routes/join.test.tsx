@@ -124,7 +124,7 @@ test('joins a signed-in visitor with their name and relationship', async () => {
   ).toBeInTheDocument()
   expect(api.joinCircle).not.toHaveBeenCalled()
 
-  fireEvent.change(screen.getByLabelText('Dad is your…'), { target: { value: 'parent' } })
+  fireEvent.change(screen.getByLabelText('Dad is my…'), { target: { value: 'parent' } })
   fireEvent.click(screen.getByLabelText('I agree to the terms of use and privacy policy.'))
   fireEvent.click(join)
 

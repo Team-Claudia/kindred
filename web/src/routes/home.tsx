@@ -14,6 +14,7 @@ import * as api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { firstName, useCircleMembers, useMyMembership, useProfile } from '@/lib/circles'
 import {
+  addDays,
   dayKey,
   formatDayLong,
   formatDayShort,
@@ -40,6 +41,7 @@ import { isOverdue, memberNames } from '@/lib/items'
 import {
   useItemCount,
   useItemMutation,
+  useItemsComingUp,
   useItemsInRange,
   useItemsNeedingAttention,
   useLatestUpdate,
@@ -117,6 +119,8 @@ function HomeSections({
   const week = useMemo(() => weekOf(monday, timeZone), [monday, timeZone])
   const weekItems = useItemsInRange(week.start.toISOString(), week.end.toISOString())
   const attention = useItemsNeedingAttention(startOfDay(today, timeZone).toISOString())
+  // Your own next items after today, from the start of tomorrow in the circle's time zone.
+  const comingUp = useItemsComingUp(userId, startOfDay(addDays(today, 1), timeZone).toISOString())
   const latest = useLatestUpdate()
   const itemCount = useItemCount()
 
@@ -165,8 +169,11 @@ function HomeSections({
         {loaded && (
           <ul
             aria-label={t('home.countsLabel')}
-            className="mt-2 flex flex-wrap gap-2 rounded-xl bg-muted p-3"
+            className="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-muted p-3"
           >
+            <li aria-hidden className="font-semibold">
+              {t('home.countsHeading')}
+            </li>
             <CountChip>{t('week.tasks', { count: counts.tasks })}</CountChip>
             <CountChip>{t('week.appointments', { count: counts.appointments })}</CountChip>
             <CountChip overdue={counts.overdue > 0}>
@@ -230,6 +237,34 @@ function HomeSections({
                   </li>
                 ))}
               </ul>
+            )}
+          </HomeSection>
+
+          <HomeSection id="home-coming-up" title={t('home.comingUp')}>
+            {comingUp.isError ? (
+              <ErrorState message={t('home.error')} onRetry={() => void comingUp.refetch()} />
+            ) : comingUp.isPending ? (
+              <LoadingState />
+            ) : (
+              <>
+                {comingUp.data.length === 0 ? (
+                  <Empty>{t('home.comingUpEmpty')}</Empty>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {comingUp.data.map((item) => (
+                      <li key={item.id}>
+                        <ItemRow item={item} names={names} timeZone={timeZone} now={now} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link
+                  to={`/week?member=${userId}`}
+                  className="flex min-h-tap items-center font-semibold underline"
+                >
+                  {t('home.comingUpSeeAll')}
+                </Link>
+              </>
             )}
           </HomeSection>
 
