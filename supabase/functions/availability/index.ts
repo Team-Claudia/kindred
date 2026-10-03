@@ -66,7 +66,9 @@ async function accessToken(config: GoogleConfig, refreshToken: string): Promise<
 
 async function memberStatus(config: GoogleConfig, row: TokenRow, slot: Slot): Promise<Availability> {
   if (!row.refresh_token) return 'unknown'
-  const key = cacheKey(row.member_id, slot)
+  // Keyed by connection too, so reconnecting a different Google account never
+  // reuses the old account's answer. Memory only, like the access tokens.
+  const key = cacheKey(`${row.member_id}|${row.refresh_token}`, slot)
   const cached = answers.get(key)
   if (cached) return cached
 
