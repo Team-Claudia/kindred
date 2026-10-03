@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import { sendEmailCode, signInWithGoogle, useAuth, verifyEmailCode } from '@/lib/auth'
+import { platform } from '@/platform'
 import SignIn from './sign-in'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
@@ -78,4 +79,68 @@ test('Use a different email goes back to the email step', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Use a different email' }))
   expect(screen.getByRole('heading', { name: "What's your email?" })).toBeInTheDocument()
   expect(screen.getByLabelText('Email')).toHaveValue('maya@example.com')
+})
+
+describe('on an iPhone (task 4.10)', () => {
+  function onIPhone({ standalone }: { standalone: boolean }) {
+    vi.spyOn(platform, 'isIOS').mockReturnValue(true)
+    vi.spyOn(platform, 'isStandalone').mockReturnValue(standalone)
+  }
+
+  beforeEach(() => {
+    const settings = new Map<string, string>()
+    vi.spyOn(platform.deviceSetting, 'get').mockImplementation((key) => settings.get(key) ?? null)
+    vi.spyOn(platform.deviceSetting, 'set').mockImplementation((key, value) => {
+      settings.set(key, value)
+    })
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('in Safari, asks to add Kindred to the Home Screen before signing in', () => {
+    onIPhone({ standalone: false })
+    renderSignIn()
+    expect(
+      screen.getByRole('heading', { name: 'Add Kindred to your Home Screen' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Continue with Google' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in here instead' }))
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeInTheDocument()
+  })
+
+  test('"Sign in here instead" is remembered on this device for a while', () => {
+    onIPhone({ standalone: false })
+    renderSignIn()
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in here instead' }))
+    cleanup()
+    renderSignIn()
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeInTheDocument()
+  })
+
+  test('in the Home Screen app, signs in straight away', () => {
+    onIPhone({ standalone: true })
+    renderSignIn()
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeInTheDocument()
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+
+  test('an item link opened in Safari says where to find it in the app', () => {
+    onIPhone({ standalone: false })
+    renderSignIn(`/sign-in?next=${encodeURIComponent('/i/item-1')}`)
+    const note = screen.getByRole('note')
+    expect(note).toHaveTextContent('Using the Kindred app?')
+    expect(note).toHaveTextContent('Open it from your Home Screen.')
+    expect(note).toHaveTextContent('under This week, or on Home')
+    // Signing in here still works.
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
+    expect(signInWithGoogle).toHaveBeenCalledWith('/i/item-1')
+  })
+})
+
+test('on a computer, signs in straight away with no app note', () => {
+  renderSignIn(`/sign-in?next=${encodeURIComponent('/i/item-1')}`)
+  expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeInTheDocument()
+  expect(screen.queryByRole('note')).not.toBeInTheDocument()
 })

@@ -57,7 +57,18 @@
     "step2Detail": "Scroll down the list if you don't see it",
     "step3Title": "Open Kindred from the new icon",
     "step3Detail": "You'll stay signed in",
-    "notNow": "Not now — remind me later"
+    "notNow": "Not now — remind me later",
+    "firstIntro": "Kindred works best from your Home Screen: it can send you notifications, and you only sign in once. Add it first, then sign in there.",
+    "firstLastStep": "Then sign in there",
+    "joinIntro": "You're invited to {{name}}'s Care Circle. Add Kindred to your Home Screen first, so you only sign in once.",
+    "joinIntro_named": "{{inviter}} invited you to {{name}}'s Care Circle. Add Kindred to your Home Screen first, so you only sign in once.",
+    "joinLastStep": "Sign in, then tap \"I have an invite code\"",
+    "yourCode": "Your invite code",
+    "codeHint": "Copy it before you leave Safari. The app can't open this link, so you'll paste the code there.",
+    "copyCode": "Copy code",
+    "copied": "Copied. Paste it in the app.",
+    "copyFailed": "Couldn't copy it. Press and hold the code to copy it, or write it down.",
+    "signInHere": "Sign in here instead"
   },
   "status": {
     "overdue": "Overdue",
@@ -144,7 +155,20 @@
     "membersHint": "People show here once they've opened the link and joined.",
     "makeAdmin": "Also make {{name}} an admin. Admins can remove members and are told when something goes overdue.",
     "done": "Go to Kindred",
-    "skip": "Skip for now — invite people later"
+    "skip": "Skip for now — invite people later",
+    "haveCode": "I have an invite code"
+  },
+  "inviteCode": {
+    "title": "Join a Care Circle",
+    "heading": "Enter your invite code",
+    "intro": "It's the 8 letters and numbers at the end of the invite link someone shared with you.",
+    "label": "Invite code",
+    "hint": "You can paste the whole invite link.",
+    "invalid": "That doesn't look like an invite code. It's 8 letters and numbers.",
+    "notFound": "We couldn't find that code. Check it, or ask for a new invite.",
+    "expired": "This invite has expired. Ask for a new one.",
+    "submit": "Continue",
+    "checking": "Checking…"
   },
   "join": {
     "invited": "You're invited",
@@ -186,7 +210,9 @@
       "demoSoon": "Coming soon.",
       "disclaimer": "Kindred coordinates care. It does not store medical records or give medical advice.",
       "privacy": "Privacy policy",
-      "terms": "Terms of use"
+      "terms": "Terms of use",
+      "itemLinkTitle": "Using the Kindred app?",
+      "itemLink": "Open it from your Home Screen. You'll find this under This week, or on Home if it's a request. Or sign in here to see it in Safari."
     },
     "email": {
       "header": "Sign in with email",
