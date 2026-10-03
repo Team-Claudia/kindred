@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
-import { leaveCircle } from '@/lib/api'
+import { leaveCircle, setDisplayName } from '@/lib/api'
 import { signOut } from '@/lib/auth'
+import { useProfile } from '@/lib/circles'
 import { RpcError } from '@/lib/errors'
 import { platform } from '@/platform'
 import { AccountCard } from './account-card'
@@ -12,10 +13,16 @@ vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
   leaveCircle: vi.fn(),
+  setDisplayName: vi.fn(),
 }))
 vi.mock('@/lib/auth', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth')>()),
   signOut: vi.fn(),
+  useAuth: () => ({ status: 'signed_in', session: { user: { id: 'user-1' } } }),
+}))
+vi.mock('@/lib/circles', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/circles')>()),
+  useProfile: vi.fn(),
 }))
 vi.mock('@/platform', () => ({ platform: { disablePush: vi.fn() } }))
 
@@ -35,7 +42,34 @@ function renderCard() {
   )
 }
 
+beforeEach(() => {
+  vi.mocked(useProfile).mockReturnValue({
+    data: { display_name: 'Maya Reyes' },
+  } as ReturnType<typeof useProfile>)
+})
+
 afterEach(() => vi.clearAllMocks())
+
+test('shows your name and saves a new one', async () => {
+  vi.mocked(setDisplayName).mockResolvedValue(undefined)
+  renderCard()
+  const name = screen.getByLabelText('Your name')
+  expect(name).toHaveValue('Maya Reyes')
+  expect(screen.queryByRole('button', { name: 'Save name' })).not.toBeInTheDocument()
+
+  fireEvent.change(name, { target: { value: '  Maya R.  ' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save name' }))
+  await vi.waitFor(() => expect(setDisplayName).toHaveBeenCalled())
+  expect(vi.mocked(setDisplayName).mock.calls[0][0]).toBe('Maya R.')
+})
+
+test('a blank name is not saved', () => {
+  renderCard()
+  fireEvent.change(screen.getByLabelText('Your name'), { target: { value: '   ' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save name' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('Enter your name.')
+  expect(setDisplayName).not.toHaveBeenCalled()
+})
 
 test('leaving asks first, then leaves and goes to Welcome', async () => {
   vi.mocked(leaveCircle).mockResolvedValue(undefined as never)

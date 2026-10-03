@@ -1,4 +1,4 @@
-import { appUrl, copyText, deviceSetting, onAppVisible, share, whatsAppUrl } from './index'
+import { appUrl, copyText, deviceSetting, isIOS, onAppVisible, share, whatsAppUrl } from './index'
 
 const content = { text: 'Physio ride on Friday', url: 'https://kindred.example/i/123' }
 
@@ -104,5 +104,17 @@ describe('onAppVisible', () => {
     setVisibility('hidden')
     setVisibility('visible')
     expect(callback).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('isIOS', () => {
+  test.each([
+    ['an iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)', 5, true],
+    ['an iPad, which says it is a Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 5, true],
+    ['a Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0, false],
+    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8)', 5, false],
+  ])('is right for %s', (_label, userAgent, maxTouchPoints, expected) => {
+    stubNavigator({ userAgent, maxTouchPoints })
+    expect(isIOS()).toBe(expected)
   })
 })

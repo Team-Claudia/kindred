@@ -1,17 +1,17 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
-import { signOut } from '@/lib/auth'
+import { signOut, useAuth } from '@/lib/auth'
+import { circleKeys, useProfile } from '@/lib/circles'
 import { errorMessage } from '@/lib/errors'
 import { forgetPushResync } from '@/lib/push-resync'
 import { platform } from '@/platform'
 
-// Leave the Care Circle and sign out (part of task 4.3, brought forward so a
-// phone can switch accounts for testing). Task 4.3 builds the rest of the
-// screen around this.
+// "Your account" on Care Circle and settings (task 4.3): your name, Leave this
+// Care Circle and Sign out. Export and Delete account are Tier 2 and hidden.
 export function AccountCard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -58,6 +58,8 @@ export function AccountCard() {
         {t('account.heading')}
       </h2>
 
+      <NameForm />
+
       {confirming ? (
         <div className="flex flex-col gap-3" role="group" aria-labelledby="leave-confirm">
           <p id="leave-confirm" className="font-semibold">
@@ -87,5 +89,68 @@ export function AccountCard() {
         </p>
       )}
     </section>
+  )
+}
+
+// Your name as the Care Circle sees it, saved through set_display_name.
+function NameForm() {
+  const { t } = useTranslation()
+  const id = useId()
+  const queryClient = useQueryClient()
+  const auth = useAuth()
+  const userId = auth.status === 'signed_in' ? auth.session.user.id : undefined
+  const profile = useProfile(userId)
+  const saved = profile.data?.display_name ?? ''
+  const [draft, setDraft] = useState<string | null>(null)
+  const [blank, setBlank] = useState(false)
+  const name = draft ?? saved
+
+  const save = useMutation({
+    mutationFn: api.setDisplayName,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['profile'] }),
+        queryClient.invalidateQueries({ queryKey: circleKeys.members }),
+      ])
+      setDraft(null)
+    },
+  })
+
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    setBlank(!name.trim())
+    if (name.trim()) save.mutate(name.trim())
+  }
+
+  const error = blank ? t('account.nameRequired') : save.error ? errorMessage(save.error) : null
+
+  return (
+    <form className="flex flex-col gap-2" onSubmit={submit} noValidate>
+      <label htmlFor={id} className="font-medium">
+        {t('account.nameLabel')}
+      </label>
+      <input
+        id={id}
+        className="h-12 w-full rounded-lg border border-input bg-background px-4 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive"
+        value={name}
+        onChange={(event) => {
+          setDraft(event.target.value)
+          save.reset()
+        }}
+        autoComplete="name"
+        maxLength={80}
+        disabled={!profile.data}
+        aria-invalid={Boolean(error)}
+        aria-describedby={`${id}-note`}
+      />
+      <p id={`${id}-note`} role={error ? 'alert' : 'status'} className="text-sm text-muted-foreground">
+        {error ?? (save.isSuccess ? t('account.nameSaved') : t('account.nameHint'))}
+      </p>
+      {draft !== null && draft.trim() !== saved.trim() && (
+        <Button type="submit" disabled={save.isPending}>
+          {save.isPending ? t('account.savingName') : t('account.saveName')}
+        </Button>
+      )}
+    </form>
   )
 }

@@ -15,6 +15,7 @@ import {
   SetupScreen,
   TextField,
 } from '@/components/circle-setup'
+import { AgreeTermsText } from '@/components/legal'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { googleName, signInPath, useAuth } from '@/lib/auth'
@@ -185,13 +186,13 @@ function JoinForm({
         error={nameError}
       />
       <RelationshipField
-        label={t('join.relationshipLabel', { name: recipient })}
+        recipientName={recipient}
         value={relationship}
         onChange={setRelationship}
         hint={t('join.relationshipHint')}
       />
       <CheckboxField checked={agreed} onChange={setAgreed} error={termsError}>
-        {t('circleSetup.agreeTerms')}
+        <AgreeTermsText />
       </CheckboxField>
       <Notice>{t('join.oneCircle')}</Notice>
     </SetupScreen>

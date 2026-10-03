@@ -9,6 +9,7 @@ import Notifications from '@/routes/notifications'
 import Privacy from '@/routes/privacy'
 import SignIn from '@/routes/sign-in'
 import Summary from '@/routes/summary'
+import Terms from '@/routes/terms'
 import Updates from '@/routes/updates'
 import Week from '@/routes/week'
 import Welcome from '@/routes/welcome'
@@ -51,6 +52,7 @@ export const routes: RouteObject[] = [
   { path: '/join/:code', element: <Join /> },
   { path: '/sign-in', element: <SignIn /> },
   { path: '/privacy', element: <Privacy /> },
+  { path: '/terms', element: <Terms /> },
 ]
 
 export const router = createBrowserRouter(routes)

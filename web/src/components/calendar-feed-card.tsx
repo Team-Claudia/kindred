@@ -83,6 +83,14 @@ export function CalendarFeedCard() {
       )}
 
       <p className="text-sm text-muted-foreground">{t('calendarFeed.delay')}</p>
+      {/* Task 4.12: iOS checks subscribed calendars rarely unless told to, and
+          a web app can't change that setting, so say how. */}
+      {platform.isIOS() && (
+        <>
+          <p className="text-sm text-muted-foreground">{t('calendarFeed.iosTip')}</p>
+          <p className="text-sm text-muted-foreground">{t('calendarFeed.iosCheckNow')}</p>
+        </>
+      )}
     </section>
   )
 }

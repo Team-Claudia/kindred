@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import {
-  Avatar,
   CheckboxField,
   ErrorText,
   Heading,
@@ -15,6 +14,8 @@ import {
   StepProgress,
   TextField,
 } from '@/components/circle-setup'
+import { AgreeTermsText } from '@/components/legal'
+import { MemberRow } from '@/components/member-list'
 import { ShareButton } from '@/components/share-button'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
@@ -22,7 +23,6 @@ import { googleName, myCircleKey, signInPath, useAuth } from '@/lib/auth'
 import {
   circleKeys,
   firstName,
-  relationshipLabel,
   useCircleMembers,
   useMyMembership,
   useProfile,
@@ -126,7 +126,7 @@ export default function Welcome() {
           error={nameError}
         />
         <CheckboxField checked={agreed} onChange={setAgreed} error={termsError}>
-          {t('circleSetup.agreeTerms')}
+          <AgreeTermsText />
         </CheckboxField>
       </SetupScreen>
     )
@@ -166,7 +166,7 @@ export default function Welcome() {
         error={recipientError}
       />
       <RelationshipField
-        label={t('welcome.relationshipLabel')}
+        recipientName={recipient}
         value={relationship}
         onChange={setRelationship}
         hint={t('welcome.relationshipHint')}
@@ -261,7 +261,13 @@ function InviteStep({
         </h3>
         <ul className="divide-y">
           {list.map((member) => (
-            <MemberRow key={member.user_id} member={member} isMe={member.user_id === userId} />
+            <MemberRow
+              key={member.user_id}
+              member={member}
+              viewerId={userId}
+              recipientName={recipientName}
+              otherBadge="joined"
+            />
           ))}
         </ul>
         <p className="text-sm text-muted-foreground">{t('welcome.membersHint')}</p>
@@ -285,38 +291,6 @@ function InviteStep({
   )
 }
 
-function memberName(member: CircleMember, t: (key: string) => string) {
-  return member.profiles?.display_name?.trim() || t('circleSetup.unnamedMember')
-}
-
 function memberFirstName(member: CircleMember, t: (key: string) => string) {
   return firstName(member.profiles?.display_name) || t('circleSetup.unnamedMember')
-}
-
-function MemberRow({ member, isMe }: { member: CircleMember; isMe: boolean }) {
-  const { t } = useTranslation()
-  const name = memberName(member, t)
-  const isAdmin = member.role === 'admin'
-  const badge = isMe
-    ? isAdmin
-      ? t('circleSetup.youAdmin')
-      : t('circleSetup.you')
-    : isAdmin
-      ? t('circleSetup.admin')
-      : t('circleSetup.joined')
-
-  return (
-    <li className="flex items-center gap-4 py-3">
-      <Avatar name={name} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate font-semibold">{name}</span>
-        {member.relationship && (
-          <span className="truncate text-sm text-muted-foreground">
-            {relationshipLabel(t, member.relationship)}
-          </span>
-        )}
-      </div>
-      <span className="shrink-0 rounded-full border px-3 py-1 text-sm">{badge}</span>
-    </li>
-  )
 }

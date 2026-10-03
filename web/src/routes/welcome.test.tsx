@@ -104,6 +104,8 @@ test('creates a circle in two steps, with the name filled in from Google', async
     screen.getByText('Agree to the terms of use and privacy policy to continue.'),
   ).toBeInTheDocument()
 
+  expect(screen.getByRole('link', { name: 'terms of use' })).toHaveAttribute('href', '/terms')
+  expect(screen.getByRole('link', { name: 'privacy policy' })).toHaveAttribute('href', '/privacy')
   fireEvent.click(screen.getByLabelText('I agree to the terms of use and privacy policy.'))
   fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
   expect(screen.getByText('Step 2 of 3 · Your loved one')).toBeInTheDocument()
@@ -113,10 +115,12 @@ test('creates a circle in two steps, with the name filled in from Google', async
   expect(screen.getByText('Enter what the family calls them.')).toBeInTheDocument()
   expect(api.createCircle).not.toHaveBeenCalled()
 
+  // Asked as "<Name> is my…" (task 4.9), once the name is in.
+  expect(screen.getByLabelText('They are my…')).toBeInTheDocument()
   fireEvent.change(screen.getByLabelText('What the family calls them'), {
     target: { value: ' Dad ' },
   })
-  fireEvent.change(screen.getByLabelText('Their relationship to you'), {
+  fireEvent.change(screen.getByLabelText('Dad is my…'), {
     target: { value: 'parent' },
   })
   fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
@@ -139,7 +143,8 @@ test('shares an invite link and lists who has joined', async () => {
   expect(screen.getByText('Care Circle · 2 people')).toBeInTheDocument()
   expect(screen.getByText('You · Admin')).toBeInTheDocument()
   expect(screen.getByText('Joined')).toBeInTheDocument()
-  expect(screen.getByText('Grandparent')).toBeInTheDocument()
+  // From the member's side (task 4.9): Dad is Ada's grandparent.
+  expect(screen.getByText("Dad's grandchild")).toBeInTheDocument()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Share invite link' }))
   await vi.waitFor(() => expect(platform.share).toHaveBeenCalled())
