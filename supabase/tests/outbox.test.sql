@@ -38,7 +38,7 @@ insert into public.outbox (id, kind, status, run_at, attempts) overriding system
   (9001, 'push', 'pending', now() - interval '2 minutes', 0),   -- due
   (9002, 'push', 'sending', now() - interval '1 minute', 2),    -- lease ran out: due again
   (9003, 'push', 'pending', now() + interval '1 hour', 0),      -- not due yet
-  (9004, 'reminder', 'pending', now() - interval '1 hour', 0),  -- not a push (task 4.5)
+  (9004, 'weekly_summary', 'pending', now() - interval '1 hour', 0), -- not sent by this worker
   (9005, 'push', 'done', now() - interval '1 hour', 1),
   (9006, 'push', 'failed', now() - interval '1 hour', 5),
   (9007, 'push', 'sending', now() + interval '1 minute', 1),    -- claimed by another call
@@ -59,7 +59,7 @@ select results_eq(
 select results_eq(
   $$ select id from public.claim_outbox_jobs(10) $$,
   $$ values (9002::bigint) $$,
-  'only due push jobs are claimed, including ones whose lease ran out'
+  'only due jobs are claimed, including ones whose lease ran out'
 );
 
 select results_eq(
@@ -76,7 +76,7 @@ select is_empty(
 select results_eq(
   $$ select status, attempts from public.outbox where id = 9004 $$,
   $$ values ('pending'::text, 0) $$,
-  'other job kinds are left pending'
+  'job kinds the worker does not send are left pending'
 );
 
 -- ---------------------------------------------------------------------------

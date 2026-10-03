@@ -10,6 +10,7 @@
 // item (or, for update_posted, the update) and the recipient's membership, write the in-app notifications row,
 // then push to each of the recipient's devices if their preference allows,
 // and record the result (finish_outbox_job, which handles retries).
+// Reminder and overdue jobs (task 4.5b) are run by scheduled.ts.
 //
 // Secrets: OUTBOX_WORKER_SECRET (the same value as outbox_worker_secret in
 // Vault), VAPID_PRIVATE_KEY and VAPID_SUBJECT (../_shared/web-push.ts).
@@ -18,14 +19,17 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { isUpdateEvent, pushAllowed, pushMessage, type NotificationPrefs } from '../_shared/push-copy.ts'
-import { configureVapid, sendPush, type Subscription } from '../_shared/web-push.ts'
+import { configureVapid } from '../_shared/web-push.ts'
+import { deliver } from './deliver.ts'
+// Reminders and overdue alerts (task 4.5b).
+import { runScheduledJob } from './scheduled.ts'
 
 const BATCH_SIZE = 10
 // Stop claiming new batches after this long, well inside the claim's 2-minute
 // lease and the function's time limit; the cron picks up the rest.
 const TIME_BUDGET_MS = 40_000
 
-type Job = { id: number; attempts: number; payload: Record<string, unknown> }
+type Job = { id: number; kind: string; attempts: number; payload: Record<string, unknown> }
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -105,45 +109,14 @@ async function runJob(admin: SupabaseClient, job: Job): Promise<string | null> {
     actorName: actor.data?.display_name ?? null,
   })
 
-  // In-app row first, whatever the preference. outbox_id is unique, so a
-  // retry of this job doesn't write a second row.
-  const notification = await admin.from('notifications').upsert(
-    { user_id: recipientId, kind: event, item_id: itemId, line: message.body, outbox_id: job.id },
-    { onConflict: 'outbox_id', ignoreDuplicates: true },
-  )
-  if (notification.error) throw notification.error
-
-  if (!pushAllowed(event, prefs.data as Partial<NotificationPrefs> | null)) return null
-
-  const subs = await admin
-    .from('push_subscriptions')
-    .select('id, endpoint, keys')
-    .eq('user_id', recipientId)
-  if (subs.error) throw subs.error
-  const subscriptions = (subs.data ?? []) as Subscription[]
-  if (subscriptions.length === 0) return null
-
-  const results = await Promise.allSettled(
-    subscriptions.map((subscription) => sendPush(subscription, message)),
-  )
-
-  const gone = subscriptions
-    .filter((_, i) => {
-      const result = results[i]
-      return result.status === 'fulfilled' && result.value === 'gone'
-    })
-    .map((subscription) => subscription.id)
-  if (gone.length > 0) {
-    const { error } = await admin.from('push_subscriptions').delete().in('id', gone)
-    if (error) console.error(error)
-  }
-
-  // Retry only if no device got it, so devices that did aren't sent it twice.
-  const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-  const sent = results.some((r) => r.status === 'fulfilled' && r.value === 'sent')
-  if (failures.length > 0 && !sent) return `push failed: ${String(failures[0].reason)}`
-  for (const failure of failures) console.error(failure.reason)
-  return null
+  return await deliver(admin, {
+    jobId: job.id,
+    recipientId,
+    kind: event,
+    itemId,
+    message,
+    pushAllowed: pushAllowed(event, prefs.data as Partial<NotificationPrefs> | null),
+  })
 }
 
 Deno.serve(async (req) => {
@@ -185,7 +158,8 @@ Deno.serve(async (req) => {
       jobs.map(async (job) => {
         let failure: string | null
         try {
-          failure = await runJob(admin, job)
+          failure =
+            job.kind === 'push' ? await runJob(admin, job) : await runScheduledJob(admin, job)
         } catch (error) {
           failure = error instanceof Error ? error.message : JSON.stringify(error)
         }

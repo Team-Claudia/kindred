@@ -340,9 +340,9 @@ select is(public.coverage_remaining(), 1, 'only this month''s requests, in the c
 reset role;
 select is_empty(
   $$ select 1 from public.outbox o
-     where o.kind <> 'push' or o.status <> 'pending'
+     where o.kind = 'push' and (o.status <> 'pending'
         or (select array_agg(k order by k) from jsonb_object_keys(o.payload) k)
-           <> array['actor_id', 'event', 'item_id', 'recipient_id'] $$,
+           <> array['actor_id', 'event', 'item_id', 'recipient_id']) $$,
   'every push job is pending and holds only IDs and an event name'
 );
 select is_empty(
@@ -350,7 +350,7 @@ select is_empty(
      where o.payload::text ilike '%' || i.title || '%'
         or o.payload::text ilike '%' || coalesce(i.private_notes, '<none>') || '%'
         or o.payload::text ilike '%' || coalesce(i.location, '<none>') || '%' $$,
-  'no push job contains a title, note or location'
+  'no outbox job contains a title, note or location'
 );
 select is_empty(
   $$ select 1 from public.activity_events e, public.items i

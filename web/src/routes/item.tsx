@@ -7,6 +7,7 @@ import { AssignSheet } from '@/components/assign-sheet'
 import { CoverageSheet, type CoverageStep } from '@/components/coverage-sheet'
 import { ItemFormSheet } from '@/components/item-form-sheet'
 import { ItemRow } from '@/components/item-row'
+import { OverdueNotice } from '@/components/overdue-notice'
 import { ShareButton } from '@/components/share-button'
 import { ErrorState, LoadingState } from '@/components/states'
 import { StatusBadge } from '@/components/status-badge'
@@ -22,6 +23,7 @@ import { currentHolder, isAskedViewer, itemActions, type ItemAction } from '@/li
 import { availabilitySlot } from '@/lib/availability'
 import { hasNoTime } from '@/lib/item-form'
 import { isOverdue, memberNames, type Item } from '@/lib/items'
+import { overdueAlertFor } from '@/lib/overdue-alert'
 import {
   isItemNotFound,
   queryKeys,
@@ -270,6 +272,15 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
           </h2>
           <p>{t('itemDetail.askedYouBody')}</p>
         </section>
+      )}
+
+      {overdue && (
+        <OverdueNotice
+          startsAt={item.starts_at}
+          alert={overdueAlertFor(history.data, item.starts_at)}
+          nameOf={nameOf}
+          timeZone={timeZone}
+        />
       )}
 
       {state === 'needs_coverage' && (

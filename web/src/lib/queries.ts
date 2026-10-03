@@ -91,7 +91,7 @@ export function useItemHistory(itemId: string) {
       rows(
         supabase
           .from('activity_events')
-          .select('id, type, actor_id, at')
+          .select('id, type, actor_id, at, data')
           .eq('item_id', itemId)
           .order('at')
           .order('id'),

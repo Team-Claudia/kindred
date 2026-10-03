@@ -114,7 +114,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 
 ### 4.2 RPCs (all writes)
 
-Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`; and `shared` (`data.share_kind`, task 3.2). Coverage types (task 3.1): `coverage_requested`, `coverage_cancelled`, `coverage_taken` (`data.previous_owner_id`). Updates (task 4.1): `update_posted` (`data.update_id`, with `item_id` when the update is linked to an item).
+Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`; and `shared` (`data.share_kind`, task 3.2). Coverage types (task 3.1): `coverage_requested`, `coverage_cancelled`, `coverage_taken` (`data.previous_owner_id`). Updates (task 4.1): `update_posted` (`data.update_id`, with `item_id` when the update is linked to an item). Overdue alerts (task 4.5b): `overdue_alerted` (no actor; `data.starts_at`, `data.told`), written by `expand_overdue_job`, not an RPC (§4.4).
 
 | RPC | Arguments | Typed errors |
 | --- | --- | --- |
@@ -212,7 +212,7 @@ The actor is never a recipient, and nor is anyone who has left the circle. Event
 | `coverage_taken` | `accept_coverage` | The member who asked for cover (the previous owner) |
 | `update_posted` | `post_update` | Every other member of the circle |
 
-**Sending push jobs** (task 3.3, migration `outbox_push_worker`). `outbox-worker` runs only `push` jobs so far; the other kinds stay `pending` until task 4.5.
+**Sending push jobs** (task 3.3, migration `outbox_push_worker`). `outbox-worker` runs `push` jobs as below, and `reminder` and `overdue` jobs as in **Reminders and overdue alerts**; `weekly_summary` and `geocode` jobs stay `pending`.
 
 - **Calls.** A statement-level trigger on `outbox` insert calls the worker through `pg_net` when the statement added a `push` job; the request goes out after the RPC's transaction commits. pg_cron job `outbox-worker` runs `outbox_catch_up()` every minute, which calls the worker only when a push job is due. Both read the function URL and shared secret from Vault (`outbox_worker_url`, `outbox_worker_secret`, §8.3); if either is missing they log and do nothing, and jobs wait as `pending`. The function has `verify_jwt = false` and rejects any call without the matching `x-outbox-secret` header (`OUTBOX_WORKER_SECRET`).
 - **Claim.** `claim_outbox_jobs(max_jobs)` (service role only) takes due `push` jobs (`pending`, or `sending` with an expired lease; `run_at <= now()`) oldest first with `for update skip locked`, sets them `sending`, adds 1 to `attempts` and leases them for 2 minutes. So the trigger's call and the cron's call never send the same job, and a job whose worker died is retried when its lease runs out. A job whose lease runs out on its 5th attempt is `failed` (`last_error = worker_did_not_finish`).
@@ -238,6 +238,20 @@ The actor is never a recipient, and nor is anyone who has left the circle. Event
 | Anything else | Something changed in Kindred | `everything_else` |
 
 `coverage_requested` goes to every other member, `coverage_taken` to the previous owner (task 3.1).
+
+**Reminders and overdue alerts** (task 4.5b, migration `reminders`, ADR-010). A trigger on `items` (`items_schedule_jobs`, after insert or update of `state`, `owner_id`, `starts_at`) queues both kinds, so every item RPC and any bulk insert (recurrence) behaves the same. Payloads hold IDs and the due time only.
+
+| `kind` | Queued when | `run_at` | Payload |
+| --- | --- | --- | --- |
+| `reminder` | The item becomes Assigned (create assigned to yourself, `accept_assignment`, `claim`, `assign` to yourself, `accept_coverage`, `cancel_coverage`), its owner changes, or an Assigned item's `starts_at` changes | `reminder_run_at(kind, starts_at, circles.time_zone)`: appointments 2 hours before; tasks 9 am on the due day in the circle's time zone, or 2 hours before if due before 11 am. Not queued if that has passed | `{item_id, recipient_id, starts_at}` |
+| `overdue` | An open item is created, reopens, or its `starts_at` changes. Moving between open states (asked, accepted, covered) keeps the job | `overdue_run_at(kind, starts_at, time_zone)`: `starts_at`, except a task with no time (23:59 in the circle's time zone) is alerted at 9 am the next morning. Not queued if that has passed | `{item_id, starts_at}` |
+
+- **Superseding.** Queuing either kind for an item first marks that item's pending jobs of the same kind `done` with `last_error = 'superseded'`; so do completing or cancelling it (both kinds) and any change of state, owner or time (`reminder`). Moving a time away and back never sends twice.
+- **Claim and calls.** `claim_outbox_jobs` and `outbox_catch_up` take due `push`, `reminder` and `overdue` jobs alike, so the cron starts a reminder within a minute of its `run_at`. The insert trigger still calls the worker only for `push` jobs.
+- **Overdue fan-out.** An `overdue` job without `recipient_id` is passed to `expand_overdue_job(job_id, attempt)` (service role only). In one transaction it re-checks the item (still open, same `starts_at`; otherwise the job is `done` with `last_error = 'stale'`), queues one `overdue` job per person to tell, due now, `{item_id, starts_at, recipient_id}`: the owner, or the proposed assignee if not yet accepted, and every admin, each once (an item with nobody on it alerts only the admins); writes one `overdue_alerted` history row (`actor_id` null, `data.starts_at`, `data.told` = their user IDs, the person on it first); and marks the job `done`. It returns how many were told (0 if the job is no longer this worker's claim).
+- **Send-time checks** (`staleReason` in `supabase/functions/_shared/reminder-copy.ts`, Deno-tested). A job with a recipient is dropped (`done`, nothing sent) if the item is gone, the recipient has left the circle, or `starts_at` no longer matches the payload; a `reminder` also if the item isn't Assigned or the owner isn't the recipient; an `overdue` also if the item isn't open or the recipient is neither an admin nor the person on it now. Otherwise the worker writes the `notifications` row (`kind` = `reminder` or `overdue`) and pushes under the `reminders` category, as for push jobs.
+- **Copy.** Title "<care recipient>'s Care Circle"; body "Reminder: something you're on is coming up" or "Something is overdue"; tap opens `/i/<item_id>`. No titles.
+- **Item detail.** When an item is overdue and it has an `overdue_alerted` row for its current `starts_at`, it says who was told (wireframe 28, simplified), above the usual actions.
 
 ### 4.5 App routes and platform adapter
 
@@ -595,4 +609,4 @@ Technical risks and mitigations are in ADR §6. Risks specific to this build:
 - [ ] Team email list (private; needed for the Supabase organisation so email codes reach the team).
 - [ ] Team review of the wireframes, especially the screens added on 2026-09-28 (see [wireframes/README.md](wireframes/README.md)).
 - [ ] Team agrees the Tier 2 cut order now that the map, weekly summary, notification list and overdue alerts are in it (§2).
-- [ ] Confirm the reminder lead times in Tier 2.
+- [x] Confirm the reminder lead times in Tier 2: appointments 2 hours before; tasks 9 am on the due day in the circle's time zone, or 2 hours before if due before 11 am (task 4.5b, §4.4).
