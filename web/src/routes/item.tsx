@@ -1,19 +1,22 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Check } from 'lucide-react'
+import { Check, MessageSquare } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { AssignSheet } from '@/components/assign-sheet'
 import { CoverageSheet, type CoverageStep } from '@/components/coverage-sheet'
 import { ItemFormSheet } from '@/components/item-form-sheet'
+import { ItemRow } from '@/components/item-row'
 import { ShareButton } from '@/components/share-button'
 import { ErrorState, LoadingState } from '@/components/states'
 import { StatusBadge } from '@/components/status-badge'
+import { UpdateCard } from '@/components/update-card'
+import { UpdateSheet } from '@/components/update-sheet'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { useCircleMembers, useMyMembership } from '@/lib/circles'
-import { firstOfNextMonth, formatDate, formatMonthDay, formatTime } from '@/lib/dates'
+import { dayKey, firstOfNextMonth, formatDate, formatMonthDay, formatTime } from '@/lib/dates'
 import { errorMessage, RpcError } from '@/lib/errors'
 import { currentHolder, isAskedViewer, itemActions, type ItemAction } from '@/lib/item-actions'
 import { hasNoTime } from '@/lib/item-form'
@@ -22,9 +25,11 @@ import {
   isItemNotFound,
   queryKeys,
   useCoverageRemaining,
+  useFollowUps,
   useItem,
   useItemHistory,
   useItemMutation,
+  useItemUpdates,
   usePendingRequest,
 } from '@/lib/queries'
 import { coverageRequestShare, itemShare } from '@/lib/share-text'
@@ -62,7 +67,8 @@ export default function ItemScreen() {
   }
   const row: Item | null = item.data
   if (!row) return <NoAccess />
-  return <ItemDetail item={row} viewerId={viewerId} timeZone={circle.time_zone} />
+  // Keyed, so opening another item (e.g. a new follow-up) starts fresh.
+  return <ItemDetail key={itemId} item={row} viewerId={viewerId} timeZone={circle.time_zone} />
 }
 
 function NoAccess() {
@@ -106,6 +112,12 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
   const [running, setRunning] = useState<ItemAction | null>(null)
   const [coverageStep, setCoverageStep] = useState<CoverageStep | null>(null)
   const coverageLeft = useCoverageRemaining()
+  // Updates and follow-ups (task 4.1).
+  const navigate = useNavigate()
+  const updates = useItemUpdates(item.id)
+  const followUps = useFollowUps(item.id)
+  const [addingUpdate, setAddingUpdate] = useState(false)
+  const [creatingFollowUp, setCreatingFollowUp] = useState(false)
 
   // Runs one RPC. The returned row shows straight away; useItemMutation then
   // refetches the item (and its history) whether it worked or not.
@@ -301,6 +313,7 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
             })}
           </Row>
         )}
+        {item.follow_up_of && <FollowUpOfRow appointmentId={item.follow_up_of} />}
       </dl>
 
       {item.private_notes && (
@@ -310,7 +323,41 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         </section>
       )}
 
-      {/* Later: linked updates and follow-ups (task 4.1). */}
+      {updates.data && updates.data.length > 0 && (
+        <section aria-labelledby="item-updates" className="flex flex-col gap-3">
+          <h2 id="item-updates" className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+            {t('updates.onItem', { count: updates.data.length })}
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {updates.data.map((update) => (
+              <li key={update.id}>
+                <UpdateCard
+                  update={update}
+                  names={names}
+                  timeZone={timeZone}
+                  today={dayKey(now, timeZone)}
+                  showItem={false}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!isTask && followUps.data && followUps.data.length > 0 && (
+        <section aria-labelledby="item-follow-ups" className="flex flex-col gap-3">
+          <h2 id="item-follow-ups" className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+            {t('updates.followUps')}
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {followUps.data.map((followUp) => (
+              <li key={followUp.id}>
+                <ItemRow item={followUp} names={names} timeZone={timeZone} now={now} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section aria-label={t('itemDetail.actionsLabel')} className="flex flex-col gap-3">
         {error !== null && (
@@ -372,6 +419,40 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         />
       )}
 
+      <div className="flex flex-col gap-3">
+        <Button size="lg" variant="outline" onClick={() => setAddingUpdate(true)}>
+          <MessageSquare aria-hidden className="size-5" />
+          {t('updates.addUpdate')}
+        </Button>
+        {!isTask && (
+          <Button size="lg" variant="outline" onClick={() => setCreatingFollowUp(true)}>
+            {t('updates.createFollowUp')}
+          </Button>
+        )}
+      </div>
+
+      <UpdateSheet
+        open={addingUpdate}
+        onOpenChange={setAddingUpdate}
+        timeZone={timeZone}
+        linkTo={item}
+        onPosted={() => setAddingUpdate(false)}
+      />
+
+      {creatingFollowUp && (
+        <ItemFormSheet
+          open
+          onOpenChange={(open) => !open && setCreatingFollowUp(false)}
+          kind="task"
+          followUpOf={{ id: item.id, title: item.title }}
+          timeZone={timeZone}
+          onSaved={(itemId) => {
+            setCreatingFollowUp(false)
+            void navigate(`/i/${itemId}`)
+          }}
+        />
+      )}
+
       <AssignSheet
         open={assigning !== null}
         onOpenChange={(open) => !open && setAssigning(null)}
@@ -421,6 +502,27 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         }}
       />
     </main>
+  )
+}
+
+// "Follow-up to <appointment>" on a follow-up task, linking back to it.
+function FollowUpOfRow({ appointmentId }: { appointmentId: string }) {
+  const { t } = useTranslation()
+  const appointment = useItem(appointmentId)
+  // useItem's data is typed never (single() over rows()), so restore the row type.
+  const parent = (appointment.data ?? null) as Item | null
+  return (
+    <Row label={t('updates.followUpTo')}>
+      {parent ? (
+        <Link to={`/i/${parent.id}`} className="inline-flex min-h-tap items-center underline">
+          {parent.title}
+        </Link>
+      ) : (
+        <span className="text-muted-foreground">
+          {appointment.isPending ? t('updates.followUpToLoading') : t('itemDetail.noAccessTitle')}
+        </span>
+      )}
+    </Row>
   )
 }
 

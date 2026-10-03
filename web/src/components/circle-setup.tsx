@@ -77,6 +77,8 @@ export function TextField({
   error,
   autoComplete,
   placeholder,
+  verbatim = false,
+  maxLength = 80,
 }: {
   label: string
   value: string
@@ -85,6 +87,9 @@ export function TextField({
   error?: string
   autoComplete?: string
   placeholder?: string
+  /** Kept exactly as typed (codes, links): no auto-capitals or autocorrect. */
+  verbatim?: boolean
+  maxLength?: number
 }) {
   const id = useId()
   return (
@@ -99,7 +104,8 @@ export function TextField({
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
         placeholder={placeholder}
-        maxLength={80}
+        maxLength={maxLength}
+        {...(verbatim && { autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false })}
         aria-invalid={Boolean(error)}
         aria-describedby={`${id}-hint`}
       />

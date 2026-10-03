@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { TFunction } from 'i18next'
 import { Share } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -28,7 +29,8 @@ import {
   useProfile,
   type CircleMember,
 } from '@/lib/circles'
-import { errorMessage } from '@/lib/errors'
+import { errorMessage, RpcError } from '@/lib/errors'
+import { inviteCodeFromText } from '@/lib/invite-code'
 import { inviteShare } from '@/lib/share-text'
 import { platform } from '@/platform'
 
@@ -43,7 +45,7 @@ export default function Welcome() {
   const membership = useMyMembership(user?.id)
   const queryClient = useQueryClient()
 
-  const [step, setStep] = useState<1 | 2>(1)
+  const [step, setStep] = useState<1 | 2 | 'code'>(1)
   const [name, setName] = useState<string | null>(null)
   const [agreed, setAgreed] = useState(false)
   const [recipient, setRecipient] = useState('')
@@ -96,21 +98,37 @@ export default function Welcome() {
   const recipientError =
     showErrors && !recipient.trim() ? t('welcome.recipientRequired') : undefined
 
+  if (step === 'code') return <InviteCodeStep userId={user.id} onBack={() => setStep(1)} />
+
   if (step === 1) {
     return (
       <SetupScreen
         title={t('welcome.title')}
         footer={
-          <Button
-            size="lg"
-            onClick={() => {
-              if (!displayName.trim() || !agreed) return setShowErrors(true)
-              setShowErrors(false)
-              setStep(2)
-            }}
-          >
-            {t('welcome.continue')}
-          </Button>
+          <>
+            <Button
+              size="lg"
+              onClick={() => {
+                if (!displayName.trim() || !agreed) return setShowErrors(true)
+                setShowErrors(false)
+                setStep(2)
+              }}
+            >
+              {t('welcome.continue')}
+            </Button>
+            {/* The Home Screen app always opens at /, so an invite link can't
+                bring people here: they enter its code instead (task 4.10). */}
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => {
+                setShowErrors(false)
+                setStep('code')
+              }}
+            >
+              {t('welcome.haveCode')}
+            </Button>
+          </>
         }
       >
         <StepProgress step={1} label={t('welcome.stepYou')} />
@@ -174,6 +192,70 @@ export default function Welcome() {
       <Notice>{t('welcome.notMedical')}</Notice>
     </SetupScreen>
   )
+}
+
+// "I have an invite code": checks the code (or a pasted invite link) with
+// invite_preview, then hands over to /join/:code to join (task 4.10).
+function InviteCodeStep({ userId, onBack }: { userId: string; onBack: () => void }) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [text, setText] = useState('')
+  const [invalid, setInvalid] = useState(false)
+
+  const check = useMutation({
+    mutationFn: (code: string) => api.invitePreview(code),
+    onSuccess: (preview, code) => {
+      // /join/:code shows this straight away rather than asking again.
+      queryClient.setQueryData(circleKeys.invitePreview(code, userId), preview)
+      navigate(`/join/${code}`)
+    },
+  })
+
+  const error = invalid ? t('inviteCode.invalid') : check.error ? inviteCodeError(check.error, t) : undefined
+
+  return (
+    <SetupScreen
+      title={t('inviteCode.title')}
+      onBack={onBack}
+      footer={
+        <Button
+          size="lg"
+          disabled={check.isPending}
+          onClick={() => {
+            const code = inviteCodeFromText(text)
+            setInvalid(!code)
+            if (code) check.mutate(code)
+          }}
+        >
+          {check.isPending ? t('inviteCode.checking') : t('inviteCode.submit')}
+        </Button>
+      }
+    >
+      <Heading intro={t('inviteCode.intro')}>{t('inviteCode.heading')}</Heading>
+      <TextField
+        label={t('inviteCode.label')}
+        value={text}
+        onChange={(value) => {
+          setText(value)
+          setInvalid(false)
+          check.reset()
+        }}
+        hint={t('inviteCode.hint')}
+        error={error}
+        autoComplete="off"
+        verbatim
+        maxLength={500}
+      />
+    </SetupScreen>
+  )
+}
+
+function inviteCodeError(error: Error, t: TFunction) {
+  const code = error instanceof RpcError ? error.code : null
+  if (code === 'invite_not_found') return t('inviteCode.notFound')
+  if (code === 'invite_expired') return t('inviteCode.expired')
+  return errorMessage(error)
 }
 
 function InviteStep({

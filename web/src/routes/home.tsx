@@ -64,7 +64,7 @@ export default function Home() {
 
   // In a Safari tab, ask to add Kindred to the Home Screen first: on iPhone,
   // push only works from there.
-  if (installGuide.show) return <InstallGuide onRemindLater={installGuide.remindLater} />
+  if (installGuide.show) return <InstallGuide onDismiss={installGuide.dismiss} />
 
   const name = profile.data?.display_name
   return (
