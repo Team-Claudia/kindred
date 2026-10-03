@@ -19,6 +19,7 @@ Deno.test('every event has its own line, using the actor first name', () => {
   assertEquals(body('item_cancelled'), 'Maya cancelled something you were on')
   assertEquals(body('coverage_requested'), 'Maya needs someone to cover for them')
   assertEquals(body('coverage_taken'), 'Maya is covering for you')
+  assertEquals(body('update_posted'), 'Maya posted an update')
 })
 
 Deno.test('an unknown event gets the generic line', () => {
@@ -49,6 +50,25 @@ Deno.test('title names the care recipient; url opens the item', () => {
   )
 })
 
+Deno.test('an update opens the Updates thread, linked or not', () => {
+  const linked = pushMessage({
+    event: 'update_posted',
+    itemId: ITEM,
+    careRecipientName: 'Mom',
+    actorName: 'Maya Patel',
+  })
+  assertEquals(linked, { title: "Mom's Care Circle", body: 'Maya posted an update', url: '/updates' })
+  assertEquals(
+    pushMessage({ event: 'update_posted', itemId: null, careRecipientName: 'Mom', actorName: null }).url,
+    '/updates',
+  )
+})
+
+Deno.test('update pushes switch off with the updates preference', () => {
+  assertEquals(pushAllowed('update_posted', null), true)
+  assertEquals(pushAllowed('update_posted', { ...DEFAULT_PREFS, updates: false }), false)
+})
+
 Deno.test('events map to notification_prefs categories', () => {
   for (const event of [
     'assignment_requested',
@@ -64,6 +84,7 @@ Deno.test('events map to notification_prefs categories', () => {
   for (const event of ['item_changed', 'item_cancelled', 'reassigned_away', 'reconfirm_requested']) {
     assertEquals(eventCategory(event), 'changes', event)
   }
+  assertEquals(eventCategory('update_posted'), 'updates')
   assertEquals(eventCategory('something_new'), 'everything_else')
   assertEquals(eventCategory('constructor'), 'everything_else')
 })

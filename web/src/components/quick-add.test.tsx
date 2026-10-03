@@ -5,6 +5,7 @@ import '@/i18n'
 import * as api from '@/lib/api'
 import { useAuth, type AuthState } from '@/lib/auth'
 import * as circles from '@/lib/circles'
+import * as queries from '@/lib/queries'
 import { QuickAdd } from './quick-add'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
@@ -20,6 +21,11 @@ vi.mock('@/lib/circles', async (importOriginal) => ({
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof api>()),
   createItem: vi.fn(),
+  postUpdate: vi.fn(),
+}))
+vi.mock('@/lib/queries', async (importOriginal) => ({
+  ...(await importOriginal<typeof queries>()),
+  useItemsInRange: vi.fn(),
 }))
 
 type Query<T extends (...args: never[]) => unknown> = ReturnType<T>
@@ -29,6 +35,7 @@ function renderQuickAdd() {
     [
       { path: '/', element: <QuickAdd /> },
       { path: '/i/:itemId', element: <p>Item screen</p> },
+      { path: '/updates', element: <p>Updates screen</p> },
     ],
     { initialEntries: ['/'] },
   )
@@ -65,6 +72,14 @@ beforeEach(() => {
     ],
   } as unknown as Query<typeof circles.useCircleMembers>)
   vi.mocked(api.createItem).mockResolvedValue('new-item')
+  vi.mocked(api.postUpdate).mockResolvedValue('new-update')
+  vi.mocked(queries.useItemsInRange).mockReturnValue({
+    isPending: false,
+    data: [
+      { id: 'cardio', kind: 'appointment', title: 'Cardiology', starts_at: '2026-09-23T21:00:00Z', state: 'assigned' },
+      { id: 'meds', kind: 'task', title: 'Refill meds', starts_at: '2026-09-26T00:00:00Z', state: 'needs_someone' },
+    ],
+  } as unknown as Query<typeof queries.useItemsInRange>)
 })
 
 afterEach(() => {
@@ -77,7 +92,6 @@ test('adds a task for nobody yet, then opens it', async () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Quick add' }))
   const chooser = await screen.findByRole('dialog', { name: 'What do you want to add?' })
-  expect(within(chooser).getByRole('button', { name: /Update or note/ })).toBeDisabled()
   fireEvent.click(within(chooser).getByRole('button', { name: /^Task/ }))
 
   const sheet = await screen.findByRole('dialog', { name: 'New task' })
@@ -130,4 +144,48 @@ test('asking someone explains they have to accept', async () => {
       assignee_id: 'jonah',
     }),
   )
+})
+
+test('Update or note posts an update, linked or not, then opens Updates', async () => {
+  const router = renderQuickAdd()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Quick add' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Update or note/ }))
+  const sheet = await screen.findByRole('dialog', { name: 'New update' })
+  expect(sheet).toHaveTextContent('Maya, posting to the Care Circle')
+  expect(within(sheet).getByRole('radio', { name: 'Nothing in particular' })).toBeChecked()
+  expect(sheet).toHaveTextContent('Everyone in the Care Circle is notified.')
+
+  // A blank update isn't sent.
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Post to updates' }))
+  expect(within(sheet).getByText('Write what happened.')).toBeInTheDocument()
+  expect(api.postUpdate).not.toHaveBeenCalled()
+
+  fireEvent.change(within(sheet).getByLabelText('What happened?'), {
+    target: { value: '  Back from cardiology, next visit in six weeks. ' },
+  })
+  fireEvent.click(within(sheet).getByRole('radio', { name: /Cardiology/ }))
+  expect(sheet).toHaveTextContent(
+    'Everyone in the Care Circle is notified, and the update also shows on Cardiology.',
+  )
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Post to updates' }))
+
+  await waitFor(() => expect(router.state.location.pathname).toBe('/updates'))
+  expect(api.postUpdate).toHaveBeenCalledWith({
+    body: 'Back from cardiology, next visit in six weeks.',
+    item_id: 'cardio',
+  })
+})
+
+test('an update over 2,000 characters is not sent', async () => {
+  renderQuickAdd()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Quick add' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Update or note/ }))
+  const sheet = await screen.findByRole('dialog', { name: 'New update' })
+  fireEvent.change(within(sheet).getByLabelText('What happened?'), { target: { value: 'a'.repeat(2001) } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Post' }))
+
+  expect(within(sheet).getByText('Keep it under 2,000 characters.')).toBeInTheDocument()
+  expect(api.postUpdate).not.toHaveBeenCalled()
 })

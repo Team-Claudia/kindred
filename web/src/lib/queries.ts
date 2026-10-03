@@ -16,6 +16,9 @@ export const queryKeys = {
   // Under 'items', so anything that refreshes items refreshes ranges too.
   itemsInRange: (from: string, to: string) => ['items', 'range', from, to] as const,
   updates: ['updates'] as const,
+  // Updates (task 4.1). Under 'updates' or the item, so the live channel refreshes them.
+  itemUpdates: (itemId: string) => ['updates', 'item', itemId] as const,
+  followUps: (itemId: string) => ['items', itemId, 'follow-ups'] as const,
   members: ['members'] as const,
   notifications: ['notifications'] as const,
   coverageRemaining: ['coverage-remaining'] as const,
@@ -113,11 +116,48 @@ export function usePendingRequest(itemId: string) {
   })
 }
 
+// An update with its linked item's title and kind, for the chip that opens it.
+const updateColumns = 'id, author_id, body, created_at, item_id, items(id, title, kind)'
+
+/** The circle's Updates thread, newest first (task 4.1). */
 export function useUpdates() {
   return useQuery({
     queryKey: queryKeys.updates,
     queryFn: () =>
-      rows(supabase.from('updates').select('*').order('created_at', { ascending: false })),
+      rows(
+        supabase
+          .from('updates')
+          .select(updateColumns)
+          .order('created_at', { ascending: false })
+          .order('id'),
+      ),
+  })
+}
+
+export type UpdateWithItem = NonNullable<ReturnType<typeof useUpdates>['data']>[number]
+
+/** Updates linked to one item, newest first. */
+export function useItemUpdates(itemId: string) {
+  return useQuery({
+    queryKey: queryKeys.itemUpdates(itemId),
+    queryFn: () =>
+      rows(
+        supabase
+          .from('updates')
+          .select(updateColumns)
+          .eq('item_id', itemId)
+          .order('created_at', { ascending: false })
+          .order('id'),
+      ),
+  })
+}
+
+/** An appointment's follow-up tasks (items.follow_up_of), in date order. */
+export function useFollowUps(itemId: string) {
+  return useQuery({
+    queryKey: queryKeys.followUps(itemId),
+    queryFn: () =>
+      rows(supabase.from('items').select('*').eq('follow_up_of', itemId).order('starts_at')),
   })
 }
 
