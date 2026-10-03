@@ -28,6 +28,7 @@ function item(overrides: Partial<Item>): Item {
     location_lng: null,
     private_notes: null,
     series_id: null,
+    occurrence_index: null,
     follow_up_of: null,
     created_by: 'maya',
     created_at: '2026-09-01T00:00:00Z',
@@ -44,6 +45,15 @@ function form(overrides: Partial<ItemForm>): ItemForm {
 describe('validateItemForm', () => {
   test('a task needs only a title and a date', () => {
     expect(validateItemForm(form({}))).toEqual({})
+  })
+
+  test('Until is optional, but not before the first date', () => {
+    expect(validateItemForm(form({ repeat: 'weekly' }))).toEqual({})
+    expect(validateItemForm(form({ repeat: 'weekly', until: '2026-09-24' }))).toEqual({})
+    expect(validateItemForm(form({ repeat: 'weekly', until: '2026-09-23' }))).toEqual({
+      until: 'untilBeforeStart',
+    })
+    expect(validateItemForm(form({ repeat: 'none', until: '2026-09-23' }))).toEqual({})
   })
 
   test('a blank title is missing', () => {
@@ -122,6 +132,35 @@ describe('createItemArgs', () => {
 
   test('a task never sends a location', () => {
     expect(createItemArgs(form({ location: 'Somewhere' }), zone)).not.toHaveProperty('location')
+  })
+
+  test('a repeat sends its rule, and Until as the end of that day in the circle', () => {
+    // Toronto changes its clocks on 1 Nov 2026 (Vancouver may not, in newer
+    // time zone data), so the end of 1 Nov is 23:59 EST, 04:59 UTC.
+    expect(
+      createItemArgs(
+        form({ date: '2026-10-25', time: '20:00', repeat: 'weekly', until: '2026-11-01' }),
+        'America/Toronto',
+      ),
+    ).toEqual({
+      kind: 'task',
+      title: 'Refill meds',
+      starts_at: '2026-10-26T00:00:00.000Z',
+      repeat: 'weekly',
+      until: '2026-11-02T04:59:00.000Z',
+    })
+  })
+
+  test('a repeat with no end date sends no until', () => {
+    const args = createItemArgs(form({ repeat: 'daily' }), zone)
+    expect(args.repeat).toBe('daily')
+    expect(args).not.toHaveProperty('until')
+  })
+
+  test("Doesn't repeat sends neither, even with an Until date left over", () => {
+    const args = createItemArgs(form({ repeat: 'none', until: '2026-10-01' }), zone)
+    expect(args).not.toHaveProperty('repeat')
+    expect(args).not.toHaveProperty('until')
   })
 })
 

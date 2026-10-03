@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
 import * as api from '@/lib/api'
@@ -30,6 +30,7 @@ vi.mock('@/lib/queries', async (importOriginal) => ({
   useItemUpdates: vi.fn(),
   useFollowUps: vi.fn(),
   useItemsInRange: vi.fn(),
+  useSeriesRepeat: vi.fn(),
 }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof api>()),
@@ -63,6 +64,7 @@ function item(overrides: Partial<Item>): Item {
     location_lng: null,
     private_notes: 'Ask about the new dose',
     series_id: null,
+    occurrence_index: null,
     follow_up_of: null,
     created_by: 'ada',
     created_at: '2026-09-22T18:00:00Z',
@@ -184,6 +186,21 @@ test('Needs someone: details, and I’ll do it claims it in one tap', async () =
 
   fireEvent.click(screen.getByRole('button', { name: "I'll do it" }))
   await waitFor(() => expect(api.claim).toHaveBeenCalledWith({ item_id: 'pharmacy', version: 4 }))
+})
+
+test('an occurrence of a series says how it repeats; a one-off says nothing', () => {
+  vi.mocked(queries.useSeriesRepeat).mockReturnValue({ data: 'weekly' } as Query<
+    typeof queries.useSeriesRepeat
+  >)
+  mockItem(item({}))
+  renderItem()
+  expect(screen.queryByText('Repeats weekly')).not.toBeInTheDocument()
+  cleanup()
+
+  mockItem(item({ series_id: 'series-1', occurrence_index: 2 }))
+  renderItem()
+  expect(screen.getByText('Repeats weekly')).toBeInTheDocument()
+  expect(queries.useSeriesRepeat).toHaveBeenCalledWith('series-1')
 })
 
 test('the person asked sees who asked, and can accept or decline', async () => {

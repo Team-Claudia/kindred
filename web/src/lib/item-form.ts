@@ -1,4 +1,4 @@
-import type { CreateItemArgs, ItemPatch } from './api'
+import type { CreateItemArgs, ItemPatch, Repeat } from './api'
 import { instantAt, isDayKey, isTimeOfDay, timeOfDay, dayKey, type DayKey } from './dates'
 import type { Item, ItemKind } from './items'
 
@@ -35,9 +35,13 @@ export interface ItemForm {
   notes: string
   /** Who is asked to do it: a member's user ID, or null for Nobody yet. */
   assigneeId: string | null
+  /** Creating only: how it repeats (task 4.5c). Each occurrence is its own item. */
+  repeat: Repeat | 'none'
+  /** The last day it repeats, 'YYYY-MM-DD', or '' for no end date. */
+  until: string
 }
 
-export type ItemFormField = 'title' | 'date' | 'time' | 'endTime' | 'location' | 'notes'
+export type ItemFormField = 'title' | 'date' | 'time' | 'endTime' | 'location' | 'notes' | 'until'
 
 export type ItemFormProblem =
   | 'titleRequired'
@@ -47,12 +51,24 @@ export type ItemFormProblem =
   | 'endBeforeStart'
   | 'locationTooLong'
   | 'notesTooLong'
+  | 'untilBeforeStart'
 
 export type ItemFormProblems = Partial<Record<ItemFormField, ItemFormProblem>>
 
 /** A blank form for a new item, due `day`. */
 export function newItemForm(kind: ItemKind, day: DayKey): ItemForm {
-  return { kind, title: '', date: day, time: '', endTime: '', location: '', notes: '', assigneeId: null }
+  return {
+    kind,
+    title: '',
+    date: day,
+    time: '',
+    endTime: '',
+    location: '',
+    notes: '',
+    assigneeId: null,
+    repeat: 'none',
+    until: '',
+  }
 }
 
 /** The form for editing `item`, with its times in `timeZone`. */
@@ -68,6 +84,8 @@ export function itemToForm(item: Item, timeZone: string): ItemForm {
     location: kind === 'appointment' ? (item.location ?? '') : '',
     notes: item.private_notes ?? '',
     assigneeId: null,
+    repeat: 'none',
+    until: '',
   }
 }
 
@@ -89,6 +107,9 @@ export function validateItemForm(form: ItemForm): ItemFormProblems {
     if (length(form.location.trim()) > limits.location) problems.location = 'locationTooLong'
   }
   if (length(form.notes.trim()) > limits.notes) problems.notes = 'notesTooLong'
+  if (form.repeat !== 'none' && isDayKey(form.until) && isDayKey(form.date) && form.until < form.date) {
+    problems.until = 'untilBeforeStart'
+  }
   return problems
 }
 
@@ -108,11 +129,16 @@ export function formTimes(form: ItemForm, timeZone: string): { starts_at: string
 
 const orNull = (value: string) => value.trim() || null
 
-/** create_item's arguments for a valid form. */
+/**
+ * create_item's arguments for a valid form. A repeat ends at the end of its
+ * Until day in the circle's time zone, so an occurrence that day is included.
+ */
 export function createItemArgs(form: ItemForm, timeZone: string): CreateItemArgs {
   const { starts_at, ends_at } = formTimes(form, timeZone)
   const location = form.kind === 'appointment' ? orNull(form.location) : null
   const notes = orNull(form.notes)
+  const repeat = form.repeat === 'none' ? null : form.repeat
+  const until = repeat && isDayKey(form.until) ? instantAt(form.until, END_OF_DAY, timeZone).toISOString() : null
   return {
     kind: form.kind,
     title: form.title.trim(),
@@ -121,6 +147,8 @@ export function createItemArgs(form: ItemForm, timeZone: string): CreateItemArgs
     ...(location && { location }),
     ...(notes && { private_notes: notes }),
     ...(form.assigneeId && { assignee_id: form.assigneeId }),
+    ...(repeat && { repeat }),
+    ...(until && { until }),
   }
 }
 
