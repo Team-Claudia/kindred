@@ -23,6 +23,7 @@ const base: Item = {
   id: '7f3c9a',
   circle_id: 'circle',
   series_id: null,
+  occurrence_index: null,
   kind: 'task',
   title: 'Pick up prescription',
   starts_at: '2025-10-03T16:30:00Z',

@@ -40,6 +40,7 @@ function item(overrides: Partial<Item>): Item {
     location_lng: null,
     private_notes: null,
     series_id: null,
+    occurrence_index: null,
     follow_up_of: null,
     created_by: 'maya',
     created_at: '2026-09-01T00:00:00Z',

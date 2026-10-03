@@ -243,13 +243,13 @@ isOneToOne: false
                   ]
                 },"items": {
                   Row: {
-                    "circle_id": string,"created_at": string,"created_by": string | null,"ends_at": string | null,"follow_up_of": string | null,"id": string,"kind": string,"location": string | null,"location_lat": number | null,"location_lng": number | null,"owner_id": string | null,"private_notes": string | null,"proposed_assignee_id": string | null,"series_id": string | null,"starts_at": string,"state": string,"title": string,"updated_at": string,"version": number
+                    "circle_id": string,"created_at": string,"created_by": string | null,"ends_at": string | null,"follow_up_of": string | null,"id": string,"kind": string,"location": string | null,"location_lat": number | null,"location_lng": number | null,"occurrence_index": number | null,"owner_id": string | null,"private_notes": string | null,"proposed_assignee_id": string | null,"series_id": string | null,"starts_at": string,"state": string,"title": string,"updated_at": string,"version": number
                   }
                   Insert: {
-                    "circle_id": string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"follow_up_of"?: string | null,"id"?: string,"kind": string,"location"?: string | null,"location_lat"?: number | null,"location_lng"?: number | null,"owner_id"?: string | null,"private_notes"?: string | null,"proposed_assignee_id"?: string | null,"series_id"?: string | null,"starts_at": string,"state"?: string,"title": string,"updated_at"?: string,"version"?: number
+                    "circle_id": string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"follow_up_of"?: string | null,"id"?: string,"kind": string,"location"?: string | null,"location_lat"?: number | null,"location_lng"?: number | null,"occurrence_index"?: number | null,"owner_id"?: string | null,"private_notes"?: string | null,"proposed_assignee_id"?: string | null,"series_id"?: string | null,"starts_at": string,"state"?: string,"title": string,"updated_at"?: string,"version"?: number
                   }
                   Update: {
-                    "circle_id"?: string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"follow_up_of"?: string | null,"id"?: string,"kind"?: string,"location"?: string | null,"location_lat"?: number | null,"location_lng"?: number | null,"owner_id"?: string | null,"private_notes"?: string | null,"proposed_assignee_id"?: string | null,"series_id"?: string | null,"starts_at"?: string,"state"?: string,"title"?: string,"updated_at"?: string,"version"?: number
+                    "circle_id"?: string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"follow_up_of"?: string | null,"id"?: string,"kind"?: string,"location"?: string | null,"location_lat"?: number | null,"location_lng"?: number | null,"occurrence_index"?: number | null,"owner_id"?: string | null,"private_notes"?: string | null,"proposed_assignee_id"?: string | null,"series_id"?: string | null,"starts_at"?: string,"state"?: string,"title"?: string,"updated_at"?: string,"version"?: number
                   }
                   Relationships: [
                     {
@@ -393,13 +393,13 @@ isOneToOne: false
                   ]
                 },"series": {
                   Row: {
-                    "circle_id": string,"created_at": string,"created_by": string | null,"id": string,"repeat": string,"until": string | null
+                    "circle_id": string,"created_at": string,"created_by": string | null,"ends_at": string | null,"id": string,"kind": string,"location": string | null,"next_index": number,"private_notes": string | null,"repeat": string,"starts_at": string,"title": string,"until": string | null
                   }
                   Insert: {
-                    "circle_id": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"repeat": string,"until"?: string | null
+                    "circle_id": string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"id"?: string,"kind": string,"location"?: string | null,"next_index"?: number,"private_notes"?: string | null,"repeat": string,"starts_at": string,"title": string,"until"?: string | null
                   }
                   Update: {
-                    "circle_id"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"repeat"?: string,"until"?: string | null
+                    "circle_id"?: string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"id"?: string,"kind"?: string,"location"?: string | null,"next_index"?: number,"private_notes"?: string | null,"repeat"?: string,"starts_at"?: string,"title"?: string,"until"?: string | null
                   }
                   Relationships: [
                     {
@@ -465,6 +465,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -493,6 +494,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -524,6 +526,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -568,6 +571,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -596,6 +600,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -627,6 +632,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -676,6 +682,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -722,6 +729,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -749,6 +757,12 @@ isOneToOne: false
                            },
 "expand_overdue_job":
 { Args: { "attempt": number,"job_id": number }; Returns: number
+                           },
+"extend_all_series":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"extend_series":
+{ Args: { "actor": string,"series_id": string }; Returns: number
                            },
 "finish_outbox_job":
 { Args: { "attempt": number,"failure"?: string,"job_id": number }; Returns: undefined
@@ -797,6 +811,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -873,6 +888,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -901,6 +917,12 @@ isOneToOne: false
 "save_push_subscription":
 { Args: { "endpoint": string,"keys": Json }; Returns: undefined
                            },
+"series_now":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"series_occurrence_at":
+{ Args: { "first": string,"n": number,"repeat": string,"time_zone": string }; Returns: string
+                           },
 "set_admin":
 { Args: { "member_id": string }; Returns: undefined
                            },
@@ -924,6 +946,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,
@@ -957,6 +980,7 @@ isOneToOne: false
 "location": string | null,
 "location_lat": number | null,
 "location_lng": number | null,
+"occurrence_index": number | null,
 "owner_id": string | null,
 "private_notes": string | null,
 "proposed_assignee_id": string | null,

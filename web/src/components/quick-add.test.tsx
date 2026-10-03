@@ -115,6 +115,44 @@ test('adds a task for nobody yet, then opens it', async () => {
   })
 })
 
+test('a task can repeat weekly until a date', async () => {
+  renderQuickAdd()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Quick add' }))
+  fireEvent.click(await screen.findByRole('button', { name: /^Task/ }))
+  const sheet = await screen.findByRole('dialog', { name: 'New task' })
+
+  const repeat = within(sheet).getByLabelText('Repeat')
+  expect(repeat).toHaveValue('none')
+  expect(within(sheet).queryByLabelText('Until (optional)')).not.toBeInTheDocument()
+
+  fireEvent.change(within(sheet).getByLabelText('Task'), { target: { value: 'Water the plants' } })
+  fireEvent.change(repeat, { target: { value: 'weekly' } })
+  expect(sheet).toHaveTextContent("Each one is a separate item. Changing or completing one doesn't change the others.")
+  fireEvent.click(within(sheet).getByRole('radio', { name: /Jonah/ }))
+  expect(sheet).toHaveTextContent('Only the first one is assigned. The rest show as Needs someone.')
+
+  // An end date before the first date isn't sent.
+  const until = within(sheet).getByLabelText('Until (optional)')
+  fireEvent.change(until, { target: { value: '2026-09-20' } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Add task' }))
+  expect(within(sheet).getByText('Choose an end date on or after the first date.')).toBeInTheDocument()
+  expect(api.createItem).not.toHaveBeenCalled()
+
+  fireEvent.change(until, { target: { value: '2026-10-08' } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Add task' }))
+  await waitFor(() =>
+    expect(api.createItem).toHaveBeenCalledWith({
+      kind: 'task',
+      title: 'Water the plants',
+      starts_at: '2026-09-25T06:59:00.000Z', // no time: by the end of the day
+      assignee_id: 'jonah',
+      repeat: 'weekly',
+      until: '2026-10-09T06:59:00.000Z', // the end of 8 Oct in Vancouver
+    }),
+  )
+})
+
 test('asking someone explains they have to accept', async () => {
   renderQuickAdd()
 

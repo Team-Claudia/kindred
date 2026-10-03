@@ -34,6 +34,7 @@ import {
   useItemMutation,
   useItemUpdates,
   usePendingRequest,
+  useSeriesRepeat,
 } from '@/lib/queries'
 import { coverageRequestShare, itemShare } from '@/lib/share-text'
 import { ASSIGNMENT_STATES, type AssignmentState } from '@/lib/status'
@@ -305,6 +306,7 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
           </span>
         </div>
         <h1 className="text-3xl font-bold break-words">{item.title}</h1>
+        {item.series_id && <RepeatsLine seriesId={item.series_id} />}
       </div>
 
       <dl className="flex flex-col">
@@ -537,6 +539,15 @@ function FollowUpOfRow({ appointmentId }: { appointmentId: string }) {
       )}
     </Row>
   )
+}
+
+// "Repeats weekly" on an occurrence of a series (task 4.5c). Edits apply to
+// this occurrence only, so this is all the detail says about the series.
+function RepeatsLine({ seriesId }: { seriesId: string }) {
+  const { t } = useTranslation()
+  const repeat = useSeriesRepeat(seriesId)
+  if (!repeat.data) return null
+  return <p className="text-sm text-muted-foreground">{t(`itemDetail.repeats.${repeat.data}`)}</p>
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
