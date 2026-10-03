@@ -85,8 +85,11 @@ begin
   -- -------------------------------------------------------------------------
   -- Start over: keep anyone else's membership (e.g. demo guests), then delete
   -- the circle, which cascades to its members, items, requests, updates,
-  -- history, invites, notifications and outbox jobs.
+  -- history, invites, notifications and outbox jobs. Lock the circle first so
+  -- a guest joining meanwhile waits for the rebuild instead of being dropped
+  -- between reading the guests and the delete.
   -- -------------------------------------------------------------------------
+  perform 1 from public.circles c where c.id = v_circle for update;
   v_guests := array(
     select cm from public.circle_members cm
     where cm.circle_id = v_circle and cm.user_id not in (v_maya, v_daniel, v_priya)
