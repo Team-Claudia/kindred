@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { ItemFormSheet } from '@/components/item-form-sheet'
 import { Sheet, SheetClose } from '@/components/sheet'
+import { UpdateSheet } from '@/components/update-sheet'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth'
 import { useMyMembership } from '@/lib/circles'
@@ -13,8 +14,8 @@ import { cn } from '@/lib/utils'
 /**
  * Quick add (wireframe 15): a button that stays at the bottom of Home and
  * opens "What do you want to add?", then the create sheet for a task or an
- * appointment. Once saved, the new item opens so its status is clear.
- * "Update or note" is task 4.1.
+ * appointment, or the New update sheet (task 4.1). Once saved, the new item
+ * opens so its status is clear; a new update opens the Updates thread.
  */
 export function QuickAdd() {
   const { t } = useTranslation()
@@ -24,6 +25,7 @@ export function QuickAdd() {
   const circle = membership.data?.circles
   const [choosing, setChoosing] = useState(false)
   const [kind, setKind] = useState<ItemKind | null>(null)
+  const [updating, setUpdating] = useState(false)
 
   // The circle's time zone is needed to read dates, so wait for it.
   if (!circle) return null
@@ -64,7 +66,10 @@ export function QuickAdd() {
           Icon={MessageSquare}
           title={t('quickAdd.updateTitle')}
           detail={t('quickAdd.updateDetail')}
-          disabled
+          onClick={() => {
+            setChoosing(false)
+            setUpdating(true)
+          }}
         />
         <SheetClose asChild>
           <Button variant="outline" size="lg">
@@ -72,6 +77,16 @@ export function QuickAdd() {
           </Button>
         </SheetClose>
       </Sheet>
+
+      <UpdateSheet
+        open={updating}
+        onOpenChange={setUpdating}
+        timeZone={circle.time_zone}
+        onPosted={() => {
+          setUpdating(false)
+          void navigate('/updates')
+        }}
+      />
 
       {kind && (
         <ItemFormSheet

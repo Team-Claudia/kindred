@@ -113,7 +113,7 @@ As in ADR-012, with these tables in the first migration: `profiles`, `circles`, 
 
 ### 4.2 RPCs (all writes)
 
-Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`; and `shared` (`data.share_kind`, task 3.2). Coverage types (task 3.1): `coverage_requested`, `coverage_cancelled`, `coverage_taken` (`data.previous_owner_id`).
+Clients never write tables directly (ADR-005). Every RPC checks membership (`not_member`), locks the row, checks the state-specific error **before** `version` (so a second claim gets `already_claimed`, not `stale_version`), writes one `activity_events` row and any `outbox` rows in the same transaction, and returns the updated item (or the new ID). Item `activity_events.type` values (task 2.1): `created`, `updated` (`data.fields`, plus `reconfirm_assignee_id` for BR-11), `assigned`, `claimed`, `accepted`, `declined`, `withdrawn`, `completed`, `cancelled`; and `shared` (`data.share_kind`, task 3.2). Coverage types (task 3.1): `coverage_requested`, `coverage_cancelled`, `coverage_taken` (`data.previous_owner_id`). Updates (task 4.1): `update_posted` (`data.update_id`, with `item_id` when the update is linked to an item).
 
 | RPC | Arguments | Typed errors |
 | --- | --- | --- |
@@ -135,7 +135,7 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 | `request_coverage` | `item_id`, `version` | `invalid_state` (not Assigned), `not_owner`, `coverage_limit_reached` (BR-01), `stale_version`. Assigned → Needs coverage; the owner keeps `owner_id` and an `open` request is added |
 | `cancel_coverage` | `item_id`, `version` | `coverage_resolved` (already taken; new owner's `name` in `DETAIL`), `not_owner`, `invalid_state` (no open request), `stale_version`. Back to Assigned for the same owner; the request is `cancelled` and still counts |
 | `accept_coverage` | `item_id`, `version` | `coverage_resolved` (someone took it first, so it's Assigned again; the owner's `name` in `DETAIL`, checked before the version), `invalid_state` (your own request, or Cancelled/Completed/any other state), `stale_version`. The caller becomes owner (BR-03) and the request is `taken`. Taking it again once it's yours returns it unchanged |
-| `post_update` | `body`, `item_id?` | `not_member`, `invalid_input` |
+| `post_update` | `body`, `item_id?` → the new update's ID | `not_member`, `invalid_input` (blank body, body over 2,000 characters, or `item_id` not in the circle). Stores the body trimmed; writes one `update_posted` history row and queues an `update_posted` push for every other member (task 4.1) |
 | `mark_notifications_read` | `notification_id?` (all if omitted) | — |
 | `log_share` | `item_id`, `share_kind` (`task`, `appointment`, `assignment_request`, `coverage_request`; the item share builders in `web/src/lib/share-text.ts`) | `not_member`, `invalid_input` (unknown `share_kind`). Writes one `activity_events` row of type `shared` with `data.share_kind`; no state change, version check or `outbox` row. Called after the share sheet reports `shared`; a failure is never shown to the member |
 | `join_demo_circle` | — | For anonymous users only |
@@ -184,7 +184,13 @@ Clients never write tables directly (ADR-005). Every RPC checks membership (`not
 { "event": "assignment_requested", "item_id": "<uuid>", "recipient_id": "<uuid>", "actor_id": "<uuid>" }
 ```
 
-IDs and an event name only; never titles, notes or locations (ADR-010). The actor is never a recipient, and nor is anyone who has left the circle. Events and who gets them:
+IDs and an event name only; never titles, notes or locations (ADR-010). `update_posted` jobs (written by `post_update`, task 4.1) carry `update_id` instead, plus `item_id` only when the update is linked to an item, and never the update's text:
+
+```json
+{ "event": "update_posted", "update_id": "<uuid>", "item_id": "<uuid, if linked>", "recipient_id": "<uuid>", "actor_id": "<uuid>" }
+```
+
+The actor is never a recipient, and nor is anyone who has left the circle. Events and who gets them:
 
 | `event` | Written by | Recipient |
 | --- | --- | --- |
@@ -197,12 +203,13 @@ IDs and an event name only; never titles, notes or locations (ADR-010). The acto
 | `item_cancelled` | `cancel_item` | The owner and the proposed assignee |
 | `coverage_requested` | `request_coverage` | Every other member of the circle |
 | `coverage_taken` | `accept_coverage` | The member who asked for cover (the previous owner) |
+| `update_posted` | `post_update` | Every other member of the circle |
 
 **Sending push jobs** (task 3.3, migration `outbox_push_worker`). `outbox-worker` runs only `push` jobs so far; the other kinds stay `pending` until task 4.5.
 
 - **Calls.** A statement-level trigger on `outbox` insert calls the worker through `pg_net` when the statement added a `push` job; the request goes out after the RPC's transaction commits. pg_cron job `outbox-worker` runs `outbox_catch_up()` every minute, which calls the worker only when a push job is due. Both read the function URL and shared secret from Vault (`outbox_worker_url`, `outbox_worker_secret`, §8.3); if either is missing they log and do nothing, and jobs wait as `pending`. The function has `verify_jwt = false` and rejects any call without the matching `x-outbox-secret` header (`OUTBOX_WORKER_SECRET`).
 - **Claim.** `claim_outbox_jobs(max_jobs)` (service role only) takes due `push` jobs (`pending`, or `sending` with an expired lease; `run_at <= now()`) oldest first with `for update skip locked`, sets them `sending`, adds 1 to `attempts` and leases them for 2 minutes. So the trigger's call and the cron's call never send the same job, and a job whose worker died is retried when its lease runs out. A job whose lease runs out on its 5th attempt is `failed` (`last_error = worker_did_not_finish`).
-- **Each job.** Dropped (`done`, nothing sent) if the item is gone or the recipient has left the circle. Otherwise the worker writes the `notifications` row (`kind` = event, `item_id`, `line` = the push body), then, if the recipient's category is on (no `notification_prefs` row → the defaults), sends `{title, body, url: "/i/<item_id>"}` to each of their `push_subscriptions` (10-second timeout per device), deleting any the push service reports gone (404/410).
+- **Each job.** Dropped (`done`, nothing sent) if the item (for `update_posted`, the update) is gone or the recipient has left the circle. Otherwise the worker writes the `notifications` row (`kind` = event, `item_id` (for `update_posted`, the update's linked item or null), `line` = the push body), then, if the recipient's category is on (no `notification_prefs` row → the defaults), sends `{title, body, url}` (`url` is `/i/<item_id>`, or `/updates` for `update_posted`) to each of their `push_subscriptions` (10-second timeout per device), deleting any the push service reports gone (404/410).
 - **Result.** `finish_outbox_job(job_id, attempt, failure?)` (service role only; does nothing unless the job is still `sending` on the attempt the caller claimed, so a worker whose lease ran out can't overwrite a newer claim): no failure → `done`. A failure (no device got the push, or a database error) → `pending` again with `last_error`, retried after 1, 5, 15, then 60 minutes; the 5th failed attempt → `failed`. If some devices got it and others failed, the job is `done`, so nobody gets it twice. Inspect with `select * from outbox where status = 'failed'`.
 
 **Push copy** (`supabase/functions/_shared/push-copy.ts`, ADR-010). Title: "<care recipient>'s Care Circle". Body (also the in-app `line`) uses at most the actor's first name ("Someone" if they have none), never an item's title, notes, location or update text:
@@ -219,6 +226,7 @@ IDs and an event name only; never titles, notes or locations (ADR-010). The acto
 | `item_cancelled` | Maya cancelled something you were on | `changes` |
 | `coverage_requested` | Maya needs someone to cover for them | `requests` |
 | `coverage_taken` | Maya is covering for you | `requests` |
+| `update_posted` | Maya posted an update | `updates` |
 | Any other `coverage_…` event | Something changed in Kindred | `requests` |
 | Anything else | Something changed in Kindred | `everything_else` |
 

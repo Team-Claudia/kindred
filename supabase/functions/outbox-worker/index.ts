@@ -7,7 +7,7 @@
 // can call it, so every call must carry the shared secret in x-outbox-secret.
 //
 // Each job: claim (claim_outbox_jobs, for update skip locked), re-check the
-// item and the recipient's membership, write the in-app notifications row,
+// item (or, for update_posted, the update) and the recipient's membership, write the in-app notifications row,
 // then push to each of the recipient's devices if their preference allows,
 // and record the result (finish_outbox_job, which handles retries).
 //
@@ -17,7 +17,7 @@
 
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { pushAllowed, pushMessage, type NotificationPrefs } from '../_shared/push-copy.ts'
+import { isUpdateEvent, pushAllowed, pushMessage, type NotificationPrefs } from '../_shared/push-copy.ts'
 import { configureVapid, sendPush, type Subscription } from '../_shared/web-push.ts'
 
 const BATCH_SIZE = 10
@@ -48,26 +48,46 @@ function text(value: unknown): string | null {
 // should be retried.
 async function runJob(admin: SupabaseClient, job: Job): Promise<string | null> {
   const event = text(job.payload.event)
-  const itemId = text(job.payload.item_id)
+  const updateId = text(job.payload.update_id)
   const recipientId = text(job.payload.recipient_id)
   const actorId = text(job.payload.actor_id)
-  if (!event || !itemId || !recipientId) {
+  let itemId = text(job.payload.item_id)
+  // Item events carry item_id; update events (task 4.1) carry update_id, and
+  // item_id too when the update is linked to an item.
+  const updateEvent = event !== null && isUpdateEvent(event)
+  if (!event || !recipientId || (updateEvent ? !updateId : !itemId)) {
     console.warn(`outbox ${job.id}: malformed push payload; dropped`)
     return null
   }
 
-  const item = await admin.from('items').select('id, circle_id').eq('id', itemId).maybeSingle()
-  if (item.error) throw item.error
-  if (!item.data) return null // The item is gone.
+  // What the push is about decides the circle. If it's gone, so is the push.
+  // An update's item is read again, as the item may have been deleted since.
+  let circleId: string
+  if (updateEvent) {
+    const update = await admin
+      .from('updates')
+      .select('circle_id, item_id')
+      .eq('id', updateId!)
+      .maybeSingle()
+    if (update.error) throw update.error
+    if (!update.data) return null
+    circleId = update.data.circle_id
+    itemId = update.data.item_id
+  } else {
+    const item = await admin.from('items').select('circle_id').eq('id', itemId!).maybeSingle()
+    if (item.error) throw item.error
+    if (!item.data) return null // The item is gone.
+    circleId = item.data.circle_id
+  }
 
   const [member, circle, actor, prefs] = await Promise.all([
     admin
       .from('circle_members')
       .select('user_id')
-      .eq('circle_id', item.data.circle_id)
+      .eq('circle_id', circleId)
       .eq('user_id', recipientId)
       .maybeSingle(),
-    admin.from('circles').select('care_recipient_name').eq('id', item.data.circle_id).single(),
+    admin.from('circles').select('care_recipient_name').eq('id', circleId).single(),
     actorId
       ? admin.from('profiles').select('display_name').eq('id', actorId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
