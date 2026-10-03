@@ -1,8 +1,9 @@
 import { ChevronLeft } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { Link, Navigate, useSearchParams } from 'react-router'
+import { Navigate, useSearchParams } from 'react-router'
 import { CodeInput } from '@/components/code-input'
+import { LegalLinks } from '@/components/legal'
 import { Button } from '@/components/ui/button'
 import {
   authErrorKind,
@@ -92,9 +93,7 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
           {t('auth.start.demoSoon')}
         </p>
         <p className="text-center text-sm text-muted-foreground">{t('auth.start.disclaimer')}</p>
-        <Button asChild variant="link" className="self-center">
-          <Link to="/privacy">{t('auth.start.privacy')}</Link>
-        </Button>
+        <LegalLinks />
       </div>
     </main>
   )

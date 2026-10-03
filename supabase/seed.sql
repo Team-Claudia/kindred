@@ -101,15 +101,15 @@ begin
   where u.id in (v_maya, v_jonah, v_ada);
 
   -- -------------------------------------------------------------------------
-  -- The circle. Dad is each member's Parent.
+  -- The circle. Dad is each member's parent (stored as the key 'parent').
   -- -------------------------------------------------------------------------
   insert into public.circles (id, care_recipient_name, time_zone, created_at)
   values (v_circle, 'Dad', v_tz, now() - interval '30 days');
 
   insert into public.circle_members (circle_id, user_id, role, relationship, joined_at) values
-    (v_circle, v_maya, 'admin', 'Parent', now() - interval '30 days'),
-    (v_circle, v_jonah, 'member', 'Parent', now() - interval '29 days'),
-    (v_circle, v_ada, 'member', 'Parent', now() - interval '28 days');
+    (v_circle, v_maya, 'admin', 'parent', now() - interval '30 days'),
+    (v_circle, v_jonah, 'member', 'parent', now() - interval '29 days'),
+    (v_circle, v_ada, 'member', 'parent', now() - interval '28 days');
 
   insert into public.activity_events (circle_id, actor_id, type, at) values
     (v_circle, v_maya, 'circle_created', now() - interval '30 days'),

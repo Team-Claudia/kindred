@@ -5,8 +5,10 @@ import { supabase } from './supabase'
 
 // Care Circle setup and joining (task 1.2): /welcome and /join/:code.
 
-// The care recipient's relationship to a member, stored as one of these keys
-// in circle_members.relationship and shown through circleSetup.relationship.
+// What the care recipient is to a member ("Dad is my parent"), stored as one of
+// these keys in circle_members.relationship. Setup and join ask it that way
+// round ("<Name> is my…", circleSetup.relationship); next to a member's name
+// it's shown from the member's side ("Dad's child", circleSetup.relationshipOf).
 export const relationships = [
   'parent',
   'grandparent',
@@ -20,11 +22,30 @@ export const relationships = [
 
 export type Relationship = (typeof relationships)[number]
 
-export function relationshipLabel(t: TFunction, value: string | null): string | null {
-  if (!value) return null
-  return (relationships as readonly string[]).includes(value)
-    ? t(`circleSetup.relationship.${value as Relationship}`)
-    : value
+/**
+ * How a member relates to the care recipient, for showing next to their name:
+ * stored "parent" (Dad is my parent) reads "Dad's child". Null when the member
+ * didn't choose one, or the care recipient's name isn't loaded yet. Every
+ * member list (Care Circle, the invite step, the member picker) uses this.
+ */
+export function relationshipLabel(
+  t: TFunction,
+  value: string | null | undefined,
+  recipientName: string | null | undefined,
+): string | null {
+  const name = recipientName?.trim()
+  // Older rows may hold a key in another case (e.g. 'Parent').
+  const key = relationships.find((option) => option.toLowerCase() === value?.trim().toLowerCase())
+  if (!key || !name) return null
+  return t(`circleSetup.relationshipOf.${key}`, { name })
+}
+
+/** A member's full name, or "New member" if they haven't given one. */
+export function memberDisplayName(
+  t: TFunction,
+  member: { profiles: { display_name: string | null } | null },
+): string {
+  return member.profiles?.display_name?.trim() || t('circleSetup.unnamedMember')
 }
 
 export function firstName(name: string | null | undefined): string {
