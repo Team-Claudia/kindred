@@ -290,11 +290,12 @@
     "appointmentTitle": "Appointment",
     "appointmentDetail": "A date, a time and a place someone has to be.",
     "updateTitle": "Update or note",
-    "updateDetail": "Tell the circle what happened. Coming soon.",
+    "updateDetail": "Tell the circle what happened.",
     "cancel": "Cancel"
   },
   "itemForm": {
     "newTask": "New task",
+    "followUpTo": "Follow-up to {{title}}",
     "newAppointment": "New appointment",
     "editTask": "Edit task",
     "editAppointment": "Edit appointment",
@@ -516,5 +517,42 @@
     "tasksError": "Couldn't change that. Check your connection and try again.",
     "error": "We couldn't load your calendar link. Check your connection and try again.",
     "delay": "Changes can take a while to show up, because your calendar app checks for them on its own schedule. Kindred itself is always up to date."
+  },
+  "updates": {
+    "intro": "Everything the family has shared, in one place.",
+    "share": "Share an update with the circle…",
+    "empty": "No updates yet. When something happens, like a visit or a call with the doctor, share it here so everyone knows.",
+    "error": "Updates couldn't load. Check your connection and try again.",
+    "postedAt": "{{day}}, {{time}}",
+    "postedAt_today": "Today, {{time}}",
+    "postedAt_yesterday": "Yesterday, {{time}}",
+    "postedAt_tomorrow": "Tomorrow, {{time}}",
+    "linkedTo": "Linked to {{title}}",
+    "onItem": "Updates · {{count}}",
+    "addUpdate": "Add update",
+    "createFollowUp": "Create follow-up task",
+    "followUps": "Follow-up tasks",
+    "followUpTo": "Follow-up to",
+    "followUpToLoading": "Loading…"
+  },
+  "updateSheet": {
+    "title": "New update",
+    "cancel": "Cancel",
+    "post": "Post",
+    "postToUpdates": "Post to updates",
+    "posting": "Posting…",
+    "postingAs": "{{name}}, posting to the Care Circle",
+    "postingAsUnknown": "Posting to the Care Circle",
+    "body": "What happened?",
+    "bodyHint": "Text only. Keep it short; the family chat is still the place to talk it over.",
+    "problems": {
+      "required": "Write what happened.",
+      "tooLong": "Keep it under {{max}} characters."
+    },
+    "linkTo": "Link this to",
+    "nothing": "Nothing in particular",
+    "linkLoading": "Loading recent tasks and appointments…",
+    "whoIsTold": "Everyone in the Care Circle is notified.",
+    "whoIsTold_linked": "Everyone in the Care Circle is notified, and the update also shows on {{title}}."
   }
 }
