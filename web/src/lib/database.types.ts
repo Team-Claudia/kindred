@@ -736,6 +736,9 @@ isOneToOne: false
 "delete_push_subscription":
 { Args: { "endpoint": string }; Returns: undefined
                            },
+"demo_nightly_cleanup":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "expand_overdue_job":
 { Args: { "attempt": number,"job_id": number }; Returns: number
                            },
@@ -750,6 +753,9 @@ isOneToOne: false
 "invoke_outbox_worker":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"is_anonymous_caller":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "is_circle_member":
 { Args: { "circle": string,"person": string }; Returns: boolean
                            },
@@ -763,6 +769,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "leave_circle":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"lock_demo_circle":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "lock_item":

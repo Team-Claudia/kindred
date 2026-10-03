@@ -5,6 +5,7 @@ import { Navigate, useSearchParams } from 'react-router'
 import { CodeInput } from '@/components/code-input'
 import { InstallGuide } from '@/components/install-guide'
 import { LegalLinks } from '@/components/legal'
+import { TryDemo } from '@/components/try-demo'
 import { Button } from '@/components/ui/button'
 import {
   authErrorKind,
@@ -38,7 +39,7 @@ export default function SignIn() {
   // there, or sign-in has to happen twice (task 4.10). Not for an item link:
   // that's someone already in a circle, so ItemLinkNote says where to find it.
   if (installFirst.show && auth.status === 'signed_out' && !isItemLink(next)) {
-    return <InstallFirstGuide onSignInHere={installFirst.dismiss} />
+    return <InstallFirstGuide showDemo={next === '/'} onSignInHere={installFirst.dismiss} />
   }
 
   if (step === 'email') {
@@ -96,13 +97,8 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
         <Button size="lg" variant="outline" onClick={onEmail} disabled={busy}>
           {t('auth.start.email')}
         </Button>
-        <p className="text-center text-sm">
-          {t('auth.start.demoPrompt')}{' '}
-          <Button variant="link" className="h-11 px-1" disabled>
-            {t('auth.start.demo')}
-          </Button>{' '}
-          {t('auth.start.demoSoon')}
-        </p>
+        {/* Not on the way somewhere, such as an invite: a guest can't join a real circle. */}
+        {next === '/' && <TryDemo />}
         <p className="text-center text-sm text-muted-foreground">{t('auth.start.disclaimer')}</p>
         <LegalLinks />
       </div>
@@ -114,7 +110,9 @@ function isItemLink(next: string) {
   return next.startsWith('/i/')
 }
 
-function InstallFirstGuide({ onSignInHere }: { onSignInHere: () => void }) {
+// Try the demo shows here too: someone just looking may not want to install
+// first. Like on the start step, not on the way to an invite.
+function InstallFirstGuide({ showDemo, onSignInHere }: { showDemo: boolean; onSignInHere: () => void }) {
   const { t } = useTranslation()
   return (
     <InstallGuide
@@ -122,6 +120,7 @@ function InstallFirstGuide({ onSignInHere }: { onSignInHere: () => void }) {
       lastStep={t('install.firstLastStep')}
       dismissLabel={t('install.signInHere')}
       onDismiss={onSignInHere}
+      footer={showDemo ? <TryDemo /> : undefined}
     />
   )
 }

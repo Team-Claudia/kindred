@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next'
  * Wireframe 09: three steps to add Kindred to the iPhone Home Screen. On Home
  * it explains notifications; before sign-in and join (task 4.10) it asks
  * people to install first, with `intro`, `lastStep` and `dismissLabel` saying
- * so, and `children` (the invite code) above the steps.
+ * so, and `children` (the invite code) above the steps. `footer` goes below
+ * the dismiss button (Try the demo, on sign-in).
  */
 export function InstallGuide({
   onDismiss,
@@ -14,12 +15,14 @@ export function InstallGuide({
   lastStep,
   dismissLabel,
   children,
+  footer,
 }: {
   onDismiss: () => void
   intro?: string
   lastStep?: string
   dismissLabel?: string
   children?: ReactNode
+  footer?: ReactNode
 }) {
   const { t } = useTranslation()
 
@@ -64,6 +67,7 @@ export function InstallGuide({
       >
         {dismissLabel ?? t('install.notNow')}
       </button>
+      {footer}
     </main>
   )
 }
