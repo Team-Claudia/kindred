@@ -956,6 +956,9 @@ isOneToOne: false
               "changes": boolean,"comments": boolean,"everything_else": boolean,"reminders": boolean,"requests": boolean,"updates": boolean,"weekly_summary": boolean
             }[]
                            },
+"store_geocode":
+{ Args: { "item_id": string,"lat": number,"lng": number,"location": string }; Returns: number
+                           },
 "update_item":
 { Args: { "item_id": string,"patch": Json,"version": number }; Returns: {
               "circle_id": string,
