@@ -11,10 +11,12 @@
 // then push to each of the recipient's devices if their preference allows,
 // and record the result (finish_outbox_job, which handles retries).
 // Reminder and overdue jobs (task 4.5b) are run by scheduled.ts, and the
-// Sunday weekly_summary jobs (task 4.5g) by weekly-summary.ts.
+// Sunday weekly_summary jobs (task 4.5g) by weekly-summary.ts, and geocode
+// jobs for the map preview (task 4.5h) by geocode.ts.
 //
 // Secrets: OUTBOX_WORKER_SECRET (the same value as outbox_worker_secret in
-// Vault), VAPID_PRIVATE_KEY and VAPID_SUBJECT (../_shared/web-push.ts).
+// Vault), VAPID_PRIVATE_KEY and VAPID_SUBJECT (../_shared/web-push.ts), and
+// GEOAPIFY_API_KEY for geocoding (../_shared/geoapify.ts; optional).
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
@@ -26,6 +28,8 @@ import { deliver } from './deliver.ts'
 import { runScheduledJob } from './scheduled.ts'
 // The Sunday weekly summary (task 4.5g).
 import { runWeeklySummaryJob } from './weekly-summary.ts'
+// Geocoding appointment locations for the map preview (task 4.5h).
+import { runGeocodeJob } from './geocode.ts'
 
 const BATCH_SIZE = 10
 // Stop claiming new batches after this long, well inside the claim's 2-minute
@@ -172,7 +176,9 @@ Deno.serve(async (req) => {
               ? await runJob(admin, job)
               : job.kind === 'weekly_summary'
                 ? await runWeeklySummaryJob(admin, job)
-                : await runScheduledJob(admin, job)
+                : job.kind === 'geocode'
+                  ? await runGeocodeJob(admin, job)
+                  : await runScheduledJob(admin, job)
         } catch (error) {
           failure = error instanceof Error ? error.message : JSON.stringify(error)
         }
