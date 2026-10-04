@@ -130,6 +130,19 @@ export async function setCalendarFeedTasks(enabled: boolean): Promise<CalendarFe
   return feed
 }
 
+// Notification preferences (task 4.5d, US 11.4). One push switch per category;
+// a member who never saved any gets the defaults.
+export type NotificationPrefs = Returns<'my_notification_prefs'>[number]
+export type PrefCategory = keyof NotificationPrefs
+async function onePrefsRow(rows: Promise<NotificationPrefs[]>): Promise<NotificationPrefs> {
+  const [prefs] = await rows
+  if (!prefs) throw new RpcError('unknown')
+  return prefs
+}
+export const notificationPrefs = () => onePrefsRow(call('my_notification_prefs'))
+export const setNotificationPref = (category: PrefCategory, enabled: boolean) =>
+  onePrefsRow(call('set_notification_pref', { category, enabled }))
+
 // Google Calendar free/busy (task 4.5a, ADR-008). Connecting goes through the
 // google-oauth Edge Function; the refresh token never reaches the app.
 export const googleCalendarConnected = () => call('google_calendar_connected')

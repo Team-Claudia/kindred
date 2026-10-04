@@ -855,6 +855,11 @@ isOneToOne: false
 "mark_notifications_read":
 { Args: { "notification_id"?: number }; Returns: undefined
                            },
+"my_notification_prefs":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "changes": boolean,"comments": boolean,"everything_else": boolean,"reminders": boolean,"requests": boolean,"updates": boolean,"weekly_summary": boolean
+            }[]
+                           },
 "name_detail":
 { Args: { "person": string }; Returns: string
                            },
@@ -933,6 +938,11 @@ isOneToOne: false
                            },
 "set_display_name":
 { Args: { "display_name": string }; Returns: undefined
+                           },
+"set_notification_pref":
+{ Args: { "category": string,"enabled": boolean }; Returns: {
+              "changes": boolean,"comments": boolean,"everything_else": boolean,"reminders": boolean,"requests": boolean,"updates": boolean,"weekly_summary": boolean
+            }[]
                            },
 "update_item":
 { Args: { "item_id": string,"patch": Json,"version": number }; Returns: {
