@@ -26,6 +26,9 @@ Deno.serve((req) =>
   handleAccount(req, {
     async getUser(jwt) {
       const { data, error } = await admin.auth.getUser(jwt)
+      // Auth checks the JWT's signature before looking the user up, so
+      // user_not_found means a genuine JWT for an account that's been deleted.
+      if (error?.code === 'user_not_found') return 'deleted'
       if (error || !data.user) return null
       return { id: data.user.id, isAnonymous: data.user.is_anonymous === true }
     },

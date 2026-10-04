@@ -92,6 +92,9 @@ export function AccountCard() {
       // The account is gone, so only this phone's session is left to forget.
       await signOut({ local: true })
     } catch {
+      // Signing out couldn't reach the server (it rarely fails right after
+      // the delete did). The stored session is dead anyway: the next token
+      // refresh fails and Supabase signs this phone out then.
       queryClient.clear()
       navigate('/sign-in', { replace: true })
     }

@@ -7,8 +7,11 @@ import { corsHeaders, json } from '../_shared/google.ts'
 export type Caller = { id: string; isAnonymous: boolean }
 
 export interface AccountDeps {
-  /** The signed-in member for a JWT, or null if it isn't valid. */
-  getUser(jwt: string): Promise<Caller | null>
+  /**
+   * The signed-in member for a JWT; 'deleted' if the JWT is genuine but its
+   * account no longer exists; null if it isn't valid.
+   */
+  getUser(jwt: string): Promise<Caller | 'deleted' | null>
   /** account_export(user_id): the member's data, or null if there's none. */
   exportAccount(userId: string): Promise<unknown>
   /**
@@ -28,12 +31,18 @@ export async function handleAccount(req: Request, deps: AccountDeps): Promise<Re
   if (!jwt) return json({ error: 'unauthorized' }, 401)
   const caller = await deps.getUser(jwt)
   if (!caller) return json({ error: 'unauthorized' }, 401)
-  // Try the demo guests have no account of their own to export or delete;
-  // the nightly clean-up deletes them.
-  if (caller.isAnonymous) return json({ error: 'guest' }, 403)
 
   const body: unknown = await req.json().catch(() => null)
   const action = body && typeof body === 'object' ? (body as { action?: unknown }).action : null
+
+  if (caller === 'deleted') {
+    // A retry of a delete that went through but whose reply was lost: say
+    // it's done, so the app signs out rather than saying it failed.
+    return action === 'delete' ? json({ status: 'deleted' }) : json({ error: 'unauthorized' }, 401)
+  }
+  // Try the demo guests have no account of their own to export or delete;
+  // the nightly clean-up deletes them.
+  if (caller.isAnonymous) return json({ error: 'guest' }, 403)
 
   try {
     if (action === 'export') {

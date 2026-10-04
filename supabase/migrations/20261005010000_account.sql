@@ -27,7 +27,9 @@
 -- coverage, whose open coverage request is cancelled) and items they were
 -- asked to take (Awaiting acceptance, whose pending request is withdrawn).
 -- Items they asked someone else to take, and closed items, are left alone.
--- Returns how many items were released.
+-- Returns how many items were released. (An item someone asks them to take in
+-- the same instant can be missed; it then waits on "Former member", and any
+-- member can withdraw or reassign it as usual.)
 -- ---------------------------------------------------------------------------
 
 create function public.release_items_for_departing_member(circle_id uuid, member_id uuid)

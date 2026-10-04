@@ -8,7 +8,7 @@ const GUEST: Caller = { id: '90000000-0000-0000-0000-000000000009', isAnonymous:
 
 // Fake dependencies that record what was called, in order.
 function fakes(options: {
-  caller?: Caller | null
+  caller?: Caller | 'deleted' | null
   token?: string | null
   exported?: unknown
   deleteFails?: boolean
@@ -65,6 +65,16 @@ Deno.test('delete: if the database fails, Google is left alone and the member ca
   assertEquals(res.status, 500)
   assertEquals(await res.json(), { error: 'unknown' })
   assertEquals(calls, ['getUser:alice-jwt', `delete:${ALICE.id}`])
+})
+
+Deno.test('delete: a retry after the account is already gone says deleted', async () => {
+  const { calls, deps } = fakes({ caller: 'deleted' })
+  const res = await handleAccount(post({ action: 'delete' }), deps)
+  assertEquals(res.status, 200)
+  assertEquals(await res.json(), { status: 'deleted' })
+  assertEquals(calls, ['getUser:alice-jwt'])
+  const exported = await handleAccount(post({ action: 'export' }), deps)
+  assertEquals(exported.status, 401, 'but there is nothing to export')
 })
 
 Deno.test('export: the caller\'s own data, never cached', async () => {
