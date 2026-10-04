@@ -19,6 +19,8 @@ export const queryKeys = {
   // Updates (task 4.1). Under 'updates' or the item, so the live channel refreshes them.
   itemUpdates: (itemId: string) => ['updates', 'item', itemId] as const,
   followUps: (itemId: string) => ['items', itemId, 'follow-ups'] as const,
+  // A series' rule never changes, so it's read once (task 4.5c).
+  series: (seriesId: string) => ['series', seriesId] as const,
   members: ['members'] as const,
   notifications: ['notifications'] as const,
   coverageRemaining: ['coverage-remaining'] as const,
@@ -70,6 +72,22 @@ export function useItem(itemId: string) {
     queryFn: () => rows(supabase.from('items').select('*').eq('id', itemId).single()),
     // Retrying won't make a missing item appear.
     retry: (failures, error) => !isItemNotFound(error) && failures < 3,
+  })
+}
+
+/** How an occurrence's series repeats ('daily', 'weekly' or 'monthly'); idle for a one-off item. */
+export function useSeriesRepeat(seriesId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.series(seriesId ?? ''),
+    queryFn: async () => {
+      // single() over rows() types the row as null, so restore it.
+      const series = (await rows(
+        supabase.from('series').select('repeat').eq('id', seriesId ?? '').single(),
+      )) as unknown as { repeat: api.Repeat }
+      return series.repeat
+    },
+    enabled: seriesId !== null,
+    staleTime: Infinity,
   })
 }
 

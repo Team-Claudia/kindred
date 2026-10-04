@@ -17,6 +17,8 @@ import {
   needsReconfirm,
   newItemForm,
   validateItemForm,
+  withDate,
+  withRepeat,
   type ItemForm,
   type ItemFormField,
 } from '@/lib/item-form'
@@ -26,8 +28,12 @@ import { cn } from '@/lib/utils'
 
 // The create/edit sheet (wireframes 16 and 18): one form for tasks and
 // appointments. Creating goes through create_item; editing sends only what
-// changed to update_item at the item's version. Repeat, the map preview and
-// who's free are task 4.5.
+// changed to update_item at the item's version. A new item can repeat daily,
+// weekly or monthly up to a required Until date (task 4.5c). Each occurrence
+// is its own item, so editing one never changes the others, and the sheet
+// doesn't offer Repeat when editing.
+
+const repeatOptions: ItemForm['repeat'][] = ['none', 'daily', 'weekly', 'monthly']
 
 /** Errors after which an edit is out of date: close and show the latest item. */
 const refreshErrors = new Set(['stale_version', 'invalid_state'])
@@ -209,7 +215,7 @@ function ItemFormBody({
               {...fieldProps}
               type="date"
               value={form.date}
-              onChange={(event) => set('date', event.target.value)}
+              onChange={(event) => setForm((current) => withDate(current, event.target.value))}
             />
           )}
         </Field>
@@ -249,6 +255,51 @@ function ItemFormBody({
             )}
           </Field>
         </>
+      )}
+
+      {!item && !followUpOf && (
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            label={t('itemForm.repeat')}
+            hint={
+              form.repeat === 'none'
+                ? undefined
+                : form.assigneeId
+                  ? t('itemForm.repeatFirstOnly')
+                  : t('itemForm.repeatHint')
+            }
+            invalid={false}
+          >
+            {(fieldProps) => (
+              <select
+                {...fieldProps}
+                value={form.repeat}
+                onChange={(event) =>
+                  setForm((current) => withRepeat(current, event.target.value as ItemForm['repeat']))
+                }
+              >
+                {repeatOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {t(`itemForm.repeatOptions.${option}`)}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          {form.repeat !== 'none' && (
+            <Field label={t('itemForm.until')} {...field('until')}>
+              {(fieldProps) => (
+                <input
+                  {...fieldProps}
+                  type="date"
+                  min={form.date || undefined}
+                  value={form.until}
+                  onChange={(event) => set('until', event.target.value)}
+                />
+              )}
+            </Field>
+          )}
+        </div>
       )}
 
       <Field label={t('itemForm.notes')} hint={t('itemForm.notesHint')} {...field('notes')}>

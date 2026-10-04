@@ -7,6 +7,8 @@ import {
   hasNoTime,
   newItemForm,
   validateItemForm,
+  withDate,
+  withRepeat,
   type ItemForm,
 } from './item-form'
 
@@ -28,6 +30,7 @@ function item(overrides: Partial<Item>): Item {
     location_lng: null,
     private_notes: null,
     series_id: null,
+    occurrence_index: null,
     follow_up_of: null,
     created_by: 'maya',
     created_at: '2026-09-01T00:00:00Z',
@@ -44,6 +47,15 @@ function form(overrides: Partial<ItemForm>): ItemForm {
 describe('validateItemForm', () => {
   test('a task needs only a title and a date', () => {
     expect(validateItemForm(form({}))).toEqual({})
+  })
+
+  test('a repeat needs an Until date, not before the first date', () => {
+    expect(validateItemForm(form({ repeat: 'weekly' }))).toEqual({ until: 'untilRequired' })
+    expect(validateItemForm(form({ repeat: 'weekly', until: '2026-09-24' }))).toEqual({})
+    expect(validateItemForm(form({ repeat: 'weekly', until: '2026-09-23' }))).toEqual({
+      until: 'untilBeforeStart',
+    })
+    expect(validateItemForm(form({ repeat: 'none', until: '2026-09-23' }))).toEqual({})
   })
 
   test('a blank title is missing', () => {
@@ -79,6 +91,39 @@ describe('validateItemForm', () => {
       endTime: 'endBeforeStart',
     })
     expect(validateItemForm(form({ kind: 'appointment', time: '14:00', endTime: '14:00' }))).toEqual({})
+  })
+})
+
+describe('withRepeat', () => {
+  test('choosing a repeat fills in Until 4 weeks after the first date', () => {
+    expect(withRepeat(form({}), 'daily')).toMatchObject({ repeat: 'daily', until: '2026-10-22' })
+  })
+
+  test('an Until date already chosen is kept', () => {
+    expect(withRepeat(form({ repeat: 'daily', until: '2026-10-01' }), 'monthly')).toMatchObject({
+      repeat: 'monthly',
+      until: '2026-10-01',
+    })
+  })
+
+  test("Doesn't repeat fills in nothing", () => {
+    expect(withRepeat(form({}), 'none')).toMatchObject({ repeat: 'none', until: '' })
+  })
+})
+
+describe('withDate', () => {
+  test('a filled-in Until moves with the date', () => {
+    const repeating = withRepeat(form({}), 'weekly')
+    expect(withDate(repeating, '2026-10-15')).toMatchObject({ date: '2026-10-15', until: '2026-11-12' })
+  })
+
+  test('an Until the member chose stays put', () => {
+    const chosen = form({ repeat: 'weekly', until: '2026-12-31' })
+    expect(withDate(chosen, '2026-10-15')).toMatchObject({ date: '2026-10-15', until: '2026-12-31' })
+  })
+
+  test("with Doesn't repeat, only the date changes", () => {
+    expect(withDate(form({}), '2026-10-15')).toMatchObject({ date: '2026-10-15', until: '' })
   })
 })
 
@@ -122,6 +167,30 @@ describe('createItemArgs', () => {
 
   test('a task never sends a location', () => {
     expect(createItemArgs(form({ location: 'Somewhere' }), zone)).not.toHaveProperty('location')
+  })
+
+  test('a repeat sends its rule, and Until as the end of that day in the circle', () => {
+    // Toronto changes its clocks on 1 Nov 2026 (Vancouver may not, in newer
+    // time zone data), so the end of 1 Nov is 23:59 EST, 04:59 UTC.
+    expect(
+      createItemArgs(
+        form({ date: '2026-10-25', time: '20:00', repeat: 'weekly', until: '2026-11-01' }),
+        'America/Toronto',
+      ),
+    ).toEqual({
+      kind: 'task',
+      title: 'Refill meds',
+      starts_at: '2026-10-26T00:00:00.000Z',
+      repeat: 'weekly',
+      until: '2026-11-02T04:59:00.000Z',
+    })
+  })
+
+
+  test("Doesn't repeat sends neither, even with an Until date left over", () => {
+    const args = createItemArgs(form({ repeat: 'none', until: '2026-10-01' }), zone)
+    expect(args).not.toHaveProperty('repeat')
+    expect(args).not.toHaveProperty('until')
   })
 })
 

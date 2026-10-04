@@ -153,10 +153,10 @@ select throws_ok(
 select throws_ok(
   $$ select public.create_item('task', 'Laundry', now(), follow_up_of => pg_temp.id('y1')) $$,
   'P0001', 'invalid_input', 'a follow-up must be of an item in the same circle');
-select throws_ok($$ select public.create_item('task', 'Laundry', now(), repeat => 'weekly') $$,
-  'P0001', 'not_implemented', 'repeating items aren''t built yet (task 4.5)');
+select throws_ok($$ select public.create_item('task', 'Laundry', now(), repeat => 'yearly') $$,
+  'P0001', 'invalid_input', 'repeat is daily, weekly or monthly (recurrence.test.sql)');
 select throws_ok($$ select public.create_item('task', 'Laundry', now(), until => now() + interval '1 month') $$,
-  'P0001', 'not_implemented', 'an end date for repeats isn''t built yet either');
+  'P0001', 'invalid_input', 'an end date needs a repeat');
 select is(pg_temp.events(), '', 'failed creates write no history');
 
 select isnt(

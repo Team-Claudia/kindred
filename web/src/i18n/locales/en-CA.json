@@ -372,6 +372,16 @@
     "explainNobody": "Nobody is asked yet. It shows as Needs someone until someone takes it.",
     "explainSelf": "You picked yourself, so it's yours straight away.",
     "explainOther": "{{name}} is asked to accept. Until they do, it shows as Awaiting {{name}}, not as theirs.",
+    "repeat": "Repeat",
+    "repeatOptions": {
+      "none": "Doesn't repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "until": "Until",
+    "repeatHint": "It repeats up to and including the Until date. Each one is a separate item, so changing or completing one doesn't change the others.",
+    "repeatFirstOnly": "Only the first one is assigned. The rest show as Needs someone.",
     "reconfirm": "You changed the time, so {{name}} is asked to confirm it again. Until they do, it shows as Awaiting {{name}}.",
     "fixProblems": "Check the highlighted details.",
     "problems": {
@@ -381,7 +391,9 @@
       "timeRequired": "Choose a start time.",
       "endBeforeStart": "The end time is before the start time.",
       "locationTooLong": "Use {{max}} characters or fewer.",
-      "notesTooLong": "Use {{max}} characters or fewer."
+      "notesTooLong": "Use {{max}} characters or fewer.",
+      "untilRequired": "Choose the last date it repeats.",
+      "untilBeforeStart": "Choose an end date on or after the first date."
     }
   },
   "assignSheet": {
@@ -394,6 +406,11 @@
     "nobodyElse": "There's nobody else in the Care Circle to ask yet. Invite someone from Care Circle and settings."
   },
   "itemDetail": {
+    "repeats": {
+      "daily": "Repeats daily",
+      "weekly": "Repeats weekly",
+      "monthly": "Repeats monthly"
+    },
     "noAccessTitle": "You don't have access to this",
     "noAccessBody": "It may have been removed, or it belongs to another Care Circle.",
     "goHome": "Go to Home",
