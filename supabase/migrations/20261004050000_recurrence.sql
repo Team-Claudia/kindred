@@ -1,9 +1,10 @@
 -- Task 4.5c: recurrence (plan §4.2, ADR-007, PRD US 7.6, BR-10).
 --
--- create_item takes repeat ('daily', 'weekly', 'monthly') and an optional
--- until. It stores the rule and what to copy in a series row, then inserts a
--- real items row for each occurrence up to 90 days ahead (or until). A nightly
--- pg_cron job tops every series up to 90 days ahead. Each occurrence is an
+-- create_item takes repeat ('daily', 'weekly', 'monthly') and a required
+-- until, so no series runs forever. It stores the rule and what to copy in a
+-- series row, then inserts a real items row for each occurrence up to 90 days
+-- ahead (or until). A nightly pg_cron job tops up series that run further than
+-- 90 days. Each occurrence is an
 -- ordinary, independent item: editing, claiming, completing or cancelling one
 -- never touches the others ("this occurrence only", Tier 2).
 --
@@ -36,7 +37,8 @@ alter table public.series
   add column location text,
   add column private_notes text,
   add column next_index integer not null default 0 check (next_index >= 0),
-  add constraint series_until_after_start check (until is null or until >= starts_at);
+  alter column until set not null,
+  add constraint series_until_after_start check (until >= starts_at);
 
 -- 0 for the first occurrence, then 1, 2, … Null for a one-off item.
 alter table public.items
@@ -102,9 +104,7 @@ begin
   end if;
 
   select c.time_zone into v_time_zone from public.circles c where c.id = v_series.circle_id;
-  if v_series.until is not null then
-    v_through := least(v_through, v_series.until);
-  end if;
+  v_through := least(v_through, v_series.until);
 
   loop
     exit when v_added >= 400;
@@ -156,8 +156,7 @@ declare
 begin
   for v_series in
     select s.id from public.series s
-    where s.until is null
-       or public.series_occurrence_at(s.starts_at, s.repeat, s.next_index,
+    where public.series_occurrence_at(s.starts_at, s.repeat, s.next_index,
             (select c.time_zone from public.circles c where c.id = s.circle_id)) <= s.until
     order by s.created_at, s.id
   loop
@@ -216,10 +215,11 @@ begin
     raise exception 'invalid_input';
   end if;
 
-  -- Repeats: a known rule; an until only with a rule, and not before the
-  -- start; and a follow-up is a single item.
+  -- Repeats: a known rule with an until, and an until only with a rule, not
+  -- before the start; and a follow-up is a single item.
   if create_item.repeat is not null
      and (create_item.repeat not in ('daily', 'weekly', 'monthly')
+          or create_item.until is null
           or create_item.follow_up_of is not null) then
     raise exception 'invalid_input';
   end if;

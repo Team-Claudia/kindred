@@ -1,5 +1,5 @@
 import type { CreateItemArgs, ItemPatch, Repeat } from './api'
-import { instantAt, isDayKey, isTimeOfDay, timeOfDay, dayKey, type DayKey } from './dates'
+import { addDays, instantAt, isDayKey, isTimeOfDay, timeOfDay, dayKey, type DayKey } from './dates'
 import type { Item, ItemKind } from './items'
 
 // The create/edit sheet's fields and the rules for turning them into
@@ -37,7 +37,7 @@ export interface ItemForm {
   assigneeId: string | null
   /** Creating only: how it repeats (task 4.5c). Each occurrence is its own item. */
   repeat: Repeat | 'none'
-  /** The last day it repeats, 'YYYY-MM-DD', or '' for no end date. */
+  /** The last day it repeats, 'YYYY-MM-DD'. Required with a repeat, so no series runs forever. */
   until: string
 }
 
@@ -51,6 +51,7 @@ export type ItemFormProblem =
   | 'endBeforeStart'
   | 'locationTooLong'
   | 'notesTooLong'
+  | 'untilRequired'
   | 'untilBeforeStart'
 
 export type ItemFormProblems = Partial<Record<ItemFormField, ItemFormProblem>>
@@ -94,6 +95,21 @@ function length(value: string): number {
   return [...value].length
 }
 
+/** How long a new repeat runs unless the member changes its Until date. */
+export const DEFAULT_REPEAT_DAYS = 28
+
+/**
+ * The form with its Repeat changed. Choosing a repeat with no Until date yet
+ * fills one in, 4 weeks after the first date, so it's one tap.
+ */
+export function withRepeat(form: ItemForm, repeat: ItemForm['repeat']): ItemForm {
+  const until =
+    repeat !== 'none' && !isDayKey(form.until) && isDayKey(form.date)
+      ? addDays(form.date, DEFAULT_REPEAT_DAYS)
+      : form.until
+  return { ...form, repeat, until }
+}
+
 /** What's wrong with the form, by field. Empty when it can be saved. */
 export function validateItemForm(form: ItemForm): ItemFormProblems {
   const problems: ItemFormProblems = {}
@@ -107,8 +123,9 @@ export function validateItemForm(form: ItemForm): ItemFormProblems {
     if (length(form.location.trim()) > limits.location) problems.location = 'locationTooLong'
   }
   if (length(form.notes.trim()) > limits.notes) problems.notes = 'notesTooLong'
-  if (form.repeat !== 'none' && isDayKey(form.until) && isDayKey(form.date) && form.until < form.date) {
-    problems.until = 'untilBeforeStart'
+  if (form.repeat !== 'none') {
+    if (!isDayKey(form.until)) problems.until = 'untilRequired'
+    else if (isDayKey(form.date) && form.until < form.date) problems.until = 'untilBeforeStart'
   }
   return problems
 }

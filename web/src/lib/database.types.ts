@@ -393,13 +393,13 @@ isOneToOne: false
                   ]
                 },"series": {
                   Row: {
-                    "circle_id": string,"created_at": string,"created_by": string | null,"ends_at": string | null,"id": string,"kind": string,"location": string | null,"next_index": number,"private_notes": string | null,"repeat": string,"starts_at": string,"title": string,"until": string | null
+                    "circle_id": string,"created_at": string,"created_by": string | null,"ends_at": string | null,"id": string,"kind": string,"location": string | null,"next_index": number,"private_notes": string | null,"repeat": string,"starts_at": string,"title": string,"until": string
                   }
                   Insert: {
-                    "circle_id": string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"id"?: string,"kind": string,"location"?: string | null,"next_index"?: number,"private_notes"?: string | null,"repeat": string,"starts_at": string,"title": string,"until"?: string | null
+                    "circle_id": string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"id"?: string,"kind": string,"location"?: string | null,"next_index"?: number,"private_notes"?: string | null,"repeat": string,"starts_at": string,"title": string,"until": string
                   }
                   Update: {
-                    "circle_id"?: string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"id"?: string,"kind"?: string,"location"?: string | null,"next_index"?: number,"private_notes"?: string | null,"repeat"?: string,"starts_at"?: string,"title"?: string,"until"?: string | null
+                    "circle_id"?: string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"id"?: string,"kind"?: string,"location"?: string | null,"next_index"?: number,"private_notes"?: string | null,"repeat"?: string,"starts_at"?: string,"title"?: string,"until"?: string
                   }
                   Relationships: [
                     {

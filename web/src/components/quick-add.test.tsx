@@ -124,16 +124,25 @@ test('a task can repeat weekly until a date', async () => {
 
   const repeat = within(sheet).getByLabelText('Repeat')
   expect(repeat).toHaveValue('none')
-  expect(within(sheet).queryByLabelText('Until (optional)')).not.toBeInTheDocument()
+  expect(within(sheet).queryByLabelText('Until')).not.toBeInTheDocument()
 
   fireEvent.change(within(sheet).getByLabelText('Task'), { target: { value: 'Water the plants' } })
   fireEvent.change(repeat, { target: { value: 'weekly' } })
-  expect(sheet).toHaveTextContent("Each one is a separate item. Changing or completing one doesn't change the others.")
+  expect(sheet).toHaveTextContent(
+    "It repeats up to and including the Until date. Each one is a separate item, so changing or completing one doesn't change the others.",
+  )
   fireEvent.click(within(sheet).getByRole('radio', { name: /Jonah/ }))
   expect(sheet).toHaveTextContent('Only the first one is assigned. The rest show as Needs someone.')
 
-  // An end date before the first date isn't sent.
-  const until = within(sheet).getByLabelText('Until (optional)')
+  // Until is filled in 4 weeks ahead, and is required.
+  const until = within(sheet).getByLabelText('Until')
+  expect(until).toHaveValue('2026-10-22')
+  fireEvent.change(until, { target: { value: '' } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Add task' }))
+  expect(within(sheet).getByText('Choose the last date it repeats.')).toBeInTheDocument()
+  expect(api.createItem).not.toHaveBeenCalled()
+
+  // An end date before the first date isn't sent either.
   fireEvent.change(until, { target: { value: '2026-09-20' } })
   fireEvent.click(within(sheet).getByRole('button', { name: 'Add task' }))
   expect(within(sheet).getByText('Choose an end date on or after the first date.')).toBeInTheDocument()

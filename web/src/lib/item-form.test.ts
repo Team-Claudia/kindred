@@ -7,6 +7,7 @@ import {
   hasNoTime,
   newItemForm,
   validateItemForm,
+  withRepeat,
   type ItemForm,
 } from './item-form'
 
@@ -47,8 +48,8 @@ describe('validateItemForm', () => {
     expect(validateItemForm(form({}))).toEqual({})
   })
 
-  test('Until is optional, but not before the first date', () => {
-    expect(validateItemForm(form({ repeat: 'weekly' }))).toEqual({})
+  test('a repeat needs an Until date, not before the first date', () => {
+    expect(validateItemForm(form({ repeat: 'weekly' }))).toEqual({ until: 'untilRequired' })
     expect(validateItemForm(form({ repeat: 'weekly', until: '2026-09-24' }))).toEqual({})
     expect(validateItemForm(form({ repeat: 'weekly', until: '2026-09-23' }))).toEqual({
       until: 'untilBeforeStart',
@@ -89,6 +90,23 @@ describe('validateItemForm', () => {
       endTime: 'endBeforeStart',
     })
     expect(validateItemForm(form({ kind: 'appointment', time: '14:00', endTime: '14:00' }))).toEqual({})
+  })
+})
+
+describe('withRepeat', () => {
+  test('choosing a repeat fills in Until 4 weeks after the first date', () => {
+    expect(withRepeat(form({}), 'daily')).toMatchObject({ repeat: 'daily', until: '2026-10-22' })
+  })
+
+  test('an Until date already chosen is kept', () => {
+    expect(withRepeat(form({ repeat: 'daily', until: '2026-10-01' }), 'monthly')).toMatchObject({
+      repeat: 'monthly',
+      until: '2026-10-01',
+    })
+  })
+
+  test("Doesn't repeat fills in nothing", () => {
+    expect(withRepeat(form({}), 'none')).toMatchObject({ repeat: 'none', until: '' })
   })
 })
 
@@ -151,11 +169,6 @@ describe('createItemArgs', () => {
     })
   })
 
-  test('a repeat with no end date sends no until', () => {
-    const args = createItemArgs(form({ repeat: 'daily' }), zone)
-    expect(args.repeat).toBe('daily')
-    expect(args).not.toHaveProperty('until')
-  })
 
   test("Doesn't repeat sends neither, even with an Until date left over", () => {
     const args = createItemArgs(form({ repeat: 'none', until: '2026-10-01' }), zone)

@@ -17,6 +17,7 @@ import {
   needsReconfirm,
   newItemForm,
   validateItemForm,
+  withRepeat,
   type ItemForm,
   type ItemFormField,
 } from '@/lib/item-form'
@@ -27,8 +28,9 @@ import { cn } from '@/lib/utils'
 // The create/edit sheet (wireframes 16 and 18): one form for tasks and
 // appointments. Creating goes through create_item; editing sends only what
 // changed to update_item at the item's version. A new item can repeat daily,
-// weekly or monthly (task 4.5c); each occurrence is its own item, so editing
-// one never changes the others, and the sheet doesn't offer Repeat when editing.
+// weekly or monthly up to a required Until date (task 4.5c). Each occurrence
+// is its own item, so editing one never changes the others, and the sheet
+// doesn't offer Repeat when editing.
 
 const repeatOptions: ItemForm['repeat'][] = ['none', 'daily', 'weekly', 'monthly']
 
@@ -271,7 +273,9 @@ function ItemFormBody({
               <select
                 {...fieldProps}
                 value={form.repeat}
-                onChange={(event) => set('repeat', event.target.value as ItemForm['repeat'])}
+                onChange={(event) =>
+                  setForm((current) => withRepeat(current, event.target.value as ItemForm['repeat']))
+                }
               >
                 {repeatOptions.map((option) => (
                   <option key={option} value={option}>

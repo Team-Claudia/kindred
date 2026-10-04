@@ -229,8 +229,9 @@ declare
   v_series uuid;
   v_item uuid;
 begin
-  insert into public.series (circle_id, repeat, kind, title, starts_at)
-  values (v_x, 'weekly', 'task', 'Pick up prescriptions', now()) returning id into v_series;
+  insert into public.series (circle_id, repeat, until, kind, title, starts_at)
+  values (v_x, 'weekly', now() + interval '1 month', 'task', 'Pick up prescriptions', now())
+  returning id into v_series;
   insert into public.items (circle_id, kind, title, starts_at, series_id, private_notes)
   values (v_x, 'task', 'Pick up prescriptions', now(), v_series, 'Pharmacy on Main')
   returning id into v_item;

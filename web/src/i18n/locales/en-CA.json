@@ -379,8 +379,8 @@
       "weekly": "Weekly",
       "monthly": "Monthly"
     },
-    "until": "Until (optional)",
-    "repeatHint": "Each one is a separate item. Changing or completing one doesn't change the others.",
+    "until": "Until",
+    "repeatHint": "It repeats up to and including the Until date. Each one is a separate item, so changing or completing one doesn't change the others.",
     "repeatFirstOnly": "Only the first one is assigned. The rest show as Needs someone.",
     "reconfirm": "You changed the time, so {{name}} is asked to confirm it again. Until they do, it shows as Awaiting {{name}}.",
     "fixProblems": "Check the highlighted details.",
@@ -392,6 +392,7 @@
       "endBeforeStart": "The end time is before the start time.",
       "locationTooLong": "Use {{max}} characters or fewer.",
       "notesTooLong": "Use {{max}} characters or fewer.",
+      "untilRequired": "Choose the last date it repeats.",
       "untilBeforeStart": "Choose an end date on or after the first date."
     }
   },

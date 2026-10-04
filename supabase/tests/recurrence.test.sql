@@ -6,7 +6,7 @@
 -- per test with pg_temp.horizon(), which sets the 90-day horizon (and so now,
 -- 90 days earlier), so the dates don't depend on when the tests run.
 begin;
-select plan(51);
+select plan(52);
 
 insert into auth.users (id) values
   ('a0000000-0000-0000-0000-00000000000a'), -- Alice
@@ -130,6 +130,8 @@ select pg_temp.sign_in_as('a0000000-0000-0000-0000-00000000000a');
 
 select throws_ok($$ select public.create_item('task', 'Laundry', now(), repeat => 'yearly') $$,
   'P0001', 'invalid_input', 'repeat is daily, weekly or monthly');
+select throws_ok($$ select public.create_item('task', 'Laundry', now(), repeat => 'daily') $$,
+  'P0001', 'invalid_input', 'a repeat needs an end date, so no series runs forever');
 select throws_ok($$ select public.create_item('task', 'Laundry', now(), until => now() + interval '1 month') $$,
   'P0001', 'invalid_input', 'an end date needs a repeat');
 select throws_ok(
@@ -240,11 +242,13 @@ select is(pg_temp.local('leap'),
 
 select pg_temp.horizon('2026-12-21 08:00 America/Toronto');
 select set_config('test.walk', public.create_item(
-  'task', 'Morning walk', '2026-12-01 08:00 America/Toronto', repeat => 'daily')::text, true);
-select is(pg_temp.n('walk'), 21, 'with no end date, occurrences are made up to the horizon');
+  'task', 'Morning walk', '2026-12-01 08:00 America/Toronto',
+  repeat => 'daily', until => '2027-02-15 23:59 America/Toronto')::text, true);
+select is(pg_temp.n('walk'), 21, 'with an end date beyond 90 days, occurrences are made up to the horizon');
 
 select set_config('test.far', public.create_item(
-  'task', 'Renew passport', '2027-02-01 08:00 America/Toronto', repeat => 'weekly')::text, true);
+  'task', 'Renew passport', '2027-02-01 08:00 America/Toronto',
+  repeat => 'weekly', until => '2027-12-31 23:59 America/Toronto')::text, true);
 select is(pg_temp.n('far'), 1, 'a series starting beyond the horizon still gets its first occurrence');
 
 select pg_temp.sign_in_as('b0000000-0000-0000-0000-00000000000b');
@@ -253,7 +257,7 @@ select lives_ok($$ select public.claim(pg_temp.id('walk'), 1) $$, 'Bob claims th
 reset role;
 select pg_temp.horizon('2026-12-31 08:00 America/Toronto');
 select is(public.extend_all_series(), 10, 'the nightly job adds the next 10 days of walks');
-select is(pg_temp.n('walk'), 31, 'the open series now runs 10 days further');
+select is(pg_temp.n('walk'), 31, 'the series now runs 10 days further');
 select is(to_char((select max(o.starts_at) from pg_temp.occurrences('walk') o) at time zone 'America/Toronto', 'YYYY-MM-DD HH24:MI'),
   '2026-12-31 08:00', 'at the same local time');
 select is(pg_temp.created('walk', by_kindred => true), 10, 'the added ones were created by Kindred, not a member');
@@ -264,8 +268,9 @@ select is(pg_temp.n('med') || ' ' || pg_temp.n('physio') || ' ' || pg_temp.n('bi
 select is(public.extend_all_series(), 0, 'running it again adds nothing');
 
 select pg_temp.horizon('2027-03-01 08:00 America/Toronto');
-select is(public.extend_all_series(), 64, 'a later night carries on: 60 walks and 4 weekly renewals');
-select is(pg_temp.n('far') || ' ' || pg_temp.n('walk'), '5 91', 'both reach the new horizon');
+select is(public.extend_all_series(), 50, 'a later night carries on: 46 walks and 4 weekly renewals');
+select is(pg_temp.n('far') || ' ' || pg_temp.n('walk'), '5 77',
+  'renewals reach the new horizon; walks stop at their end date, 15 Feb');
 
 -- ---------------------------------------------------------------------------
 -- Assigning at creation asks about the first occurrence only
