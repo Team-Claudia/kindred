@@ -7,6 +7,7 @@ import { AssignSheet } from '@/components/assign-sheet'
 import { CoverageSheet, type CoverageStep } from '@/components/coverage-sheet'
 import { ItemFormSheet } from '@/components/item-form-sheet'
 import { ItemRow } from '@/components/item-row'
+import { MapPreview } from '@/components/map-preview'
 import { OverdueNotice } from '@/components/overdue-notice'
 import { ShareButton } from '@/components/share-button'
 import { ErrorState, LoadingState } from '@/components/states'
@@ -329,6 +330,15 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
         )}
         {item.follow_up_of && <FollowUpOfRow appointmentId={item.follow_up_of} />}
       </dl>
+
+      {!isTask && item.location && (
+        <MapPreview
+          itemId={item.id}
+          location={item.location}
+          lat={item.location_lat}
+          lng={item.location_lng}
+        />
+      )}
 
       {item.private_notes && (
         <section className="flex flex-col gap-2 rounded-xl border p-4">
