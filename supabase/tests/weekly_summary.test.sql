@@ -164,9 +164,10 @@ select set_eq(
   'any day in the week names that week'
 );
 
-select is_empty(
-  $$ select 1 from public.weekly_summary('2026-02-23') where kind in ('completed', 'missed', 'unowned', 'updates') $$,
-  'the week before has none of this week''s history'
+select results_eq(
+  $$ select kind, item_id from public.weekly_summary('2026-02-23') where kind in ('completed', 'missed', 'unowned', 'updates') $$,
+  $$ values ('completed'::text, pg_temp.iid(4)) $$,
+  'the week before ends at midnight Sunday EST: it has the 11:30 pm completion and none of this week''s history'
 );
 
 -- This week: items that need someone soon.
