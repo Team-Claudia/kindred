@@ -7,6 +7,7 @@ import {
   hasNoTime,
   newItemForm,
   validateItemForm,
+  withDate,
   withRepeat,
   type ItemForm,
 } from './item-form'
@@ -107,6 +108,22 @@ describe('withRepeat', () => {
 
   test("Doesn't repeat fills in nothing", () => {
     expect(withRepeat(form({}), 'none')).toMatchObject({ repeat: 'none', until: '' })
+  })
+})
+
+describe('withDate', () => {
+  test('a filled-in Until moves with the date', () => {
+    const repeating = withRepeat(form({}), 'weekly')
+    expect(withDate(repeating, '2026-10-15')).toMatchObject({ date: '2026-10-15', until: '2026-11-12' })
+  })
+
+  test('an Until the member chose stays put', () => {
+    const chosen = form({ repeat: 'weekly', until: '2026-12-31' })
+    expect(withDate(chosen, '2026-10-15')).toMatchObject({ date: '2026-10-15', until: '2026-12-31' })
+  })
+
+  test("with Doesn't repeat, only the date changes", () => {
+    expect(withDate(form({}), '2026-10-15')).toMatchObject({ date: '2026-10-15', until: '' })
   })
 })
 

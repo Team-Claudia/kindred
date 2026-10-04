@@ -17,6 +17,7 @@ import {
   needsReconfirm,
   newItemForm,
   validateItemForm,
+  withDate,
   withRepeat,
   type ItemForm,
   type ItemFormField,
@@ -214,7 +215,7 @@ function ItemFormBody({
               {...fieldProps}
               type="date"
               value={form.date}
-              onChange={(event) => set('date', event.target.value)}
+              onChange={(event) => setForm((current) => withDate(current, event.target.value))}
             />
           )}
         </Field>

@@ -110,6 +110,18 @@ export function withRepeat(form: ItemForm, repeat: ItemForm['repeat']): ItemForm
   return { ...form, repeat, until }
 }
 
+/**
+ * The form with its date changed. An Until date still at its filled-in
+ * default moves with it, so the repeat keeps running 4 weeks; one the member
+ * chose stays put.
+ */
+export function withDate(form: ItemForm, date: string): ItemForm {
+  const defaulted =
+    form.repeat !== 'none' && isDayKey(form.date) && form.until === addDays(form.date, DEFAULT_REPEAT_DAYS)
+  const until = defaulted && isDayKey(date) ? addDays(date, DEFAULT_REPEAT_DAYS) : form.until
+  return { ...form, date, until }
+}
+
 /** What's wrong with the form, by field. Empty when it can be saved. */
 export function validateItemForm(form: ItemForm): ItemFormProblems {
   const problems: ItemFormProblems = {}
