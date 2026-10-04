@@ -46,7 +46,9 @@
     "tabs": "Main",
     "notifications": "Notifications",
     "circle": "Care Circle and settings",
-    "back": "Back"
+    "back": "Back",
+    "notificationsUnread_one": "Notifications, {{count}} unread",
+    "notificationsUnread_other": "Notifications, {{count}} unread"
   },
   "install": {
     "title": "Add Kindred to your Home Screen",
@@ -734,5 +736,14 @@
     "linkLoading": "Loading recent tasks and appointments…",
     "whoIsTold": "Everyone in the Care Circle is notified.",
     "whoIsTold_linked": "Everyone in the Care Circle is notified, and the update also shows on {{title}}."
+  },
+  "notifications": {
+    "heading": "What you missed",
+    "intro": "Also sent to your phone when notifications are on.",
+    "markAllRead": "Mark all read",
+    "unread": "New",
+    "empty": "Nothing yet. When someone asks you to take something, changes something of yours or posts an update, it shows up here.",
+    "error": "Your notifications didn't load. Check your connection and try again.",
+    "markError": "That didn't save. Check your connection and try again."
   }
 }
