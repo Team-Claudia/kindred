@@ -34,6 +34,10 @@ select ok(
 -- Claiming
 -- ---------------------------------------------------------------------------
 
+-- Jobs already queued (e.g. geocode jobs for the seed data's appointments)
+-- are set aside, so only this test's jobs are due.
+update public.outbox set status = 'done' where status in ('pending', 'sending');
+
 insert into public.outbox (id, kind, status, run_at, attempts) overriding system value values
   (9001, 'push', 'pending', now() - interval '2 minutes', 0),   -- due
   (9002, 'push', 'sending', now() - interval '1 minute', 2),    -- lease ran out: due again

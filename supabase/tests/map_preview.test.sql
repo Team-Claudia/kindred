@@ -4,7 +4,7 @@
 --
 -- People: Alice and Bob are in circle X; Erin is alone in circle Z.
 begin;
-select plan(34);
+select plan(36);
 
 insert into auth.users (id) values
   ('a0000000-0000-0000-0000-00000000000a'), -- Alice
@@ -189,6 +189,21 @@ select is(pg_temp.jobs('clinic'), 1, 'and queues a geocode job for the new one')
 select public.update_item(pg_temp.id('clinic2'), pg_temp.version('clinic2'), '{"location": ""}');
 select is(pg_temp.coords('clinic2') || ' ' || pg_temp.jobs('clinic2'), 'none 0',
   'removing the location clears them and queues nothing');
+
+-- Catching up: jobs dropped while there was no key, or appointments saved
+-- before the migration.
+reset role;
+update public.outbox set status = 'done' where kind = 'geocode' and status = 'pending';
+select public.queue_missing_geocodes();
+select is(
+  (select string_agg(i.location, ', ' order by i.location)
+   from public.outbox o join public.items i on i.id = (o.payload ->> 'item_id')::uuid
+   where o.kind = 'geocode' and o.status = 'pending'
+     and o.circle_id in ('10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003')),
+  '123 Main St, Toronto, Dad''s house, Home, Physio clinic',
+  'queue_missing_geocodes queues one job per place still without coordinates'
+);
+select is(public.queue_missing_geocodes(), 0, 'and running it again queues nothing');
 
 -- ---------------------------------------------------------------------------
 -- Sending

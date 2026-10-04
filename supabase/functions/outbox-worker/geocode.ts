@@ -22,7 +22,8 @@ export interface GeocodeDeps {
   readItem(itemId: string): Promise<GeocodeItem | null>
   /**
    * Asks Geoapify about the location text: the place, null if it found
-   * nothing, 'not_configured' with no key, or an error message to retry.
+   * nothing, 'not_configured' with no key (or one Geoapify refuses), or an
+   * error message to retry.
    */
   geocode(location: string): Promise<Coords | null | 'not_configured' | { error: string }>
   /** store_geocode: how many items now have the coordinates. */
@@ -47,7 +48,8 @@ export async function geocodeJob(job: Job, deps: GeocodeDeps): Promise<string | 
 
   const result = await deps.geocode(item.location)
   if (result === 'not_configured') {
-    console.warn(`outbox ${job.id}: GEOAPIFY_API_KEY is not set; location stays as text`)
+    // queue_missing_geocodes() queues these again once the key works.
+    console.warn(`outbox ${job.id}: no working GEOAPIFY_API_KEY; location stays as text`)
     return null
   }
   if (result && 'error' in result) return result.error
@@ -78,8 +80,13 @@ export function runGeocodeJob(admin: SupabaseClient, job: Job): Promise<string |
       const res = await fetchWithTimeout(geocodeUrl(location, key), { method: 'GET' })
       if (!res.ok) {
         await res.body?.cancel()
-        // e.g. 429 once the day's free credits are used up. Only the status
-        // is logged, never the location.
+        // Only the status is logged, never the location.
+        console.warn('geocode: Geoapify refused', res.status)
+        // A wrong or revoked key won't work on a retry either.
+        if (res.status === 401 || res.status === 403) return 'not_configured'
+        // Nor will text Geoapify can't take.
+        if (res.status === 400) return null
+        // e.g. 429 once the day's free credits are used up, or 5xx: retried.
         return { error: `geoapify_${res.status}` }
       }
       return parseGeocode(await res.json())

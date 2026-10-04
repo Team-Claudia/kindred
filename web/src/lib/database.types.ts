@@ -878,6 +878,12 @@ isOneToOne: false
 "post_update":
 { Args: { "body": string,"item_id"?: string }; Returns: string
                            },
+"queue_geocode":
+{ Args: { "circle_id": string,"item_id": string,"location": string }; Returns: undefined
+                           },
+"queue_missing_geocodes":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "queue_push":
 { Args: { "actor": string,"event": string,"item": Database["public"]['Tables']["items"]['Row'],"recipients": (string)[] }; Returns: undefined
                            },

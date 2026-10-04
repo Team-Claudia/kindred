@@ -10,6 +10,8 @@
 --     clinic is geocoded once, not once per occurrence. If the item a job is
 --     for moves elsewhere first, the job passes to another item still at the
 --     old place (or is dropped if there's none).
+-- Appointments that already have a location are queued once below
+-- (queue_missing_geocodes).
 -- The outbox-worker reads the item's location text, asks Geoapify where it is
 -- (sending only that text), and calls store_geocode() with the result, which
 -- fills in every appointment in the circle still waiting at that text. If
@@ -32,6 +34,27 @@ create index items_circle_location_idx on public.items (circle_id, location)
 create index outbox_geocode_pending_idx on public.outbox (circle_id, (payload ->> 'item_id'))
   where kind = 'geocode' and status = 'pending';
 
+-- Queues a geocode job for item_id, unless one is already waiting for an
+-- appointment in the circle at the same location text.
+create function public.queue_geocode(circle_id uuid, item_id uuid, location text)
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if not exists (
+    select 1
+    from public.outbox o
+    join public.items i on i.id = (o.payload ->> 'item_id')::uuid
+    where o.kind = 'geocode'
+      and o.status = 'pending'
+      and o.circle_id = queue_geocode.circle_id
+      and i.location = queue_geocode.location
+  ) then
+    insert into public.outbox (circle_id, kind, payload)
+    values (queue_geocode.circle_id, 'geocode', jsonb_build_object('item_id', queue_geocode.item_id));
+  end if;
+end $$;
+
 -- Before insert or a change of location, so the coordinates written always
 -- match the location text.
 create function public.items_geocode_location()
@@ -46,9 +69,24 @@ begin
       return new;
     end if;
 
-    -- This item's waiting job may stand for others still at the old place
-    -- (see below): hand it to one of them, or drop it if there are none.
-    if old.location is not null then
+    -- This item's job may stand for others still at the old place (see
+    -- below). A waiting one is dropped; if others are left without one (even
+    -- if the worker is running this one now and reads the new location), one
+    -- of them gets a new job.
+    if old.location is not null and exists (
+      select 1 from public.outbox o
+      where o.kind = 'geocode'
+        and o.status in ('pending', 'sending')
+        and o.circle_id = old.circle_id
+        and o.payload ->> 'item_id' = old.id::text
+    ) then
+      update public.outbox o
+      set status = 'done', last_error = 'superseded'
+      where o.kind = 'geocode'
+        and o.status = 'pending'
+        and o.circle_id = old.circle_id
+        and o.payload ->> 'item_id' = old.id::text;
+
       select i.id into v_heir
       from public.items i
       where i.circle_id = old.circle_id
@@ -57,14 +95,9 @@ begin
         and i.location_lat is null
         and i.id <> old.id
       limit 1;
-      update public.outbox o
-      set payload = case when v_heir is null then o.payload else jsonb_build_object('item_id', v_heir) end,
-          status = case when v_heir is null then 'done' else o.status end,
-          last_error = case when v_heir is null then 'superseded' else o.last_error end
-      where o.kind = 'geocode'
-        and o.status = 'pending'
-        and o.circle_id = old.circle_id
-        and o.payload ->> 'item_id' = old.id::text;
+      if v_heir is not null then
+        perform public.queue_geocode(old.circle_id, v_heir, old.location);
+      end if;
     end if;
   end if;
 
@@ -89,18 +122,7 @@ begin
 
   -- One job per place: rows inserted earlier in the same statement (a new
   -- series' occurrences) and their jobs are visible here.
-  if not exists (
-    select 1
-    from public.outbox o
-    join public.items i on i.id = (o.payload ->> 'item_id')::uuid
-    where o.kind = 'geocode'
-      and o.status = 'pending'
-      and o.circle_id = new.circle_id
-      and i.location = new.location
-  ) then
-    insert into public.outbox (circle_id, kind, payload)
-    values (new.circle_id, 'geocode', jsonb_build_object('item_id', new.id));
-  end if;
+  perform public.queue_geocode(new.circle_id, new.id, new.location);
 
   return new;
 end $$;
@@ -109,6 +131,35 @@ create trigger items_geocode_location
   before insert or update of location on public.items
   for each row
   execute function public.items_geocode_location();
+
+-- Appointments saved before this migration, or while GEOAPIFY_API_KEY wasn't
+-- set (the worker drops jobs then): queues one job per place that has none
+-- yet, skipping cancelled appointments. Run below, and again by hand after
+-- the key is first set (plan §8.3). Returns how many jobs it queued.
+create function public.queue_missing_geocodes()
+returns integer
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_before integer;
+  v_after integer;
+  r record;
+begin
+  select count(*) into v_before from public.outbox o where o.kind = 'geocode' and o.status = 'pending';
+  for r in
+    select distinct on (i.circle_id, i.location) i.circle_id, i.id, i.location
+    from public.items i
+    where i.kind = 'appointment'
+      and i.location is not null
+      and i.location_lat is null
+      and i.state <> 'cancelled'
+    order by i.circle_id, i.location, i.starts_at desc
+  loop
+    perform public.queue_geocode(r.circle_id, r.id, r.location);
+  end loop;
+  select count(*) into v_after from public.outbox o where o.kind = 'geocode' and o.status = 'pending';
+  return v_after - v_before;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Storing the result (the worker, as the service role)
@@ -217,14 +268,20 @@ begin
   return null;
 end $$;
 
+-- Appointments that already have a location.
+select public.queue_missing_geocodes();
+
 -- ---------------------------------------------------------------------------
--- Who can call what: only the worker stores coordinates; the trigger function
--- is internal. claim_outbox_jobs, outbox_catch_up and outbox_after_insert keep
--- their grants (create or replace).
+-- Who can call what: only the worker stores coordinates; the rest is internal
+-- (queue_missing_geocodes is run by hand in the SQL editor). claim_outbox_jobs,
+-- outbox_catch_up and outbox_after_insert keep their grants (create or
+-- replace).
 -- ---------------------------------------------------------------------------
 
 revoke execute on function
   public.items_geocode_location(),
+  public.queue_geocode(uuid, uuid, text),
+  public.queue_missing_geocodes(),
   public.store_geocode(uuid, text, double precision, double precision)
 from public, anon, authenticated, service_role;
 

@@ -279,8 +279,9 @@ where o.status = 'pending' and o.kind = 'overdue'
 update public.outbox o set run_at = now() - interval '1 minute'
 where o.status = 'pending' and o.kind = 'reminder' and o.payload ->> 'item_id' = pg_temp.id('r3')::text;
 
--- Earlier RPCs queued pushes; set them aside so only scheduled jobs are due.
-update public.outbox set status = 'done' where kind = 'push' and status in ('pending', 'sending');
+-- Earlier RPCs queued pushes, and the seed data's appointments geocode jobs;
+-- set them aside so only scheduled jobs are due.
+update public.outbox set status = 'done' where kind in ('push', 'geocode') and status in ('pending', 'sending');
 
 create temp table claimed as
 select * from public.claim_outbox_jobs(10);
