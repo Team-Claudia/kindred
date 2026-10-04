@@ -7,7 +7,7 @@ import { myCircleKey, signOut, useAuth, type AuthState } from '@/lib/auth'
 import { AuthGuard } from './auth-guard'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
-vi.mock('@/lib/live', () => ({ useLiveUpdates: vi.fn() }))
+vi.mock('@/lib/live', () => ({ useLiveUpdates: vi.fn(), useLiveNotifications: vi.fn() }))
 vi.mock('@/lib/push-resync', () => ({ useKeepPushSubscription: vi.fn(), forgetPushResync: vi.fn() }))
 vi.mock('@/platform', () => ({ platform: { disablePush: vi.fn(() => Promise.resolve()) } }))
 vi.mock('@/lib/api', async (importOriginal) => ({

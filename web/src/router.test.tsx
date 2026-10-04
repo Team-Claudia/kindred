@@ -13,7 +13,7 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   invitePreview: vi.fn(),
 }))
 // No Realtime in tests (task 2.3).
-vi.mock('@/lib/live', () => ({ useLiveUpdates: vi.fn() }))
+vi.mock('@/lib/live', () => ({ useLiveUpdates: vi.fn(), useLiveNotifications: vi.fn() }))
 vi.mock('@/lib/auth', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth')>()),
   useAuth: vi.fn(),
@@ -61,7 +61,7 @@ test.each([
   ['/updates', 'Updates'],
   ['/summary', 'Summary'],
   ['/circle', 'Care Circle'],
-  ['/notifications', 'Notifications'],
+  ['/notifications', 'What you missed'],
 ])('%s renders its placeholder', (path, title) => {
   renderAt(path)
   expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()

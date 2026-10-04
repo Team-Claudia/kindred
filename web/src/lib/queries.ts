@@ -22,7 +22,12 @@ export const queryKeys = {
   // A series' rule never changes, so it's read once (task 4.5c).
   series: (seriesId: string) => ['series', seriesId] as const,
   members: ['members'] as const,
+  // The member's own notifications (task 4.5f), keyed by user so another
+  // account on the same phone never sees them. The bell's count sits under
+  // the list, so refreshing ['notifications'] refreshes both.
   notifications: ['notifications'] as const,
+  notificationList: (userId: string) => ['notifications', userId] as const,
+  unreadNotifications: (userId: string) => ['notifications', userId, 'unread'] as const,
   coverageRemaining: ['coverage-remaining'] as const,
   weeklySummary: (weekStart: string) => ['weekly-summary', weekStart] as const,
   // Home (task 2.3). Under 'items' and 'updates', so the live channel refreshes them.
@@ -186,11 +191,78 @@ export function useMembers() {
   })
 }
 
-export function useNotifications() {
+/** How many notifications /notifications shows, newest first. */
+export const notificationLimit = 100
+
+/**
+ * The member's notifications, newest first (task 4.5f). outbox-worker writes
+ * one for every request, change, update, reminder and overdue alert, whether
+ * or not it was pushed.
+ */
+export function useNotifications(userId: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.notifications,
+    queryKey: queryKeys.notificationList(userId ?? ''),
     queryFn: () =>
-      rows(supabase.from('notifications').select('*').order('created_at', { ascending: false })),
+      rows(
+        supabase
+          .from('notifications')
+          .select('id, kind, item_id, line, created_at, read_at')
+          .eq('user_id', userId!)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .limit(notificationLimit),
+      ),
+    enabled: userId !== undefined,
+  })
+}
+
+export type Notification = NonNullable<ReturnType<typeof useNotifications>['data']>[number]
+
+/** How many of the member's notifications are unread, for the bell on Home. */
+export function useUnreadNotificationCount(userId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.unreadNotifications(userId ?? ''),
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId!)
+        .is('read_at', null)
+      if (error) throw error
+      return count ?? 0
+    },
+    enabled: userId !== undefined,
+  })
+}
+
+/**
+ * Marks one notification read, or all of them without an ID. The list and
+ * the bell clear straight away; the other phones hear it over Realtime.
+ */
+export function useMarkNotificationsRead(userId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (notificationId?: number) => api.markNotificationsRead(notificationId),
+    onMutate: async (notificationId) => {
+      if (!userId) return
+      const listKey = queryKeys.notificationList(userId)
+      await queryClient.cancelQueries({ queryKey: listKey })
+      const now = new Date().toISOString()
+      let cleared = 0
+      queryClient.setQueryData<Notification[]>(listKey, (list) =>
+        list?.map((notification) => {
+          if (notification.read_at || (notificationId !== undefined && notification.id !== notificationId)) {
+            return notification
+          }
+          cleared += 1
+          return { ...notification, read_at: now }
+        }),
+      )
+      queryClient.setQueryData<number>(queryKeys.unreadNotifications(userId), (count) =>
+        count === undefined ? count : notificationId === undefined ? 0 : Math.max(0, count - cleared),
+      )
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
   })
 }
 

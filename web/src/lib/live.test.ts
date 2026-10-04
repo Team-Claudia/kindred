@@ -2,7 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { platform } from '@/platform'
-import { keysForTable, listenToCircle, liveTables, useLiveUpdates, type LiveTable } from './live'
+import {
+  keysForTable,
+  listenToCircle,
+  listenToNotifications,
+  liveTables,
+  useLiveNotifications,
+  useLiveUpdates,
+} from './live'
 import { supabase } from './supabase'
 
 type ChangeHandler = () => void
@@ -10,7 +17,7 @@ type StatusHandler = (status: string) => void
 
 interface FakeChannel {
   topic: string
-  handlers: Map<LiveTable, ChangeHandler>
+  handlers: Map<string, ChangeHandler>
   filters: string[]
   status?: StatusHandler
   on: ReturnType<typeof vi.fn>
@@ -26,7 +33,7 @@ vi.mock('./supabase', () => ({
         topic,
         handlers: new Map(),
         filters: [],
-        on: vi.fn((_type: string, options: { table: LiveTable; filter: string }, handler: ChangeHandler) => {
+        on: vi.fn((_type: string, options: { table: string; filter: string }, handler: ChangeHandler) => {
           channel.handlers.set(options.table, handler)
           channel.filters.push(options.filter)
           return channel
@@ -173,5 +180,79 @@ describe('useLiveUpdates', () => {
     const { hook } = setup(null)
     expect(supabase.channel).not.toHaveBeenCalled()
     hook.unmount()
+  })
+})
+
+describe('listenToNotifications', () => {
+  test("opens the member's own channel, beside the circle's, for their notifications rows only", () => {
+    const stopCircle = listenToCircle('circle-1', listener())
+    const live = listener()
+    const stop = listenToNotifications('user-1', live)
+    expect(channels.map((channel) => channel.topic)).toEqual(['circle:circle-1', 'notifications:user-1'])
+    const channel = channels[1]
+    expect([...channel.handlers.keys()]).toEqual(['notifications'])
+    expect(channel.filters).toEqual(['user_id=eq.user-1'])
+    channel.handlers.get('notifications')!()
+    expect(live.onChange).toHaveBeenCalled()
+    stop()
+    stopCircle()
+    vi.runAllTimers()
+    expect(supabase.removeChannel).toHaveBeenCalledTimes(2)
+  })
+
+  test('switches channel when someone else signs in', () => {
+    const stopOld = listenToNotifications('user-1', listener())
+    const stopNew = listenToNotifications('user-2', listener())
+    expect(supabase.removeChannel).toHaveBeenCalledWith(channels[0])
+    expect(channels[1].topic).toBe('notifications:user-2')
+    stopOld()
+    stopNew()
+  })
+})
+
+describe('useLiveNotifications', () => {
+  function setup(userId: string | undefined) {
+    const queryClient = new QueryClient()
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue()
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children)
+    const hook = renderHook(({ id }) => useLiveNotifications(id), { wrapper, initialProps: { id: userId } })
+    return { invalidate, hook }
+  }
+
+  test('refreshes the list and the bell once when rows change, as Mark all read on another phone does', () => {
+    const { invalidate, hook } = setup('user-1')
+    const changed = channels[0].handlers.get('notifications')!
+    changed()
+    changed()
+    changed()
+    expect(invalidate).not.toHaveBeenCalled()
+    vi.runAllTimers()
+    expect(invalidate).toHaveBeenCalledTimes(1)
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['notifications'] })
+    hook.unmount()
+  })
+
+  test('refreshes on reconnect and when the app comes back on screen', () => {
+    let visible: (() => void) | undefined
+    vi.spyOn(platform, 'onAppVisible').mockImplementation((callback) => {
+      visible = callback
+      return () => {}
+    })
+    const { invalidate, hook } = setup('user-1')
+    channels[0].status!('SUBSCRIBED')
+    channels[0].status!('SUBSCRIBED')
+    expect(invalidate).toHaveBeenCalledTimes(1)
+    visible!()
+    expect(invalidate).toHaveBeenCalledTimes(2)
+    expect(invalidate).toHaveBeenLastCalledWith({ queryKey: ['notifications'] })
+    hook.unmount()
+  })
+
+  test('closes the channel on sign-out', () => {
+    const { hook } = setup('user-1')
+    hook.rerender({ id: undefined })
+    vi.runAllTimers()
+    expect(supabase.removeChannel).toHaveBeenCalledWith(channels[0])
   })
 })

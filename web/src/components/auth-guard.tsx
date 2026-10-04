@@ -5,7 +5,7 @@ import { Navigate, Outlet, useLocation } from 'react-router'
 import { Button } from '@/components/ui/button'
 import * as api from '@/lib/api'
 import { isAnonymous, myCircleKey, signInPath, useAuth, useMyCircleId } from '@/lib/auth'
-import { useLiveUpdates } from '@/lib/live'
+import { useLiveNotifications, useLiveUpdates } from '@/lib/live'
 import { useKeepPushSubscription } from '@/lib/push-resync'
 import { useSignOut } from '@/lib/use-sign-out'
 
@@ -37,6 +37,8 @@ export function AuthGuard({ requireCircle = false }: { requireCircle?: boolean }
   // One live channel for the whole signed-in app (Home, This week, item
   // detail…), closed on sign-out or leaving the circle (task 2.3).
   useLiveUpdates(requireCircle && userId ? circle.data : undefined)
+  // And the member's own notifications, for the bell on Home (task 4.5f).
+  useLiveNotifications(requireCircle ? userId : undefined)
   // Keep this phone subscribed to push for whoever is signed in.
   useKeepPushSubscription(userId)
 
