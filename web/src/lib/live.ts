@@ -9,9 +9,9 @@ import { supabase } from './supabase'
 // signed-in app keeps one Realtime channel for its circle, `circle:<id>`, and
 // refreshes the TanStack Query keys a change affects. A second channel,
 // `notifications:<user id>`, carries the member's own notifications for the
-// bell (task 4.5f). Realtime checks each
-// change against the table's select policy, so members only hear about their
-// own circle. While the phone has Kindred in the background it hears nothing,
+// bell (task 4.5f). Realtime checks each change against the table's select
+// policy, so members only hear about their own circle and their own
+// notifications. While the phone has Kindred in the background it hears nothing,
 // so coming back on screen refreshes everything.
 
 export const liveTables = ['items', 'activity_events', 'coverage_requests', 'updates'] as const

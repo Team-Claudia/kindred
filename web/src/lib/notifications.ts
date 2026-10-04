@@ -6,10 +6,11 @@
 
 /**
  * Where tapping a notification goes: the Updates thread for an update (even
- * one linked to an item, as its push does), else the item, or Updates when
- * there's no item.
+ * one linked to an item, as its push does), Summary for the weekly summary,
+ * else the item, or Updates when there's no item.
  */
 export function notificationPath(notification: { kind: string; item_id: string | null }): string {
+  if (notification.kind === 'weekly_summary') return '/summary'
   if (notification.kind === 'update_posted' || !notification.item_id) return '/updates'
   return `/i/${notification.item_id}`
 }

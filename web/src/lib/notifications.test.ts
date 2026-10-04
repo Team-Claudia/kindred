@@ -12,8 +12,12 @@ describe('notificationPath', () => {
     expect(notificationPath({ kind: 'update_posted', item_id: null })).toBe('/updates')
   })
 
+  test('opens Summary for the weekly summary', () => {
+    expect(notificationPath({ kind: 'weekly_summary', item_id: null })).toBe('/summary')
+  })
+
   test('opens Updates when there is no item', () => {
-    expect(notificationPath({ kind: 'weekly_summary', item_id: null })).toBe('/updates')
+    expect(notificationPath({ kind: 'something_new', item_id: null })).toBe('/updates')
   })
 })
 
