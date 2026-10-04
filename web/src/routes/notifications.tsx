@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, CircleCheck, Clock, MessageSquare, type LucideIcon } from 'lucide-react'
+import { Bell, CalendarDays, CircleCheck, Clock, MessageSquare } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { ErrorState, LoadingState } from '@/components/states'
@@ -88,12 +88,17 @@ export default function Notifications() {
   )
 }
 
-function iconFor(kind: string): LucideIcon {
-  if (kind === 'reminder' || kind === 'overdue') return Clock
-  if (kind === 'update_posted') return MessageSquare
-  if (kind.endsWith('_requested')) return CircleCheck
-  if (kind === 'weekly_summary') return Bell
-  return CalendarDays
+// A picture of what it's about: a reminder or overdue alert, an update, an
+// assignment or coverage request, the weekly summary, or a change to an item.
+function KindIcon({ kind }: { kind: string }) {
+  const className = 'size-5'
+  if (kind === 'reminder' || kind === 'overdue') return <Clock className={className} />
+  if (kind === 'update_posted') return <MessageSquare className={className} />
+  if (kind.startsWith('assignment_') || kind.startsWith('coverage_')) {
+    return <CircleCheck className={className} />
+  }
+  if (kind === 'weekly_summary') return <Bell className={className} />
+  return <CalendarDays className={className} />
 }
 
 function NotificationRow({
@@ -109,7 +114,6 @@ function NotificationRow({
 }) {
   const { t, i18n } = useTranslation()
   const unread = !notification.read_at
-  const Icon = iconFor(notification.kind)
 
   return (
     <Link
@@ -124,7 +128,7 @@ function NotificationRow({
           unread && 'border-2 border-foreground',
         )}
       >
-        <Icon className="size-5" />
+        <KindIcon kind={notification.kind} />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className={cn('break-words', unread ? 'font-semibold' : 'text-muted-foreground')}>
