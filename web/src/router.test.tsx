@@ -59,7 +59,6 @@ afterEach(() => {
 
 test.each([
   ['/updates', 'Updates'],
-  ['/summary', 'Summary'],
   ['/circle', 'Care Circle'],
   ['/notifications', 'What you missed'],
 ])('%s renders its placeholder', (path, title) => {

@@ -881,6 +881,9 @@ isOneToOne: false
 "queue_push":
 { Args: { "actor": string,"event": string,"item": Database["public"]['Tables']["items"]['Row'],"recipients": (string)[] }; Returns: undefined
                            },
+"queue_weekly_summaries":
+{ Args: { "as_of"?: string }; Returns: number
+                           },
 "release_items_for_departing_member":
 { Args: { "circle_id": string,"member_id": string }; Returns: number
                            },

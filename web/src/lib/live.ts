@@ -31,7 +31,8 @@ export const keysForTable: Record<LiveTable, readonly QueryKey[]> = {
   items: [queryKeys.items, weeklySummaries, queryKeys.coverageRemaining, queryKeys.updates],
   activity_events: [queryKeys.items, weeklySummaries],
   coverage_requests: [queryKeys.items, queryKeys.coverageRemaining],
-  updates: [queryKeys.updates],
+  // The weekly summary counts updates (task 4.5g).
+  updates: [queryKeys.updates, weeklySummaries],
 }
 
 export interface LiveListener {

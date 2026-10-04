@@ -156,3 +156,27 @@ export function itemShare(
       return null
   }
 }
+
+/**
+ * The weekly summary (task 4.5g, US 10.3), for Share with family: a heading,
+ * then "What happened" and "What's still open", one sentence per line, and
+ * the link. The sentences come from lib/weekly-summary.ts, which names items
+ * and people only; update text never reaches them. Empty sections are left
+ * out, and a summary with nothing in it says so.
+ */
+export function weeklySummaryShare(
+  summary: { heading: string; happened: readonly string[]; open: readonly string[] },
+  url: string,
+  t: TFunction,
+): ShareContent {
+  const section = (title: string, sentences: readonly string[]) =>
+    sentences.length > 0 ? [title, ...sentences.map((sentence) => `• ${sentence}`)].join('\n') : null
+  const happened = section(t('summary.happened'), summary.happened)
+  const open = section(t('summary.stillOpen'), summary.open)
+  return {
+    text: [summary.heading, happened ?? (open ? null : t('summary.empty')), open]
+      .filter(Boolean)
+      .join('\n\n'),
+    url,
+  }
+}

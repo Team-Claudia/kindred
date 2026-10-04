@@ -1,7 +1,8 @@
--- Task 0.3: every table exists with RLS on, every RPC is a stub, and only the
--- right roles can call each one.
+-- Task 0.3: every table exists with RLS on, every plan §4.2 RPC exists, and
+-- only the right roles can call each one. (The "stubs raise not_implemented"
+-- check went with the last stub tested here, weekly_summary, in task 4.5g.)
 begin;
-select plan(9);
+select plan(8);
 
 select tables_are(
   'public',
@@ -49,12 +50,6 @@ select is_empty(
      join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public' $$,
   'every plan §4.2 RPC exists'
-);
-
-select throws_ok(
-  $$ select * from public.weekly_summary('2026-10-05') $$,
-  'P0001', 'not_implemented',
-  'RPC stubs raise not_implemented'
 );
 
 select is_empty(
