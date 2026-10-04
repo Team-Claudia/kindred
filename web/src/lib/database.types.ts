@@ -511,6 +511,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"account_export":
+{ Args: { "user_id": string }; Returns: Json
+                           },
 "after_member_left":
 { Args: { "circle_id": string }; Returns: undefined
                            },
@@ -746,6 +749,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"delete_account":
+{ Args: { "user_id": string }; Returns: Json
+                           },
 "delete_push_subscription":
 { Args: { "endpoint": string }; Returns: undefined
                            },
@@ -874,6 +880,9 @@ isOneToOne: false
                            },
 "queue_push":
 { Args: { "actor": string,"event": string,"item": Database["public"]['Tables']["items"]['Row'],"recipients": (string)[] }; Returns: undefined
+                           },
+"release_items_for_departing_member":
+{ Args: { "circle_id": string,"member_id": string }; Returns: number
                            },
 "reminder_run_at":
 { Args: { "kind": string,"starts_at": string,"time_zone": string }; Returns: string

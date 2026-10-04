@@ -7,18 +7,19 @@ import { forgetPushResync } from './push-resync'
 
 /**
  * Signs out and goes to the sign-in screen. Throws if signing out fails, so
- * the caller can say so.
+ * the caller can say so. After deleting the account, pass `{ local: true }`:
+ * there's no session left on the server to end.
  */
 export function useSignOut() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  return useCallback(async () => {
+  return useCallback(async (options?: { local?: boolean }) => {
     // So the next person on this phone doesn't get this person's
     // notifications. Best effort: signing out matters more.
     await platform.disablePush().catch(() => undefined)
     forgetPushResync()
-    await signOut()
+    await signOut(options?.local ? 'local' : 'global')
     // Clear first, so no guard reads the old circle from the cache.
     queryClient.clear()
     navigate('/sign-in', { replace: true })

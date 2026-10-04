@@ -16,6 +16,20 @@ export { notificationPermission }
 
 export type ShareResult = 'shared' | 'cancelled' | 'unsupported'
 
+/**
+ * 'saved' once the file was handed to the share sheet or downloaded,
+ * 'cancelled' if the member closed the share sheet, and 'needs_tap' if the
+ * share sheet wouldn't open without a fresh tap (iPhone allows it only right
+ * after one); then ask the member to tap again and call saveFile from that tap.
+ */
+export type SaveFileResult = 'saved' | 'cancelled' | 'needs_tap'
+
+export interface SaveFileContent {
+  name: string
+  type: string
+  text: string
+}
+
 export interface Platform {
   /**
    * Opens the share sheet. Resolves 'cancelled' if the member closes it and
@@ -23,6 +37,11 @@ export interface Platform {
    * Copy link and WhatsApp instead (components/share-button.tsx).
    */
   share(content: ShareContent): Promise<ShareResult>
+  /**
+   * Saves a file the app made, such as Download my data: the share sheet on
+   * an iPhone (Save to Files, AirDrop, Mail…), else a download.
+   */
+  saveFile(content: SaveFileContent): Promise<SaveFileResult>
   /** Whether the share sheet is available; if not, offer Copy link instead. */
   canShare(): boolean
   /** Copies text to the clipboard. Resolves false if the browser refused. */
@@ -88,6 +107,30 @@ export async function share(content: ShareContent): Promise<ShareResult> {
     // e.g. NotAllowedError when the sheet is blocked: fall back to Copy link.
     return 'unsupported'
   }
+}
+
+export async function saveFile({ name, type, text }: SaveFileContent): Promise<SaveFileResult> {
+  const file = new File([text], name, { type })
+  if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] })
+      return 'saved'
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled'
+      if (error instanceof DOMException && error.name === 'NotAllowedError') return 'needs_tap'
+      // Anything else: download it instead.
+    }
+  }
+  const url = URL.createObjectURL(file)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = name
+  document.body.append(link)
+  link.click()
+  link.remove()
+  // Give the browser time to start the download before letting go of it.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  return 'saved'
 }
 
 export async function copyText(text: string): Promise<boolean> {
@@ -179,6 +222,7 @@ export function onPageRestored(callback: () => void): () => void {
 
 export const platform: Platform = {
   share,
+  saveFile,
   canShare,
   copyText,
   whatsAppUrl,

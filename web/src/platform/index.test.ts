@@ -1,4 +1,14 @@
-import { appUrl, copyText, deviceSetting, isIOS, onAppVisible, onPageRestored, share, whatsAppUrl } from './index'
+import {
+  appUrl,
+  copyText,
+  deviceSetting,
+  isIOS,
+  onAppVisible,
+  onPageRestored,
+  saveFile,
+  share,
+  whatsAppUrl,
+} from './index'
 
 const content = { text: 'Physio ride on Friday', url: 'https://kindred.example/i/123' }
 
@@ -32,6 +42,54 @@ describe('share', () => {
   test('falls back when the sheet fails to open', async () => {
     stubNavigator({ share: vi.fn().mockRejectedValue(new DOMException('', 'NotAllowedError')) })
     expect(await share(content)).toBe('unsupported')
+  })
+})
+
+describe('saveFile', () => {
+  const file = { name: 'kindred-data.json', type: 'application/json', text: '{"a":1}' }
+
+  function stubDownload() {
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    // jsdom has no object URLs.
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:file'), revokeObjectURL: vi.fn() })
+    return click
+  }
+
+  test('hands the file to the share sheet when it can take files', async () => {
+    const shareSpy = vi.fn().mockResolvedValue(undefined)
+    stubNavigator({ canShare: () => true, share: shareSpy })
+    expect(await saveFile(file)).toBe('saved')
+    const shared = shareSpy.mock.calls[0][0] as ShareData
+    expect(shared.files?.[0].name).toBe('kindred-data.json')
+    expect(await shared.files?.[0].text()).toBe('{"a":1}')
+  })
+
+  test('is cancelled when the member closes the sheet', async () => {
+    stubNavigator({ canShare: () => true, share: vi.fn().mockRejectedValue(new DOMException('', 'AbortError')) })
+    expect(await saveFile(file)).toBe('cancelled')
+  })
+
+  test('asks for another tap when the sheet needs one', async () => {
+    stubNavigator({
+      canShare: () => true,
+      share: vi.fn().mockRejectedValue(new DOMException('', 'NotAllowedError')),
+    })
+    expect(await saveFile(file)).toBe('needs_tap')
+  })
+
+  test('downloads the file when the share sheet can\'t take files', async () => {
+    stubNavigator({ canShare: () => false })
+    const click = stubDownload()
+    expect(await saveFile(file)).toBe('saved')
+    expect(click).toHaveBeenCalledOnce()
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('kindred-data.json')
+  })
+
+  test('downloads the file without the Web Share API', async () => {
+    stubNavigator({ canShare: undefined, share: undefined })
+    const click = stubDownload()
+    expect(await saveFile(file)).toBe('saved')
+    expect(click).toHaveBeenCalledOnce()
   })
 })
 

@@ -22,6 +22,11 @@ Deno.test('every event has its own line, using the actor first name', () => {
   assertEquals(body('update_posted'), 'Maya posted an update')
 })
 
+Deno.test('a released item names nobody: the member who left has no account any more', () => {
+  assertEquals(body('item_released', null), 'A member left Kindred. Something they were on needs someone')
+  assertEquals(eventCategory('item_released'), 'changes')
+})
+
 Deno.test('an unknown event gets the generic line', () => {
   assertEquals(body('something_new'), 'Something changed in Kindred')
   assertEquals(body('toString'), 'Something changed in Kindred')

@@ -40,6 +40,8 @@ const LINES: Record<string, (actor: string) => string> = {
   coverage_requested: (actor) => `${actor} needs someone to cover for them`,
   coverage_taken: (actor) => `${actor} is covering for you`,
   update_posted: (actor) => `${actor} posted an update`,
+  // The actor has deleted their account by the time this is sent, so no name.
+  item_released: () => 'A member left Kindred. Something they were on needs someone',
 }
 
 export const FALLBACK_LINE = 'Something changed in Kindred'
@@ -53,6 +55,7 @@ const CATEGORIES: Record<string, PrefCategory> = {
   reconfirm_requested: 'changes',
   item_changed: 'changes',
   item_cancelled: 'changes',
+  item_released: 'changes',
   update_posted: 'updates',
 }
 

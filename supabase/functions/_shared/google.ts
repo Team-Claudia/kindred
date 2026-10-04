@@ -14,6 +14,7 @@ export const FREEBUSY_SCOPE = 'https://www.googleapis.com/auth/calendar.freebusy
 export const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 export const GOOGLE_FREEBUSY_URL = 'https://www.googleapis.com/calendar/v3/freeBusy'
+export const GOOGLE_REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
 
 export type GoogleConfig = { clientId: string; clientSecret: string; redirectUri: string }
 

@@ -91,8 +91,12 @@ export async function signInAsGuest(): Promise<void> {
   if (error) throw error
 }
 
-export async function signOut(): Promise<void> {
-  const { error } = await supabase.auth.signOut()
+/**
+ * Signs out. 'local' only forgets the session on this phone, without asking
+ * the server, for when the account has just been deleted.
+ */
+export async function signOut(scope: 'global' | 'local' = 'global'): Promise<void> {
+  const { error } = await supabase.auth.signOut({ scope })
   if (error) throw error
 }
 

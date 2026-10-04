@@ -458,6 +458,12 @@ verify_jwt = false
 enabled = true
 verify_jwt = false
 
+# Download my data and Delete my account (task 4.5e). Verifies the caller's
+# JWT itself, like availability, and refuses demo guests.
+[functions.account]
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
