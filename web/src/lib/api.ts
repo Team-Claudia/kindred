@@ -216,3 +216,26 @@ export async function deleteAccount(): Promise<void> {
   })
   if (error || data?.status !== 'deleted') throw new RpcError('unknown', {}, error)
 }
+
+// Map preview (task 4.5h, ADR-017), through the static-map Edge Function. The
+// coordinates go in the URL so a moved appointment gets a new image while the
+// same place stays cached; the function reads the stored ones itself.
+
+/** The map image of an appointment's location, or null if there's no map. */
+export async function staticMap(
+  itemId: string,
+  place: { lat: number; lng: number },
+): Promise<Blob | null> {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (!token) return null
+  const params = new URLSearchParams({ item: itemId, at: `${place.lat},${place.lng}` })
+  // Not functions.invoke: it reads image replies as text.
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/static-map?${params}`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
+  })
+  // 404: not found on the map, no Geoapify key, or the day's quota ran out.
+  if (res.status === 404) return null
+  if (!res.ok) throw new RpcError('unknown')
+  return res.blob()
+}

@@ -464,6 +464,13 @@ verify_jwt = false
 enabled = true
 verify_jwt = false
 
+# Map preview (task 4.5h). The app GETs ?item=<id> with the member's JWT, which
+# the function verifies itself, like availability. Secret: GEOAPIFY_API_KEY
+# (optional: without it locations show as text).
+[functions.static-map]
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

@@ -86,6 +86,24 @@ export interface Platform {
    * a busy button, can be reset. Returns a function that stops it.
    */
   onPageRestored(callback: () => void): () => void
+  /**
+   * Opens directions to a place in the phone's maps app: Apple Maps on an
+   * iPhone or iPad, Google Maps elsewhere. Only the coordinates are sent.
+   */
+  openMaps(place: MapPlace): void
+  /** A URL an <img> can show for an image the app fetched (e.g. the map preview). */
+  imageUrl(blob: Blob): ImageUrl
+}
+
+export interface MapPlace {
+  lat: number
+  lng: number
+}
+
+/** A blob shown as an image: its URL, and release() once it's off screen. */
+export interface ImageUrl {
+  url: string
+  release(): void
 }
 
 export interface ShareContent {
@@ -220,6 +238,25 @@ export function onPageRestored(callback: () => void): () => void {
   return () => window.removeEventListener('pageshow', listener)
 }
 
+/** Directions to a place: maps.apple.com on iOS (opens Apple Maps), else Google Maps. */
+export function mapsUrl({ lat, lng }: MapPlace, ios: boolean): string {
+  const at = `${lat},${lng}`
+  return ios
+    ? `https://maps.apple.com/?daddr=${encodeURIComponent(at)}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(at)}`
+}
+
+export function openMaps(place: MapPlace): void {
+  // A new tab, so Kindred stays where it was; on an iPhone the link opens
+  // the Maps app.
+  window.open(mapsUrl(place, isIOS()), '_blank', 'noopener,noreferrer')
+}
+
+export function imageUrl(blob: Blob): ImageUrl {
+  const url = URL.createObjectURL(blob)
+  return { url, release: () => URL.revokeObjectURL(url) }
+}
+
 export const platform: Platform = {
   share,
   saveFile,
@@ -238,4 +275,6 @@ export const platform: Platform = {
   deviceSetting,
   onAppVisible,
   onPageRestored,
+  openMaps,
+  imageUrl,
 }

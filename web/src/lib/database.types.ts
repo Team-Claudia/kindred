@@ -878,6 +878,12 @@ isOneToOne: false
 "post_update":
 { Args: { "body": string,"item_id"?: string }; Returns: string
                            },
+"queue_geocode":
+{ Args: { "circle_id": string,"item_id": string,"location": string }; Returns: undefined
+                           },
+"queue_missing_geocodes":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "queue_push":
 { Args: { "actor": string,"event": string,"item": Database["public"]['Tables']["items"]['Row'],"recipients": (string)[] }; Returns: undefined
                            },
@@ -955,6 +961,9 @@ isOneToOne: false
 { Args: { "category": string,"enabled": boolean }; Returns: {
               "changes": boolean,"comments": boolean,"everything_else": boolean,"reminders": boolean,"requests": boolean,"updates": boolean,"weekly_summary": boolean
             }[]
+                           },
+"store_geocode":
+{ Args: { "item_id": string,"lat": number,"lng": number,"location": string }; Returns: number
                            },
 "update_item":
 { Args: { "item_id": string,"patch": Json,"version": number }; Returns: {

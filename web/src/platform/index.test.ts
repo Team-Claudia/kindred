@@ -3,8 +3,10 @@ import {
   copyText,
   deviceSetting,
   isIOS,
+  mapsUrl,
   onAppVisible,
   onPageRestored,
+  openMaps,
   saveFile,
   share,
   whatsAppUrl,
@@ -192,5 +194,27 @@ describe('onPageRestored', () => {
     stop()
     pageshow(true)
     expect(callback).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('maps', () => {
+  const place = { lat: 43.6588, lng: -79.3887 }
+
+  test('directions go to Apple Maps on iOS and Google Maps elsewhere, with the coordinates only', () => {
+    expect(mapsUrl(place, true)).toBe('https://maps.apple.com/?daddr=43.6588%2C-79.3887')
+    expect(mapsUrl(place, false)).toBe(
+      'https://www.google.com/maps/dir/?api=1&destination=43.6588%2C-79.3887',
+    )
+  })
+
+  test('openMaps opens Apple Maps on an iPhone', () => {
+    stubNavigator({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)', maxTouchPoints: 5 })
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    openMaps(place)
+    expect(open).toHaveBeenCalledWith(
+      'https://maps.apple.com/?daddr=43.6588%2C-79.3887',
+      '_blank',
+      'noopener,noreferrer',
+    )
   })
 })

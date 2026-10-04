@@ -30,6 +30,9 @@ export const queryKeys = {
   unreadNotifications: (userId: string) => ['notifications', userId, 'unread'] as const,
   coverageRemaining: ['coverage-remaining'] as const,
   weeklySummary: (weekStart: string) => ['weekly-summary', weekStart] as const,
+  // The map preview (task 4.5h). Not under 'items': the same coordinates
+  // always give the same image, so it's fetched once.
+  staticMap: (itemId: string, lat: number, lng: number) => ['static-map', itemId, lat, lng] as const,
   // Home (task 2.3). Under 'items' and 'updates', so the live channel refreshes them.
   itemsNeedingAttention: (before: string) => ['items', 'attention', before] as const,
   // Coming up for you (task 4.11), under 'items' like the rest of Home.
@@ -93,6 +96,21 @@ export function useSeriesRepeat(seriesId: string | null) {
     },
     enabled: seriesId !== null,
     staleTime: Infinity,
+  })
+}
+
+/**
+ * The map image of an appointment's location (task 4.5h): null while there are
+ * no coordinates, or when the static-map function has no map to give.
+ */
+export function useStaticMap(itemId: string, lat: number | null, lng: number | null) {
+  return useQuery({
+    queryKey: queryKeys.staticMap(itemId, lat ?? 0, lng ?? 0),
+    queryFn: () => api.staticMap(itemId, { lat: lat ?? 0, lng: lng ?? 0 }),
+    enabled: lat !== null && lng !== null,
+    staleTime: Infinity,
+    // A failure shows the location as text; it's tried again next visit.
+    retry: false,
   })
 }
 
