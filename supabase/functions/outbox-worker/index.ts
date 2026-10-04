@@ -10,7 +10,8 @@
 // item (or, for update_posted, the update) and the recipient's membership, write the in-app notifications row,
 // then push to each of the recipient's devices if their preference allows,
 // and record the result (finish_outbox_job, which handles retries).
-// Reminder and overdue jobs (task 4.5b) are run by scheduled.ts.
+// Reminder and overdue jobs (task 4.5b) are run by scheduled.ts, and the
+// Sunday weekly_summary jobs (task 4.5g) by weekly-summary.ts.
 //
 // Secrets: OUTBOX_WORKER_SECRET (the same value as outbox_worker_secret in
 // Vault), VAPID_PRIVATE_KEY and VAPID_SUBJECT (../_shared/web-push.ts).
@@ -23,13 +24,21 @@ import { configureVapid } from '../_shared/web-push.ts'
 import { deliver } from './deliver.ts'
 // Reminders and overdue alerts (task 4.5b).
 import { runScheduledJob } from './scheduled.ts'
+// The Sunday weekly summary (task 4.5g).
+import { runWeeklySummaryJob } from './weekly-summary.ts'
 
 const BATCH_SIZE = 10
 // Stop claiming new batches after this long, well inside the claim's 2-minute
 // lease and the function's time limit; the cron picks up the rest.
 const TIME_BUDGET_MS = 40_000
 
-type Job = { id: number; kind: string; attempts: number; payload: Record<string, unknown> }
+type Job = {
+  id: number
+  kind: string
+  attempts: number
+  circle_id: string | null
+  payload: Record<string, unknown>
+}
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -159,7 +168,11 @@ Deno.serve(async (req) => {
         let failure: string | null
         try {
           failure =
-            job.kind === 'push' ? await runJob(admin, job) : await runScheduledJob(admin, job)
+            job.kind === 'push'
+              ? await runJob(admin, job)
+              : job.kind === 'weekly_summary'
+                ? await runWeeklySummaryJob(admin, job)
+                : await runScheduledJob(admin, job)
         } catch (error) {
           failure = error instanceof Error ? error.message : JSON.stringify(error)
         }
