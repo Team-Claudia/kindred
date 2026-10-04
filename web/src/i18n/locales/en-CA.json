@@ -669,6 +669,38 @@
     "working": "Working…",
     "error": "Something went wrong changing notifications. Try again."
   },
+  "notificationPrefs": {
+    "heading": "What to notify me about",
+    "state": { "checking": "…", "on": "On", "off": "Off" },
+    "category": {
+      "requests": {
+        "label": "Requests",
+        "includes": "Assignment requests, coverage requests and re-confirmation requests."
+      },
+      "reminders": {
+        "label": "Reminders and overdue",
+        "includes": "Upcoming things you're on, requests nobody has answered yet, and overdue alerts."
+      },
+      "changes": {
+        "label": "Changes",
+        "includes": "Changes, reassignments and cancellations to things you're on or were asked to take."
+      },
+      "updates": {
+        "label": "Updates",
+        "includes": "New posts in Updates."
+      },
+      "weekly_summary": {
+        "label": "Weekly summary",
+        "includes": "When the weekly summary is ready."
+      },
+      "everything_else": {
+        "label": "Everything else",
+        "includes": "Other members completing or creating things."
+      }
+    },
+    "note": "Everything still shows in Kindred; this only changes what's pushed to your phone.",
+    "loadError": "Couldn't load your notification choices."
+  },
   "terms": {
     "title": "Terms of use",
     "intro": "Kindred is a prototype that helps families coordinate care for someone they love. By using it, you agree to these terms. They're written in plain language.",

@@ -5,6 +5,7 @@ import { platform } from '@/platform'
 import { PushSettingsCard } from './push-settings-card'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+vi.mock('@/components/notification-prefs-list', () => ({ NotificationPrefsList: () => null }))
 
 const settings = new Map<string, string>()
 

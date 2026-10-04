@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { NotificationPrefsList } from '@/components/notification-prefs-list'
 import { Button } from '@/components/ui/button'
 import { setPushTurnedOff } from '@/lib/push-resync'
 import { readPushStatus, type PushStatus as ReadStatus } from '@/lib/push-status'
@@ -20,7 +21,7 @@ const badgeStyles: Record<PushStatus, string> = {
 }
 
 // "Notifications on this phone" (task 4.3): on or off for this device only.
-// Which kinds of notification to get (US 11.4) is Tier 2.
+// Which kinds of notification to get (US 11.4, task 4.5d) is the list below it.
 export function PushSettingsCard() {
   const { t } = useTranslation()
   const [status, setStatus] = useState<PushStatus>('checking')
@@ -90,7 +91,7 @@ export function PushSettingsCard() {
           {t('pushSettings.error')}
         </p>
       )}
-      {/* Tier 2: per-category switches (notification_prefs, US 11.4) go here. */}
+      <NotificationPrefsList />
     </section>
   )
 }

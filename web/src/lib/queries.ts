@@ -325,6 +325,27 @@ export function useSetCalendarFeedTasks(userId: string | undefined) {
   })
 }
 
+// Notification preferences (task 4.5d). Keyed by user, like the feed.
+export const notificationPrefsKey = (userId: string | undefined) => ['notification-prefs', userId] as const
+
+export function useNotificationPrefs(userId: string | undefined) {
+  return useQuery({
+    queryKey: notificationPrefsKey(userId),
+    queryFn: api.notificationPrefs,
+    enabled: userId !== undefined,
+    staleTime: Infinity,
+  })
+}
+
+export function useSetNotificationPref(userId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { category: api.PrefCategory; enabled: boolean }) =>
+      api.setNotificationPref(args.category, args.enabled),
+    onSuccess: (prefs) => queryClient.setQueryData(notificationPrefsKey(userId), prefs),
+  })
+}
+
 // Google Calendar connection (task 4.5a). Keyed by user, like the feed.
 export const googleCalendarKey = (userId: string | undefined) => ['google-calendar', userId] as const
 
