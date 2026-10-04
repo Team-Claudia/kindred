@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import '@/i18n'
-import { leaveCircle, setDisplayName } from '@/lib/api'
+import { deleteAccount, exportAccount, leaveCircle, setDisplayName } from '@/lib/api'
 import { signOut } from '@/lib/auth'
 import { useProfile } from '@/lib/circles'
 import { RpcError } from '@/lib/errors'
@@ -14,6 +14,8 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
   leaveCircle: vi.fn(),
   setDisplayName: vi.fn(),
+  exportAccount: vi.fn(),
+  deleteAccount: vi.fn(),
 }))
 vi.mock('@/lib/auth', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth')>()),
@@ -25,7 +27,7 @@ vi.mock('@/lib/circles', async (importOriginal) => ({
   useProfile: vi.fn(),
 }))
 vi.mock('@/platform', () => ({
-  platform: { disablePush: vi.fn(), deviceSetting: { get: vi.fn(), set: vi.fn() } },
+  platform: { disablePush: vi.fn(), saveFile: vi.fn(), deviceSetting: { get: vi.fn(), set: vi.fn() } },
 }))
 
 function renderCard() {
@@ -120,4 +122,92 @@ test('signs out even if push could not be stopped', async () => {
   renderCard()
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
   expect(await screen.findByText('Sign-in screen')).toBeInTheDocument()
+})
+
+// ---------------------------------------------------------------------------
+// Download my data and Delete my account (task 4.5e)
+// ---------------------------------------------------------------------------
+
+test('Download my data saves a JSON file of the export', async () => {
+  vi.mocked(exportAccount).mockResolvedValue({ profile: { display_name: 'Maya Reyes' } })
+  vi.mocked(platform.saveFile).mockResolvedValue('saved')
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Download my data' }))
+  expect(await screen.findByText('Your data is saved.')).toBeInTheDocument()
+  const file = vi.mocked(platform.saveFile).mock.calls[0][0]
+  expect(file.type).toBe('application/json')
+  expect(file.name).toMatch(/^kindred-my-data-\d{4}-\d{2}-\d{2}\.json$/)
+  expect(JSON.parse(file.text)).toEqual({ profile: { display_name: 'Maya Reyes' } })
+})
+
+test('when the share sheet needs another tap, Save my data opens it again', async () => {
+  vi.mocked(exportAccount).mockResolvedValue({ a: 1 })
+  vi.mocked(platform.saveFile).mockResolvedValueOnce('needs_tap').mockResolvedValueOnce('saved')
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Download my data' }))
+  expect(await screen.findByText('Your data is ready.')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Save my data' }))
+  expect(await screen.findByText('Your data is saved.')).toBeInTheDocument()
+  expect(exportAccount).toHaveBeenCalledOnce()
+  expect(platform.saveFile).toHaveBeenCalledTimes(2)
+})
+
+test('a failed export says so', async () => {
+  vi.mocked(exportAccount).mockRejectedValue(new Error('offline'))
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Download my data' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't get your data.")
+  expect(platform.saveFile).not.toHaveBeenCalled()
+})
+
+test('deleting asks first and says plainly what happens', () => {
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+  expect(deleteAccount).not.toHaveBeenCalled()
+  const confirm = screen.getByRole('group', { name: 'Delete your account?' })
+  expect(confirm).toHaveTextContent('goes back to Needs someone')
+  expect(confirm).toHaveTextContent('the rest of your Care Circle is told')
+  expect(confirm).toHaveTextContent('"Former member"')
+  expect(confirm).toHaveTextContent("This can't be undone.")
+})
+
+test('Keep my account closes the question without deleting', () => {
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Keep my account' }))
+  expect(screen.queryByRole('group', { name: 'Delete your account?' })).not.toBeInTheDocument()
+  expect(deleteAccount).not.toHaveBeenCalled()
+})
+
+test('confirming deletes the account, signs out on this phone and goes to sign-in', async () => {
+  vi.mocked(deleteAccount).mockResolvedValue()
+  vi.mocked(platform.disablePush).mockResolvedValue()
+  vi.mocked(signOut).mockResolvedValue()
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Yes, delete my account' }))
+  expect(await screen.findByText('Sign-in screen')).toBeInTheDocument()
+  expect(deleteAccount).toHaveBeenCalledOnce()
+  expect(signOut).toHaveBeenCalledWith('local')
+  expect(vi.mocked(deleteAccount).mock.invocationCallOrder[0]).toBeLessThan(
+    vi.mocked(signOut).mock.invocationCallOrder[0],
+  )
+})
+
+test('a failed delete says so, stays signed in and can be tried again', async () => {
+  vi.mocked(deleteAccount).mockRejectedValue(new Error('offline'))
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Yes, delete my account' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't delete your account.")
+  expect(signOut).not.toHaveBeenCalled()
+  expect(screen.getByRole('button', { name: 'Yes, delete my account' })).toBeEnabled()
+})
+
+test('opening Delete closes Leave, so only one question shows', () => {
+  renderCard()
+  fireEvent.click(screen.getByRole('button', { name: 'Leave this Care Circle' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+  expect(screen.queryByText('Leave this Care Circle?')).not.toBeInTheDocument()
+  expect(screen.getByText('Delete your account?')).toBeInTheDocument()
 })

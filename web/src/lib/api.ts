@@ -190,3 +190,29 @@ export async function availability(
   if (error || !data) throw new RpcError('unknown', {}, error)
   return data
 }
+
+// Account export and deletion (task 4.5e, ADR-015), through the account Edge
+// Function. Not for demo guests.
+
+/** A JSON copy of the caller's own data and the content they added. */
+export async function exportAccount(): Promise<unknown> {
+  const { data, error } = await supabase.functions.invoke<unknown>('account', {
+    method: 'POST',
+    body: { action: 'export' },
+  })
+  if (error || !data) throw new RpcError('unknown', {}, error)
+  return data
+}
+
+/**
+ * Deletes the caller's account: their open items go back to Needs someone
+ * (the others are told) and what they added stays as "Former member". Sign
+ * out locally afterwards; the account is gone.
+ */
+export async function deleteAccount(): Promise<void> {
+  const { data, error } = await supabase.functions.invoke<{ status?: string }>('account', {
+    method: 'POST',
+    body: { action: 'delete' },
+  })
+  if (error || data?.status !== 'deleted') throw new RpcError('unknown', {}, error)
+}
