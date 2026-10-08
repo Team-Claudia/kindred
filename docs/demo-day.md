@@ -1,6 +1,6 @@
 # Kindred — Demo Day
 
-Notes for preparing the Demo Day pitch and demo. Building the prototype is covered by [implementation-plan.md](implementation-plan.md); how we're scored is in [judging-criteria.md](judging-criteria.md).
+Notes for preparing the Demo Day pitch and demo. Building the prototype is covered by [implementation-plan.md](implementation-plan.md); how we're scored is in [judging-criteria.md](judging-criteria.md); the pitch script is in [pitch.md](pitch.md).
 
 ## Timeline
 
