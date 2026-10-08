@@ -54,8 +54,8 @@ export function CoverageSheet({
     <Sheet open={step !== null} onOpenChange={(open) => !open && onClose()} title={title} description={subtitle}>
       {step === 'confirm' && (
         <>
-          <section className="flex flex-col gap-1 rounded-xl border-2 border-foreground p-4">
-            <h3 className="text-sm font-semibold tracking-wider uppercase">{t('coverage.allowanceTitle')}</h3>
+          <section className="flex flex-col gap-1 rounded-xl border-2 border-primary p-4">
+            <h3 className="text-sm font-semibold">{t('coverage.allowanceTitle')}</h3>
             <p>
               {remaining !== undefined && (
                 <strong>{t('coverage.remaining', { count: remaining })} </strong>

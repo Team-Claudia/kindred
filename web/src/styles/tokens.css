@@ -4,34 +4,54 @@
 */
 
 :root {
+    /*
+      Garden (docs/design-system.md): a calm green palette with generous
+      rounding and a rounded typeface. Every text pair here passes WCAG 2.2 AA;
+      the ratios are listed in the design-application PR (#60). The design
+      has no dark mode, so there is no .dark block.
+    */
+
     /* Fonts and spacing. 1 Tailwind spacing unit = --space-unit. */
-    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-body: "Nunito Variable", Nunito, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --space-unit: 0.25rem;
     --tap-target: 2.75rem; /* 44px minimum tap target */
+
+    /* Radii: buttons and inputs 14px, cards 22px. Chips and badges are pills. */
+    --radius-control: 0.875rem;
+    --radius-card: 1.375rem;
 
     /*
       Assignment states: a background + text pair each. Always shown with the
       state's text label (en-CA.json "state"), never colour alone.
     */
-    --state-needs-someone: oklch(0.95 0.07 85);
-    --state-needs-someone-foreground: oklch(0.42 0.09 70);
-    --state-awaiting-acceptance: oklch(0.94 0.04 250);
-    --state-awaiting-acceptance-foreground: oklch(0.42 0.14 255);
-    --state-assigned: oklch(0.94 0.05 150);
-    --state-assigned-foreground: oklch(0.4 0.1 150);
-    --state-needs-coverage: oklch(0.94 0.05 30);
-    --state-needs-coverage-foreground: oklch(0.47 0.17 30);
-    --state-completed: oklch(0.95 0 0);
-    --state-completed-foreground: oklch(0.38 0 0);
-    --state-cancelled: oklch(0.97 0 0);
-    --state-cancelled-foreground: oklch(0.5 0 0);
-    /* Overdue is shown alongside a state, so it also gets a border. */
-    --state-overdue: oklch(1 0 0);
-    --state-overdue-foreground: oklch(0.45 0.18 27);
+    --state-needs-someone: #fcebd2;
+    --state-needs-someone-foreground: #7a4a0c;
+    --state-awaiting-acceptance: #e6eef6;
+    --state-awaiting-acceptance-foreground: #2b4f73;
+    --state-assigned: #e7f2ec;
+    --state-assigned-foreground: #2f6b57;
+    --state-needs-coverage: #fbe4dc;
+    --state-needs-coverage-foreground: #8a3a1e;
+    --state-completed: #edefec;
+    --state-completed-foreground: #4a564f;
+    --state-cancelled: #f4f3ef;
+    --state-cancelled-foreground: #5c615d;
+    /* Overdue is the solid marigold accent; the attention states are its tints. */
+    --state-overdue: #e9a23b;
+    --state-overdue-foreground: #1f2d27;
+
+    /*
+      The overdue card, the same everywhere: an accent border and a tinted
+      background, always with the Overdue badge. Unclaimed and coverage cards
+      are outlined in --primary instead. The border is a darker marigold so it
+      keeps 3:1 against the card and the page (WCAG 1.4.11).
+    */
+    --overdue-border: #b7791f;
+    --overdue-surface: #fdf3e2;
 
     /*
       Who's free (task 4.5a): Free, Busy or Unknown in the ask-someone pickers,
-      always with the word. They reuse the state colours, so dark mode follows.
+      always with the word. They reuse the state colours.
     */
     --availability-free: var(--state-assigned);
     --availability-free-foreground: var(--state-assigned-foreground);
@@ -40,85 +60,37 @@
     --availability-unknown: var(--state-completed);
     --availability-unknown-foreground: var(--state-completed-foreground);
 
-    --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-    --state-needs-someone: oklch(0.32 0.06 80);
-    --state-needs-someone-foreground: oklch(0.9 0.08 85);
-    --state-awaiting-acceptance: oklch(0.3 0.06 255);
-    --state-awaiting-acceptance-foreground: oklch(0.88 0.06 250);
-    --state-assigned: oklch(0.3 0.06 150);
-    --state-assigned-foreground: oklch(0.88 0.08 150);
-    --state-needs-coverage: oklch(0.32 0.08 30);
-    --state-needs-coverage-foreground: oklch(0.88 0.07 30);
-    --state-completed: oklch(0.27 0 0);
-    --state-completed-foreground: oklch(0.85 0 0);
-    --state-cancelled: oklch(0.24 0 0);
-    --state-cancelled-foreground: oklch(0.7 0 0);
-    --state-overdue: oklch(0.145 0 0);
-    --state-overdue-foreground: oklch(0.8 0.12 27);
-
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --radius: var(--radius-control);
+    --background: #fbf8f1;
+    --foreground: #1f2d27;
+    --card: #ffffff;
+    --card-foreground: #1f2d27;
+    --popover: #ffffff;
+    --popover-foreground: #1f2d27;
+    --primary: #2f6b57;
+    --primary-foreground: #ffffff;
+    --secondary: #e7f2ec;
+    --secondary-foreground: #1f2d27;
+    --muted: #e7f2ec;
+    --muted-foreground: #4d5c55;
+    --accent: #e7f2ec;
+    --accent-foreground: #1f2d27;
+    --destructive: #b42318;
+    --border: #d5e3db;
+    /* Input outlines need 3:1 against what's behind them (WCAG 1.4.11). */
+    --input: #7b8e85;
+    --ring: #2f6b57;
+    --chart-1: #8cc3ac;
+    --chart-2: #2f6b57;
+    --chart-3: #e9a23b;
+    --chart-4: #4d5c55;
+    --chart-5: #1f2d27;
+    --sidebar: #fbf8f1;
+    --sidebar-foreground: #1f2d27;
+    --sidebar-primary: #2f6b57;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e7f2ec;
+    --sidebar-accent-foreground: #1f2d27;
+    --sidebar-border: #d5e3db;
+    --sidebar-ring: #2f6b57;
 }

@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils"
 import { Slot } from "radix-ui"
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-center text-sm font-medium transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
-    // Every size is at least 44px tall (h-11) so it is an easy tap target on a phone.
+    // Every size is at least 44px tall (min-h-11) so it is an easy tap target on a phone.
+    // Labels wrap and the button grows, so nothing is clipped at the largest text size.
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -21,10 +22,10 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-11 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-11 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-11 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-12 rounded-md px-6 has-[>svg]:px-4",
+        default: "min-h-11 px-4 py-2 has-[>svg]:px-3",
+        xs: "min-h-11 gap-1 rounded-md px-2 py-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "min-h-11 gap-1.5 rounded-md px-3 py-2 has-[>svg]:px-2.5",
+        lg: "min-h-12 rounded-md px-6 py-2 has-[>svg]:px-4",
         icon: "size-11",
         "icon-xs": "size-11 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-11",

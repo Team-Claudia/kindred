@@ -43,7 +43,7 @@ export function HomeTopBar({ name }: { name?: string | null }) {
         <Link
           to="/circle"
           aria-label={t('shell.circle')}
-          className="flex size-tap items-center justify-center rounded-full border bg-muted font-semibold"
+          className="flex size-tap items-center justify-center rounded-full border border-primary bg-primary font-semibold text-primary-foreground"
         >
           {initial || <UserRound aria-hidden className="size-5" />}
         </Link>

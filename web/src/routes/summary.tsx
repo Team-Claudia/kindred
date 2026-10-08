@@ -166,7 +166,7 @@ function WeeklySummary({ careRecipient, timeZone }: { careRecipient: string; tim
               aria-labelledby="summary-happened"
               className="flex flex-col gap-3 rounded-xl border bg-card p-4 text-card-foreground"
             >
-              <h2 id="summary-happened" className="text-sm font-semibold tracking-wider uppercase">
+              <h2 id="summary-happened" className="text-sm font-semibold">
                 {t('summary.happened')}
               </h2>
               {sections.happened.length === 0 ? (
@@ -186,7 +186,7 @@ function WeeklySummary({ careRecipient, timeZone }: { careRecipient: string; tim
               aria-labelledby="summary-open"
               className="flex flex-col gap-3 rounded-xl border bg-card p-4 text-card-foreground"
             >
-              <h2 id="summary-open" className="text-sm font-semibold tracking-wider uppercase">
+              <h2 id="summary-open" className="text-sm font-semibold">
                 {t('summary.stillOpen')}
               </h2>
               {sections.open.length === 0 ? (

@@ -94,7 +94,7 @@ export function CircleMembersCard({
     <section className="flex flex-col gap-1" aria-labelledby="members-heading">
       <h2
         id="members-heading"
-        className="font-mono text-sm font-medium tracking-wider text-muted-foreground uppercase"
+        className="text-sm font-medium text-muted-foreground"
       >
         {t('circle.members', { count: list.length })}
       </h2>

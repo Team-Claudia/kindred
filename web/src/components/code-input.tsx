@@ -50,7 +50,7 @@ export function CodeInput({
             key={index}
             className={cn(
               'flex h-16 items-center justify-center rounded-lg border border-input text-2xl font-semibold',
-              index === activeIndex && 'group-focus-within:border-2 group-focus-within:border-foreground',
+              index === activeIndex && 'group-focus-within:border-2 group-focus-within:border-primary',
               invalid && 'border-destructive',
             )}
           >

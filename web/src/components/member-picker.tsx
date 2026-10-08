@@ -42,7 +42,7 @@ export function MemberPicker({
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-semibold tracking-wider uppercase">{legend}</legend>
+      <legend className="mb-2 text-sm font-semibold">{legend}</legend>
       {slot && <p className="text-sm text-muted-foreground">{t('availability.note')}</p>}
       {shown.map((member) => {
         const name = memberName(t, member, viewerId)
@@ -115,7 +115,7 @@ function PickerRow({
     <label
       className={cn(
         'flex min-h-tap cursor-pointer items-center gap-3 rounded-xl border p-3',
-        checked && 'border-2 border-foreground',
+        checked && 'border-2 border-primary',
       )}
     >
       <input

@@ -22,8 +22,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#ffffff',
+        background_color: '#fbf8f1',
+        theme_color: '#fbf8f1',
         // Placeholder icons from scripts/generate-icons.mjs; swap in the brand later.
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
@@ -37,6 +37,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Precache the Nunito font (Latin subsets), so the installed app keeps
+        // its typeface offline.
+        globPatterns: ['**/*.{js,css,html}', '**/nunito-latin*.woff2'],
         // The calendar feed is served by Supabase, not the app shell.
         navigateFallbackDenylist: [/^\/cal\//],
         // Push and notification-tap handlers (task 1.4), served from public/.

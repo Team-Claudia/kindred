@@ -295,7 +295,7 @@ iPhone install and links (task 4.10): the Home Screen app has its own sign-in, s
 
 ### 4.6 Design tokens
 
-All colours, radii, spacing and fonts live as CSS variables in `web/src/styles/tokens.css`, consumed by Tailwind and shadcn/ui. Each assignment state has a token pair (background + text) and a text label. The final brand is applied later by editing this file.
+All colours, radii, spacing and fonts live as CSS variables in `web/src/styles/tokens.css`, consumed by Tailwind and shadcn/ui. Each assignment state has a token pair (background + text) and a text label. The Garden brand ([design-system.md](design-system.md)) is applied there (task 4.4): Nunito (self-hosted), `--radius-control` (14px, buttons and inputs) and `--radius-card` (22px, cards), and `--overdue-border` and `--overdue-surface` for the overdue card, which looks the same everywhere. There is no dark mode.
 
 ---
 

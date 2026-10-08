@@ -338,7 +338,7 @@ function InviteStep({
       </div>
 
       <section className="flex flex-col gap-1">
-        <h3 className="font-mono text-sm font-medium tracking-wider text-muted-foreground uppercase">
+        <h3 className="text-sm font-medium text-muted-foreground">
           {t('welcome.members', { count: list.length })}
         </h3>
         <ul className="divide-y">

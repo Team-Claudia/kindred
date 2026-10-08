@@ -100,7 +100,7 @@ function InstallFirst({
       onDismiss={onSignInHere}
     >
       <section className="flex flex-col items-center gap-3 rounded-xl border bg-muted p-5 text-center">
-        <h2 className="font-mono text-sm font-medium tracking-wider text-muted-foreground uppercase">
+        <h2 className="text-sm font-medium text-muted-foreground">
           {t('install.yourCode')}
         </h2>
         <p className="font-mono text-4xl font-semibold tracking-[0.15em] select-all">{code}</p>
@@ -154,7 +154,7 @@ function InviteLanding({ code, invite }: { code: string; invite: api.InvitePrevi
         </>
       }
     >
-      <p className="font-mono text-sm font-medium tracking-wider text-muted-foreground uppercase">
+      <p className="text-sm font-medium text-muted-foreground">
         {t('join.invited')}
       </p>
       <Heading>

@@ -55,7 +55,7 @@ export function PushPrompt() {
       className="fixed inset-0 z-50 overflow-y-auto bg-background"
     >
       <div className="mx-auto flex min-h-full max-w-md flex-col gap-4 px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div className="flex size-14 items-center justify-center rounded-lg border-2 border-foreground bg-muted">
+        <div className="flex size-14 items-center justify-center rounded-lg border-2 border-primary bg-muted">
           <Bell className="size-6" aria-hidden />
         </div>
         <h1 id="push-prompt-title" className="text-3xl font-bold">
