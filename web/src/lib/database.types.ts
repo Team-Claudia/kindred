@@ -27,6 +27,7 @@ export type Database = {
                   Row: {
                     "actor_id": string | null,"at": string,"circle_id": string,"data": NonNullable<Json>,"id": number,"item_id": string | null,"type": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "actor_id"?: string | null,"at"?: string,"circle_id": string,"data"?: NonNullable<Json>,"id"?: never,"item_id"?: string | null,"type": string
                   }
@@ -58,6 +59,7 @@ isOneToOne: false
                   Row: {
                     "assignee_id": string | null,"assigner_id": string | null,"circle_id": string,"created_at": string,"id": string,"item_id": string,"resolved_at": string | null,"scope": string,"status": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "assignee_id"?: string | null,"assigner_id"?: string | null,"circle_id": string,"created_at"?: string,"id"?: string,"item_id": string,"resolved_at"?: string | null,"scope"?: string,"status"?: string
                   }
@@ -95,6 +97,7 @@ isOneToOne: false
                   Row: {
                     "feed_appointments": boolean,"feed_tasks": boolean,"feed_token": string,"google_secret_id": string | null,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "feed_appointments"?: boolean,"feed_tasks"?: boolean,"feed_token"?: string,"google_secret_id"?: string | null,"user_id": string
                   }
@@ -114,6 +117,7 @@ isOneToOne: true
                   Row: {
                     "circle_id": string,"joined_at": string,"relationship": string | null,"role": string,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "circle_id": string,"joined_at"?: string,"relationship"?: string | null,"role"?: string,"user_id": string
                   }
@@ -139,6 +143,7 @@ isOneToOne: true
                   Row: {
                     "care_recipient_name": string,"created_at": string,"id": string,"time_zone": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "care_recipient_name": string,"created_at"?: string,"id"?: string,"time_zone"?: string
                   }
@@ -152,6 +157,7 @@ isOneToOne: true
                   Row: {
                     "author_id": string | null,"body": string,"circle_id": string,"created_at": string,"id": string,"item_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "author_id"?: string | null,"body": string,"circle_id": string,"created_at"?: string,"id"?: string,"item_id": string
                   }
@@ -183,6 +189,7 @@ isOneToOne: false
                   Row: {
                     "circle_id": string,"created_at": string,"id": string,"item_id": string,"requester_id": string | null,"resolved_at": string | null,"status": string,"taken_by": string | null
                   }
+                  ComputedFields: never
                   Insert: {
                     "circle_id": string,"created_at"?: string,"id"?: string,"item_id": string,"requester_id"?: string | null,"resolved_at"?: string | null,"status"?: string,"taken_by"?: string | null
                   }
@@ -220,6 +227,7 @@ isOneToOne: false
                   Row: {
                     "circle_id": string,"code": string,"created_at": string,"created_by": string | null,"expires_at": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "circle_id": string,"code": string,"created_at"?: string,"created_by"?: string | null,"expires_at"?: string
                   }
@@ -245,6 +253,7 @@ isOneToOne: false
                   Row: {
                     "circle_id": string,"created_at": string,"created_by": string | null,"ends_at": string | null,"follow_up_of": string | null,"id": string,"kind": string,"location": string | null,"location_lat": number | null,"location_lng": number | null,"occurrence_index": number | null,"owner_id": string | null,"private_notes": string | null,"proposed_assignee_id": string | null,"series_id": string | null,"starts_at": string,"state": string,"title": string,"updated_at": string,"version": number
                   }
+                  ComputedFields: never
                   Insert: {
                     "circle_id": string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"follow_up_of"?: string | null,"id"?: string,"kind": string,"location"?: string | null,"location_lat"?: number | null,"location_lng"?: number | null,"occurrence_index"?: number | null,"owner_id"?: string | null,"private_notes"?: string | null,"proposed_assignee_id"?: string | null,"series_id"?: string | null,"starts_at": string,"state"?: string,"title": string,"updated_at"?: string,"version"?: number
                   }
@@ -294,6 +303,7 @@ isOneToOne: false
                   Row: {
                     "changes": boolean,"comments": boolean,"everything_else": boolean,"reminders": boolean,"requests": boolean,"updates": boolean,"user_id": string,"weekly_summary": boolean
                   }
+                  ComputedFields: never
                   Insert: {
                     "changes"?: boolean,"comments"?: boolean,"everything_else"?: boolean,"reminders"?: boolean,"requests"?: boolean,"updates"?: boolean,"user_id": string,"weekly_summary"?: boolean
                   }
@@ -313,6 +323,7 @@ isOneToOne: true
                   Row: {
                     "created_at": string,"id": number,"item_id": string | null,"kind": string,"line": string,"outbox_id": number | null,"read_at": string | null,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "created_at"?: string,"id"?: never,"item_id"?: string | null,"kind": string,"line": string,"outbox_id"?: number | null,"read_at"?: string | null,"user_id": string
                   }
@@ -344,6 +355,7 @@ isOneToOne: false
                   Row: {
                     "attempts": number,"circle_id": string | null,"created_at": string,"id": number,"kind": string,"last_error": string | null,"payload": NonNullable<Json>,"run_at": string,"status": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "attempts"?: number,"circle_id"?: string | null,"created_at"?: string,"id"?: never,"kind": string,"last_error"?: string | null,"payload"?: NonNullable<Json>,"run_at"?: string,"status"?: string
                   }
@@ -363,6 +375,7 @@ isOneToOne: false
                   Row: {
                     "created_at": string,"display_name": string | null,"id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "created_at"?: string,"display_name"?: string | null,"id": string
                   }
@@ -376,6 +389,7 @@ isOneToOne: false
                   Row: {
                     "created_at": string,"endpoint": string,"id": number,"keys": NonNullable<Json>,"user_id": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "created_at"?: string,"endpoint": string,"id"?: never,"keys": NonNullable<Json>,"user_id": string
                   }
@@ -395,6 +409,7 @@ isOneToOne: false
                   Row: {
                     "circle_id": string,"created_at": string,"created_by": string | null,"ends_at": string | null,"id": string,"kind": string,"location": string | null,"next_index": number,"private_notes": string | null,"repeat": string,"starts_at": string,"title": string,"until": string
                   }
+                  ComputedFields: never
                   Insert: {
                     "circle_id": string,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string | null,"id"?: string,"kind": string,"location"?: string | null,"next_index"?: number,"private_notes"?: string | null,"repeat": string,"starts_at": string,"title": string,"until": string
                   }
@@ -420,6 +435,7 @@ isOneToOne: false
                   Row: {
                     "author_id": string | null,"body": string,"circle_id": string,"created_at": string,"id": string,"item_id": string | null
                   }
+                  ComputedFields: never
                   Insert: {
                     "author_id"?: string | null,"body": string,"circle_id": string,"created_at"?: string,"id"?: string,"item_id"?: string | null
                   }
@@ -853,7 +869,7 @@ isOneToOne: false
         isSetofReturn: false
       } },
 "log_item_event":
-{ Args: { "actor": string,"data"?: Json,"event_type": string,"item": Database["public"]['Tables']["items"]['Row'] }; Returns: undefined
+{ Args: { "actor": string,"data"?: Json,"event_type": string,"item": Omit<Database["public"]['Tables']["items"]['Row'], Database["public"]['Tables']["items"]['ComputedFields']> }; Returns: undefined
                            },
 "log_share":
 { Args: { "item_id": string,"share_kind": string }; Returns: undefined
@@ -885,7 +901,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "queue_push":
-{ Args: { "actor": string,"event": string,"item": Database["public"]['Tables']["items"]['Row'],"recipients": (string)[] }; Returns: undefined
+{ Args: { "actor": string,"event": string,"item": Omit<Database["public"]['Tables']["items"]['Row'], Database["public"]['Tables']["items"]['ComputedFields']>,"recipients": (string)[] }; Returns: undefined
                            },
 "queue_weekly_summaries":
 { Args: { "as_of"?: string }; Returns: number
