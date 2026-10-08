@@ -132,7 +132,7 @@ function UpdateForm({
       </p>
 
       <div className="flex min-w-0 flex-col gap-2">
-        <label htmlFor={bodyId} className="text-sm font-semibold tracking-wider uppercase">
+        <label htmlFor={bodyId} className="text-sm font-semibold">
           {t('updateSheet.body')}
         </label>
         <textarea
@@ -158,7 +158,7 @@ function UpdateForm({
       </div>
 
       <fieldset className="flex min-w-0 flex-col gap-2">
-        <legend className="mb-2 text-sm font-semibold tracking-wider uppercase">
+        <legend className="mb-2 text-sm font-semibold">
           {t('updateSheet.linkTo')}
         </legend>
         <div className="flex flex-wrap gap-2">
@@ -223,7 +223,7 @@ function LinkChip({
     <label
       className={cn(
         'flex min-h-tap max-w-full cursor-pointer flex-col justify-center rounded-full border px-4 py-2 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring',
-        checked && 'border-2 border-foreground font-semibold',
+        checked && 'border-2 border-primary font-semibold',
       )}
     >
       <input type="radio" name={name} checked={checked} onChange={onSelect} className="sr-only" />

@@ -44,7 +44,7 @@ export function StepProgress({ step, label }: { step: 1 | 2 | 3; label: string }
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-2">
-      <p className="font-mono text-sm font-medium tracking-wider text-muted-foreground uppercase">
+      <p className="text-sm font-medium text-muted-foreground">
         {t('welcome.step', { step, label })}
       </p>
       <div className="grid grid-cols-3 gap-2" aria-hidden>
@@ -65,7 +65,7 @@ export function Heading({ children, intro }: { children: ReactNode; intro?: Reac
   )
 }
 
-const fieldLabel = 'font-mono text-sm font-medium tracking-wider text-muted-foreground uppercase'
+const fieldLabel = 'text-sm font-medium text-muted-foreground'
 const fieldControl =
   'h-12 w-full rounded-lg border border-input bg-background px-4 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive'
 

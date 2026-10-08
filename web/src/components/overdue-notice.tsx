@@ -2,6 +2,8 @@ import { Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatDate } from '@/lib/dates'
 import type { OverdueAlert } from '@/lib/overdue-alert'
+import { attentionCardClass } from '@/lib/status'
+import { cn } from '@/lib/utils'
 
 /**
  * Item detail when an item is overdue (wireframe 28, simplified, task 4.5b):
@@ -25,8 +27,8 @@ export function OverdueNotice({
   const names = new Intl.ListFormat(locale, { type: 'conjunction' }).format(told.map(nameOf))
 
   return (
-    <section className="flex flex-col gap-2 rounded-xl border-2 border-foreground p-4">
-      <h2 className="flex items-center gap-2 font-semibold tracking-wider uppercase">
+    <section className={cn('flex flex-col gap-2 rounded-xl p-4', attentionCardClass(true))}>
+      <h2 className="flex items-center gap-2 font-semibold">
         <Clock aria-hidden className="size-5 shrink-0" />
         {t('overdueAlert.since', { date: formatDate(startsAt, timeZone, locale) })}
       </h2>

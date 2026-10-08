@@ -176,7 +176,7 @@ function EmailStep({
       </div>
       <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
         <div className="flex flex-col gap-2">
-          <label htmlFor="email" className="text-sm font-medium uppercase tracking-wide">
+          <label htmlFor="email" className="text-sm font-medium">
             {t('auth.email.label')}
           </label>
           <input

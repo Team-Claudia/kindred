@@ -266,8 +266,8 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
   return (
     <main className="flex flex-col gap-6 px-4 py-6">
       {asked && (
-        <section className="flex flex-col gap-2 rounded-xl border-2 border-foreground p-4">
-          <h2 className="font-semibold tracking-wider uppercase">
+        <section className="flex flex-col gap-2 rounded-xl border-2 border-primary p-4">
+          <h2 className="font-semibold">
             {asker && names.has(asker)
               ? t('itemDetail.askedYou', { name: names.get(asker) })
               : t('itemDetail.askedYouUnknown')}
@@ -286,8 +286,8 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
       )}
 
       {state === 'needs_coverage' && (
-        <section className="flex flex-col gap-2 rounded-xl border-2 border-foreground p-4">
-          <h2 className="font-semibold tracking-wider uppercase">
+        <section className="flex flex-col gap-2 rounded-xl border-2 border-primary p-4">
+          <h2 className="font-semibold">
             {item.owner_id === viewerId
               ? t('coverage.youAsked')
               : ownerName
@@ -342,14 +342,14 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
 
       {item.private_notes && (
         <section className="flex flex-col gap-2 rounded-xl border p-4">
-          <h2 className="text-sm font-semibold tracking-wider uppercase">{t('itemDetail.notes')}</h2>
+          <h2 className="text-sm font-semibold">{t('itemDetail.notes')}</h2>
           <p className="break-words whitespace-pre-wrap">{item.private_notes}</p>
         </section>
       )}
 
       {updates.data && updates.data.length > 0 && (
         <section aria-labelledby="item-updates" className="flex flex-col gap-3">
-          <h2 id="item-updates" className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+          <h2 id="item-updates" className="text-sm font-semibold text-muted-foreground">
             {t('updates.onItem', { count: updates.data.length })}
           </h2>
           <ul className="flex flex-col gap-3">
@@ -370,13 +370,13 @@ function ItemDetail({ item, viewerId, timeZone }: { item: Item; viewerId: string
 
       {!isTask && followUps.data && followUps.data.length > 0 && (
         <section aria-labelledby="item-follow-ups" className="flex flex-col gap-3">
-          <h2 id="item-follow-ups" className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+          <h2 id="item-follow-ups" className="text-sm font-semibold text-muted-foreground">
             {t('updates.followUps')}
           </h2>
           <ul className="flex flex-col gap-3">
             {followUps.data.map((followUp) => (
               <li key={followUp.id}>
-                <ItemRow item={followUp} names={names} timeZone={timeZone} now={now} />
+                <ItemRow item={followUp} names={names} timeZone={timeZone} now={now} userId={viewerId} />
               </li>
             ))}
           </ul>
@@ -563,7 +563,7 @@ function RepeatsLine({ seriesId }: { seriesId: string }) {
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b py-3">
-      <dt className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">{label}</dt>
+      <dt className="text-sm font-semibold text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-right break-words">{children}</dd>
     </div>
   )

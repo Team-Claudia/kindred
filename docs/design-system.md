@@ -8,7 +8,7 @@ A calm green palette with generous rounding and a rounded typeface. It feels lik
 - **Feels like:** a handwritten note left on the kitchen table.
 - **Trade-off:** green can read as wellness or health. Keep imagery domestic, never clinical.
 
-**Status in the app:** not applied yet. `web/src/styles/tokens.css` still holds the default neutral theme; applying a brand means editing that file (implementation plan §4.6).
+**Status in the app:** applied (task 4.4). The colours, font and radii live in `web/src/styles/tokens.css` (implementation plan §4.6). The app adds a few colours the design doesn't name: a text-safe muted grey (`#4D5C55`), an input outline that meets 3:1 (`#7B8E85`), a pale marigold tint for overdue cards (`#FDF3E2`), and a background and text pair for each assignment state. The design has no dark mode.
 
 ## Colour
 

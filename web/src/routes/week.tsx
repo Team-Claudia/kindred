@@ -44,10 +44,18 @@ export default function Week() {
   if (membership.isError || !circle) {
     return <ErrorState message={t('week.error')} onRetry={() => void membership.refetch()} />
   }
-  return <WeekAgenda careRecipient={circle.care_recipient_name} timeZone={circle.time_zone} />
+  return <WeekAgenda careRecipient={circle.care_recipient_name} timeZone={circle.time_zone} userId={userId} />
 }
 
-function WeekAgenda({ careRecipient, timeZone }: { careRecipient: string; timeZone: string }) {
+function WeekAgenda({
+  careRecipient,
+  timeZone,
+  userId,
+}: {
+  careRecipient: string
+  timeZone: string
+  userId?: string
+}) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const now = useNow()
@@ -152,7 +160,7 @@ function WeekAgenda({ careRecipient, timeZone }: { careRecipient: string; timeZo
 
         {(names.size > 1 || memberId !== null) && (
           <div role="group" aria-labelledby="week-show" className="flex flex-wrap items-center gap-2">
-            <span id="week-show" className="text-sm font-semibold tracking-wider uppercase">
+            <span id="week-show" className="text-sm font-semibold">
               {t('week.show')}
             </span>
             <FilterChip selected={memberId === null} onClick={() => update({ member: null })}>
@@ -185,14 +193,14 @@ function WeekAgenda({ careRecipient, timeZone }: { careRecipient: string; timeZo
               <section key={day} aria-labelledby={`day-${day}`} className="flex flex-col gap-3">
                 <h2
                   id={`day-${day}`}
-                  className="text-sm font-semibold tracking-wider text-muted-foreground uppercase"
+                  className="text-sm font-semibold text-muted-foreground"
                 >
                   {day === today ? t('week.today', { day: label }) : label}
                 </h2>
                 <ul className="flex flex-col gap-3">
                   {dayItems.map((item) => (
                     <li key={item.id}>
-                      <ItemRow item={item} names={names} timeZone={timeZone} now={now} />
+                      <ItemRow item={item} names={names} timeZone={timeZone} now={now} userId={userId} />
                     </li>
                   ))}
                 </ul>

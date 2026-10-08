@@ -125,7 +125,7 @@ function NotificationRow({
         aria-hidden
         className={cn(
           'flex size-tap shrink-0 items-center justify-center rounded-lg border bg-muted',
-          unread && 'border-2 border-foreground',
+          unread && 'border-2 border-primary',
         )}
       >
         <KindIcon kind={notification.kind} />

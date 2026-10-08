@@ -377,7 +377,7 @@ function Field({
   const described = [hint && `${id}-hint`, message && `${id}-error`].filter(Boolean).join(' ')
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-semibold tracking-wider uppercase">
+      <label htmlFor={id} className="text-sm font-semibold">
         {label}
       </label>
       {children({

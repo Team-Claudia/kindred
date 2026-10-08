@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/status-badge'
 import { formatTime } from '@/lib/dates'
 import { hasNoTime } from '@/lib/item-form'
 import { isOverdue, type Item } from '@/lib/items'
-import { ASSIGNMENT_STATES, type AssignmentState } from '@/lib/status'
+import { ASSIGNMENT_STATES, attentionCardClass, type AssignmentState } from '@/lib/status'
 import { cn } from '@/lib/utils'
 
 export type ItemRowItem = Pick<
@@ -28,6 +28,8 @@ export interface ItemRowProps {
   timeZone: string
   /** For the Overdue indicator. */
   now: Date
+  /** The signed-in person, whose avatar is filled in primary. */
+  userId?: string
   className?: string
 }
 
@@ -42,7 +44,7 @@ function asState(state: string): AssignmentState {
  * time, who owns it or has been asked, its state as text plus colour and the
  * Overdue indicator. Tapping it opens the item.
  */
-export function ItemRow({ item, names, timeZone, now, className }: ItemRowProps) {
+export function ItemRow({ item, names, timeZone, now, userId, className }: ItemRowProps) {
   const { t, i18n } = useTranslation()
   const state = asState(item.state)
   const overdue = isOverdue(item, now)
@@ -73,7 +75,9 @@ export function ItemRow({ item, names, timeZone, now, className }: ItemRowProps)
   const unconfirmed = state === 'awaiting_acceptance' || !avatarName
   const initial = avatarName?.trim().charAt(0).toUpperCase() || '?'
   const finished = state === 'completed' || state === 'cancelled'
-  const needsAttention = overdue || state === 'needs_someone' || state === 'needs_coverage'
+  const needsSomeone = state === 'needs_someone' || state === 'needs_coverage'
+  // Your own open items get the filled avatar; finished ones recede.
+  const avatarIsYou = !unconfirmed && !finished && !!userId && item.owner_id === userId
 
   return (
     <Link
@@ -82,7 +86,7 @@ export function ItemRow({ item, names, timeZone, now, className }: ItemRowProps)
       data-overdue={overdue || undefined}
       className={cn(
         'flex min-h-tap gap-3 rounded-xl border bg-card p-4 text-card-foreground',
-        needsAttention && 'border-2 border-foreground',
+        attentionCardClass(overdue, needsSomeone),
         className,
       )}
     >
@@ -90,7 +94,11 @@ export function ItemRow({ item, names, timeZone, now, className }: ItemRowProps)
         aria-hidden
         className={cn(
           'flex size-tap shrink-0 items-center justify-center rounded-full border font-semibold',
-          unconfirmed ? 'border-dashed border-muted-foreground' : 'bg-muted',
+          unconfirmed
+            ? 'border-dashed border-muted-foreground'
+            : avatarIsYou
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'bg-muted',
         )}
       >
         {initial}

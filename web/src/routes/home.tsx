@@ -48,6 +48,7 @@ import {
   useLatestUpdate,
   type ItemNeedingAttention,
 } from '@/lib/queries'
+import { attentionCardClass } from '@/lib/status'
 import { useNow } from '@/lib/use-now'
 import { cn } from '@/lib/utils'
 
@@ -235,7 +236,7 @@ function HomeSections({
               <ul className="flex flex-col gap-3">
                 {todayList.map((item) => (
                   <li key={item.id}>
-                    <ItemRow item={item} names={names} timeZone={timeZone} now={now} />
+                    <ItemRow item={item} names={names} timeZone={timeZone} now={now} userId={userId} />
                   </li>
                 ))}
               </ul>
@@ -255,7 +256,7 @@ function HomeSections({
                   <ul className="flex flex-col gap-3">
                     {comingUp.data.map((item) => (
                       <li key={item.id}>
-                        <ItemRow item={item} names={names} timeZone={timeZone} now={now} />
+                        <ItemRow item={item} names={names} timeZone={timeZone} now={now} userId={userId} />
                       </li>
                     ))}
                   </ul>
@@ -301,7 +302,7 @@ function HomeSections({
                 {coverage.map((item) => (
                   <li key={item.id}>
                     {item.owner_id === userId ? (
-                      <ItemRow item={item} names={names} timeZone={timeZone} now={now} />
+                      <ItemRow item={item} names={names} timeZone={timeZone} now={now} userId={userId} />
                     ) : (
                       <CoverCard
                         item={item}
@@ -385,7 +386,7 @@ function HomeSection({ id, title, children }: { id: string; title: string; child
     <section aria-labelledby={id} className="flex flex-col gap-3">
       <h2
         id={id}
-        className="text-sm font-semibold tracking-wider break-words text-muted-foreground uppercase"
+        className="text-sm font-semibold break-words text-muted-foreground"
       >
         {title}
       </h2>
@@ -458,7 +459,7 @@ function AnswerCard({ item, askedBy, when, overdue, onStart, onError }: ActionCa
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border-2 border-foreground bg-card p-4 text-card-foreground">
+    <div className={cn('flex flex-col gap-3 rounded-xl bg-card p-4 text-card-foreground', attentionCardClass(overdue))}>
       <Link to={`/i/${item.id}`} className="flex min-h-tap flex-col gap-1">
         <span className="text-lg leading-snug font-semibold break-words">{item.title}</span>
         <span className="break-words text-muted-foreground">
@@ -489,7 +490,7 @@ function ClaimCard({ item, when, overdue, onStart, onError }: ActionCardProps) {
   const claim = useItemMutation(api.claim)
 
   return (
-    <div className="flex flex-wrap items-start gap-3 rounded-xl border-2 border-foreground bg-card p-4 text-card-foreground">
+    <div className={cn('flex flex-wrap items-start gap-3 rounded-xl bg-card p-4 text-card-foreground', attentionCardClass(overdue))}>
       <Link to={`/i/${item.id}`} className="flex min-h-tap min-w-0 flex-1 basis-48 gap-3">
         <Avatar dashed />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -526,7 +527,7 @@ function CoverCard({ item, owner, when, overdue, onStart, onError }: ActionCardP
   const accept = useItemMutation(api.acceptCoverage)
 
   return (
-    <div className="flex flex-wrap items-start gap-3 rounded-xl border-2 border-foreground bg-card p-4 text-card-foreground">
+    <div className={cn('flex flex-wrap items-start gap-3 rounded-xl bg-card p-4 text-card-foreground', attentionCardClass(overdue))}>
       <Link to={`/i/${item.id}`} className="flex min-h-tap min-w-0 flex-1 basis-48 gap-3">
         <Avatar name={owner} />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
