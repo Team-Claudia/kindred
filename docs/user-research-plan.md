@@ -102,3 +102,17 @@ To find where to improve next.
   - If you could change one thing about this, what would it be?
 
 ## Findings
+
+**Status, 14 October 2026:** we didn't collect enough survey responses to report, and no interviews or usability tests have run yet. Until they do, we lean on two sources, each labelled wherever it's used:
+
+- **Published research (real caregivers):** Caregiver Action Network's *Caregiver Tech Insights Survey 2026*, 272 US family caregivers. [Summary and limits](research/secondary/caregiver-tech-insights-2026.md).
+- **Synthetic pilot (not real people):** AI personas answering this plan's survey and interview questions. [Summary](research/synthetic/summary.md).
+
+What they point to so far:
+
+1. **Coordination is a real burden.** 37% of caregivers spend 11+ hours a week just coordinating care, and nearly 1 in 3 say it feels fragmented (CAN 2026).
+2. **What gets lost is information passed between people**, especially after appointments. 72% would value doctor-visit summaries (CAN 2026), and most synthetic interviews tell a medication-handoff story.
+3. **Ease of setup decides adoption.** 23% would rather use text or email than an app (CAN 2026), and synthetic helpers said the same. That supports one-tap Accept and sharing to the chat.
+4. **Price is the biggest risk.** Only 12% would pay out of pocket, and 32% expect it free (CAN 2026). The synthetic answers were more optimistic than this.
+
+Not yet tested with real caregivers: whether caregivers share care with **siblings**, and who coordinates. That's what our own interviews still need to answer.
