@@ -194,7 +194,7 @@ Paid from day one. The coordinator pays per Care Circle; helpers always join fre
 ### 8.2 Primary channel
 
 - **Primary:** online caregiver communities in Canada: Facebook groups, plus Reddit (r/AgingParents, r/caregivers). Coordinators ask for help there at the moment of crisis.
-- **Secondary:** hospital help groups and elder-care organizations. Slower, as they need partnerships.
+- **Secondary:** hospital help groups and elder-care organizations. Slower, as they need partnerships, but worth it: a trusted organization's recommendation is the #1 reason caregivers adopt a tool (131 of 272 in a 2026 US survey), ahead of ease of use, price and reviews.¹
 
 ### 8.3 How we win there
 
@@ -252,6 +252,7 @@ Paid from day one. The coordinator pays per Care Circle; helpers always join fre
 | Helpers don't join | One-tap Accept from a WhatsApp link; invite message written for siblings |
 | A group chat feels good enough | Reach families right after a trigger; work with the chat, not against it |
 | Paying for an early product leads to refunds | Founding-family price, money-back guarantee, hands-on onboarding |
+| Caregivers expect tools to be free: only 12% would pay out of pocket, and 32% say tools should be free¹ | Price below the $11–25/month that 28% would pay¹; helpers always free; prove value before the founding price ends; look into employer caregiver benefits and partner-funded access later |
 | Promotion gets us removed from groups | Follow each group's rules; help first; partner with admins |
 | People hesitate to share their calendar | Clear consent when connecting; disconnect any time |
 | Concerns about care information and AI | Plain-language privacy policy, consent for AI features; PIPEDA review |
@@ -265,6 +266,7 @@ Paid from day one. The coordinator pays per Care Circle; helpers always join fre
 - GTM workshop team worksheets: positioning, messaging, growth
 - Statistics Canada, *The Daily*, 8 November 2022: unpaid care to children and care-dependent adults
 - Canadian Centre for Caregiving Excellence, *Caring in Canada* 2026 (via CTV News)
+- ¹ Caregiver Action Network, *Caregiver Tech Insights Survey: Findings Report 2026* (272 US family caregivers, ±5.94%). [Our summary and its limits](research/secondary/caregiver-tech-insights-2026.md)
 
 ## Appendix A. Headline and subheading options
 
