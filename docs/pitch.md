@@ -2,7 +2,7 @@
 
 Draft 1, October 2026. The judged 7-minute live pitch on 17 October (see [demo-day.md](demo-day.md) and [judging-criteria.md](judging-criteria.md)). Built from the [GTM plan](gtm-plan.md), the [competitor analysis](competitor-analysis.md) and the [user research plan](user-research-plan.md).
 
-Our own survey didn't reach enough people, so the validation beat uses published research (Caregiver Action Network's [Caregiver Tech Insights Survey 2026](research/secondary/caregiver-tech-insights-2026.md), 272 US caregivers) alongside our [synthetic AI-persona pilot](research/synthetic/summary.md), each labelled. `[Brackets]` still wait on usability tests. Never put a figure or quote in the pitch that we didn't collect or can't cite, and never present synthetic answers as real people.
+Our own survey didn't reach enough people, so the validation beat uses published research (Caregiver Action Network's [Caregiver Tech Insights Survey 2026](research/secondary/caregiver-tech-insights-2026.md), 272 US caregivers) The [synthetic AI-persona pilot](research/synthetic/summary.md) stays off the slides; mention it only if asked, and say it's AI-generated. `[Brackets]` still wait on usability tests. Never put a figure or quote in the pitch that we didn't collect or can't cite, and never present synthetic answers as real people.
 
 ## One-liner
 
@@ -38,14 +38,16 @@ Each beat is mapped to a judging criterion, with a suggested time and speaker so
 ### Validation (0:45)
 
 - **Published research:** a 2026 survey of 272 US family caregivers (Caregiver Action Network) found 37% spend 11+ hours a week just coordinating care, nearly 1 in 3 say care feels fragmented, and 26% say coordinating appointments, medications and family communication is where technology could help most.
-- **Our synthetic pilot (say "AI personas", not "caregivers"):** 19 of 30 had care slip in the last 3 months, with average stress of 3.8/5 when it did.
-- What the synthetic interviews pointed to, and what we built in response:
+- 90% already use at least one digital tool for caregiving, so families will use an app if it's easy.
+- What caregivers in that survey need, and what we built in response:
 
-| We heard | We built |
+| Caregivers said (2026 US survey) | We built |
 |---|---|
-| An appointment buried in texts was missed | Reminders before every appointment and due task |
-| When someone cancels, cover falls back on the coordinator | Ask for cover in one tap, shared to the family chat |
-| One sibling holds it all in their head | A weekly summary of who did what |
+| Appointments and medications take the most time | Reminders before every appointment and due task |
+| There's little or no backup when they can't make it | Ask for cover in one tap, shared to the family chat |
+| Information is scattered across too many systems | A weekly summary of who did what |
+
+- If asked what we did ourselves: our synthetic pilot (AI personas answering our questions, not real people) pointed the same way. Say clearly that it's AI-generated.
 
 - Quote, from a real caregiver in the CAN survey: *"The most stressful part of caregiving is trying to coordinate everything at once, appointments, medications, and daily care, while still managing my own responsibilities."*
 
@@ -86,7 +88,7 @@ Each beat is mapped to a judging criterion, with a suggested time and speaker so
 
 ## Before Demo Day
 
-- Fill the usability `[brackets]` once tests run. Problem & Validation is 20% of the score: always say where a figure comes from (published US survey, or AI personas).
+- Fill the usability `[brackets]` once tests run. Problem & Validation is 20% of the score: always say the figures come from a published US survey, not our own research.
 - Show the weekly summary in the demo, not just on a slide: it's our clearest point of difference.
 - Don't claim contribution tracking over time: the weekly summary names who did what each week, but nothing tallies it over time. Be ready if a judge asks about CircleCare.
 - Add the demo URL and QR code to the slides.
