@@ -81,7 +81,11 @@ function StartStep({ next, onEmail }: { next: string; onEmail: () => void }) {
 
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-6 px-6 py-8">
-      <p className="text-xl font-semibold">{t('auth.appName')}</p>
+      <img
+        src="/kindred-logo-tagline.svg"
+        alt={t('auth.appName')}
+        className="h-14 w-auto self-start"
+      />
       <ItemLinkNote next={next} />
       <div className="aspect-[4/3] w-full rounded-xl bg-muted" aria-hidden="true" />
       <div className="flex flex-col gap-2">

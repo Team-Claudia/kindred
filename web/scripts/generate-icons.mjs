@@ -1,27 +1,57 @@
-// Draws the placeholder app icons (a white "K" on a dark tile, matching
-// public/favicon.svg) as PNGs, with no dependencies. Run from web/:
+// Draws the app icons (the Kindred mark from public/favicon.svg on a cream
+// tile) as PNGs, with no dependencies. Run from web/ after changing the mark:
 //   node scripts/generate-icons.mjs
-// Replace the output with the real brand icons later; keep the file names.
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync } from 'node:zlib'
 
-const BG = [0x17, 0x17, 0x17]
-const FG = [0xfa, 0xfa, 0xfa]
+const BG = [0xfb, 0xf8, 0xf1] // --background
 const SAMPLES = 4 // supersampling per axis, for smooth edges
+const CURVE_STEPS = 16 // line segments per Bézier curve
 
-// The "K", in a 64-unit box like favicon.svg: a stem and two diagonal arms.
-const STROKE = 6.4
-const SEGMENTS = [
-  [23, 18, 23, 46],
-  [24, 34, 42, 18],
-  [30, 29, 43, 46],
-]
+const out = new URL('../public/', import.meta.url)
 
-function distanceToSegment(px, py, [x1, y1, x2, y2]) {
-  const dx = x2 - x1
-  const dy = y2 - y1
-  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)))
-  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy))
+// favicon.svg holds the mark as filled paths using only M, L, C and Z with
+// absolute coordinates. Each becomes a polygon, painted in document order.
+const svg = readFileSync(new URL('favicon.svg', out), 'utf8')
+const [, , , viewWidth, viewHeight] = svg
+  .match(/viewBox="([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)"/)
+  .map(Number)
+const SHAPES = [...svg.matchAll(/<path fill="#([0-9a-f]{6})" d="([^"]+)"/g)].map(([, hex, d]) => ({
+  colour: [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)),
+  polygon: flatten(d),
+}))
+
+function flatten(d) {
+  const points = []
+  for (const [, command, args] of d.matchAll(/([MLCZ])([^MLCZ]*)/g)) {
+    const n = args.trim() ? args.trim().split(/\s+/).map(Number) : []
+    if (command === 'M' || command === 'L') points.push([n[0], n[1]])
+    if (command === 'C') {
+      const [x0, y0] = points.at(-1)
+      for (let s = 1; s <= CURVE_STEPS; s++) {
+        const t = s / CURVE_STEPS
+        const a = (1 - t) ** 3,
+          b = 3 * (1 - t) ** 2 * t,
+          c = 3 * (1 - t) * t ** 2,
+          e = t ** 3
+        points.push([
+          a * x0 + b * n[0] + c * n[2] + e * n[4],
+          a * y0 + b * n[1] + c * n[3] + e * n[5],
+        ])
+      }
+    }
+  }
+  return points
+}
+
+function insidePolygon(x, y, polygon) {
+  let inside = false
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i]
+    const [xj, yj] = polygon[j]
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside
+  }
+  return inside
 }
 
 function insideRoundedRect(x, y, size, radius) {
@@ -30,28 +60,34 @@ function insideRoundedRect(x, y, size, radius) {
   return Math.hypot(x - cx, y - cy) <= radius
 }
 
-// glyphScale shrinks the K towards the centre (maskable icons keep it inside
-// the safe zone). cornerRadius is in 64-unit space; 0 gives a full square.
-function draw(size, { glyphScale = 1, cornerRadius = 14 } = {}) {
+// markHeight is the mark's height as a share of the icon (maskable icons keep
+// it inside the central safe zone). cornerRadius is in 64-unit space; 0 gives
+// a full square.
+function draw(size, { markHeight = 0.68, cornerRadius = 14 } = {}) {
   const pixels = Buffer.alloc(size * size * 4)
   const total = SAMPLES * SAMPLES
+  const scale = (markHeight * size) / viewHeight
+  const left = (size - viewWidth * scale) / 2
+  const top = (size - viewHeight * scale) / 2
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       let tile = 0
-      let glyph = 0
+      const colour = [0, 0, 0]
       for (let sy = 0; sy < SAMPLES; sy++) {
         for (let sx = 0; sx < SAMPLES; sx++) {
-          const u = ((x + (sx + 0.5) / SAMPLES) / size) * 64
-          const v = ((y + (sy + 0.5) / SAMPLES) / size) * 64
-          if (cornerRadius === 0 || insideRoundedRect(u, v, 64, cornerRadius)) tile++
-          const gu = 32 + (u - 32) / glyphScale
-          const gv = 32 + (v - 32) / glyphScale
-          if (SEGMENTS.some((s) => distanceToSegment(gu, gv, s) <= STROKE / 2)) glyph++
+          const px = x + (sx + 0.5) / SAMPLES
+          const py = y + (sy + 0.5) / SAMPLES
+          const [tu, tv] = [(px / size) * 64, (py / size) * 64]
+          if (cornerRadius === 0 || insideRoundedRect(tu, tv, 64, cornerRadius)) tile++
+          const u = (px - left) / scale
+          const v = (py - top) / scale
+          let sample = BG
+          for (const shape of SHAPES) if (insidePolygon(u, v, shape.polygon)) sample = shape.colour
+          for (let c = 0; c < 3; c++) colour[c] += sample[c]
         }
       }
-      const g = glyph / total
       const i = (y * size + x) * 4
-      for (let c = 0; c < 3; c++) pixels[i + c] = Math.round(BG[c] * (1 - g) + FG[c] * g)
+      for (let c = 0; c < 3; c++) pixels[i + c] = Math.round(colour[c] / total)
       pixels[i + 3] = Math.round((tile / total) * 255)
     }
   }
@@ -99,13 +135,12 @@ function encodePng(size, rgba) {
   ])
 }
 
-const out = new URL('../public/', import.meta.url)
 writeFileSync(new URL('pwa-192x192.png', out), draw(192))
 writeFileSync(new URL('pwa-512x512.png', out), draw(512))
-// Maskable: full-bleed tile, K inside the central 80% safe zone.
+// Maskable: full-bleed tile, mark inside the central 80% safe zone.
 writeFileSync(
   new URL('maskable-icon-512x512.png', out),
-  draw(512, { glyphScale: 0.8, cornerRadius: 0 }),
+  draw(512, { markHeight: 0.56, cornerRadius: 0 }),
 )
 // iOS rounds the corners itself and shows transparency as black, so no corners.
 writeFileSync(new URL('apple-touch-icon.png', out), draw(180, { cornerRadius: 0 }))

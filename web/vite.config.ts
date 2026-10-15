@@ -13,7 +13,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: [
+        'favicon.svg',
+        'kindred-logo.svg',
+        'kindred-logo-tagline.svg',
+        'apple-touch-icon.png',
+      ],
       manifest: {
         name: 'Kindred',
         short_name: 'Kindred',
@@ -24,7 +29,7 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#fbf8f1',
         theme_color: '#fbf8f1',
-        // Placeholder icons from scripts/generate-icons.mjs; swap in the brand later.
+        // Drawn from public/favicon.svg by scripts/generate-icons.mjs.
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
