@@ -2,7 +2,7 @@
 
 Draft 1, October 2026. The judged 7-minute live pitch on 17 October (see [demo-day.md](demo-day.md) and [judging-criteria.md](judging-criteria.md)). Built from the [GTM plan](gtm-plan.md), the [competitor analysis](competitor-analysis.md) and the [user research plan](user-research-plan.md).
 
-Our own survey didn't reach enough people, so the validation beat uses published research (Caregiver Action Network's [Caregiver Tech Insights Survey 2026](research/secondary/caregiver-tech-insights-2026.md), 272 US caregivers) The [synthetic AI-persona pilot](research/synthetic/summary.md) stays off the slides; mention it only if asked, and say it's AI-generated. `[Brackets]` still wait on usability tests. Never put a figure or quote in the pitch that we didn't collect or can't cite, and never present synthetic answers as real people.
+Our own survey didn't reach enough people, so the validation beat uses published research (Caregiver Action Network's [Caregiver Tech Insights Survey 2026](research/secondary/caregiver-tech-insights-2026.md), 272 US caregivers). The [synthetic AI-persona pilot](research/synthetic/summary.md) stays off the slides; mention it only if asked, and say it's AI-generated. `[Brackets]` still wait on usability tests. Never put a figure or quote in the pitch that we didn't collect or can't cite, and never present synthetic answers as real people.
 
 ## One-liner
 
@@ -92,3 +92,4 @@ Each beat is mapped to a judging criterion, with a suggested time and speaker so
 - Show the weekly summary in the demo, not just on a slide: it's our clearest point of difference.
 - Don't claim contribution tracking over time: the weekly summary names who did what each week, but nothing tallies it over time. Be ready if a judge asks about CircleCare.
 - Add the demo URL and QR code to the slides.
+- Prepare for judges' questions with [judge-qa.md](pitch/judge-qa.md). The deck's appendix (slides 13–21) has a backup slide for each theme.

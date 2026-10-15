@@ -51,7 +51,7 @@ CircleCare's clearest edge over other caregiving apps is contribution tracking a
 
 ### Where they differ
 
-- **The AI weekly summary is Kindred's real point of difference.** Turning the family's week into "what happened / what's next" has no real equivalent among the apps we looked at. Caring Village's "Julia" assistant is the closest, but it's framed as general tips and reminders, not a structured recap of your own family's week.
+- **The weekly summary is Kindred's real point of difference.** It's built inside Kindred from the week's activity, with no AI, so no care information leaves the app. Turning the family's week into "what happened / what's next" has no real equivalent among the apps we looked at. Caring Village's "Julia" assistant is the closest, but it's framed as general tips and reminders, not a structured recap of your own family's week.
 - **CircleCare's headline feature, contribution tracking for sibling fairness, isn't in Kindred's scope.** It's aimed at exactly the pain our Round 2 interview surfaced (siblings splitting medicine, food and money duties, one person feeling they carry more).
 - **Kindred deliberately leaves chat and video to existing tools.** That's a narrower, more disciplined position than CaringBridge, whose whole pitch is replacing the group text.
 - **Brand tone:** warm, human, calm and explicitly not clinical, unlike CareZone and Caring Village, which lean into medication tracking and health monitoring.

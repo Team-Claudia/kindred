@@ -30,7 +30,7 @@ Page numbers refer to the report.
 | **26%** say coordinating appointments, medications and family communication is where technology could help most, second to safety monitoring and remote connection (**28%**) | 6 | Kindred's focus is a top-two priority |
 | **90%** already use at least one digital tool for caregiving | 4 | Caregivers will use an app |
 | Tech preferences split four ways: **26%** open to apps only if easy to set up and genuinely helpful; **24%** happy with several single-purpose apps; **23%** prefer text or email to downloading apps; **22%** want one consolidated app | 4 | Supports one-tap Accept, sharing to the chat, and free helpers who barely need the app |
-| **59%** have tried or regularly use AI tools for caregiving; only **24%** have no interest | 5 | There's appetite for the AI summary |
+| **59%** have tried or regularly use AI tools for caregiving; only **24%** have no interest | 5 | There's appetite for AI later. Today's weekly summary is built from templates, with no AI, so an AI version would be an opt-in roadmap item |
 | **72%** rate audio recordings and written summaries of doctor visits as very beneficial or life-changing (a concierge admin service scored the same) | 6 | The handoff after an appointment matters; see the roadmap below |
 | Top barriers to adopting technology (of 272): cost **117**, unsure which products to trust **114**, privacy and security **110**, no time to research and set up **92** | 8 | Price, trust and privacy are risks to answer |
 | A recommendation or vetting from a trusted organization is the **#1** adoption factor (**131**), above ease of use, price and reviews | 8 | Supports going through elder-care organizations |

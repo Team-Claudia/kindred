@@ -145,7 +145,7 @@ Features that make it work:
 - **Shared care calendar:** every visit, appointment and task with a named owner.
 - **Claim, accept and ask for cover:** tasks are claimed in one tap and handed off when plans change.
 - **Push notifications and scheduling prompts:** open slots get claimed and nothing goes overdue unnoticed.
-- **Works with existing apps:** Google Calendar sync, WhatsApp sharing, and AI summaries of updates.
+- **Works with existing apps:** Google Calendar sync and WhatsApp sharing, plus a weekly summary built inside Kindred (no AI, so no care information leaves the app). AI-written summaries are a later, opt-in idea.
 
 Proof we'll collect from pilot families:
 
