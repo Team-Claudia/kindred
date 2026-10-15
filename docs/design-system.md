@@ -21,6 +21,14 @@ A calm green palette with generous rounding and a rounded typeface. It feels lik
 | Background | `#FBF8F1` | 13.5:1 with text | Main canvas |
 | Text | `#1F2D27` | 14.4:1 on white | Headings, primary content |
 
+## Logo
+
+A forest stem with two arms, sage and marigold, for two people sharing the care. The full brand sheet is [brand/kindred-logo.pdf](brand/kindred-logo.pdf). The wordmark is lowercase "kindred" in Optima Bold, with the tagline "Plan · Share · Care".
+
+- **Mark:** `web/public/favicon.svg`. It is the favicon, the notification icon, and the source of the app icons (`web/scripts/generate-icons.mjs` draws it on a cream tile).
+- **Lockups:** `web/public/kindred-logo.svg` (mark and wordmark, in the Home top bar) and `kindred-logo-tagline.svg` (with the tagline, on the sign-in screen). The wordmark is outlined, so it needs no font.
+- **On forest:** the stem and wordmark turn white, and the arms stay sage and marigold. The pitch deck uses this version.
+
 ## Typography
 
 Typeface: **Nunito**.

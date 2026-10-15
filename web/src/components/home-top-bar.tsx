@@ -21,7 +21,7 @@ export function HomeTopBar({ name }: { name?: string | null }) {
 
   return (
     <header className="flex items-center justify-between gap-2 border-b px-4 py-2">
-      <span className="text-xl font-semibold">{t('common.appName')}</span>
+      <img src="/kindred-logo.svg" alt={t('common.appName')} className="h-9 w-auto" />
       <div className="flex items-center gap-1">
         <Link
           to="/notifications"
